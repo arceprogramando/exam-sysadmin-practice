@@ -25,12 +25,12 @@ export function formatShort(totalSeconds: number, _locale: Locale = "es"): strin
   return `${r}s`;
 }
 
-/** Negativo = más rápido que la vez anterior. */
+/** Negativo = más rápido que la vez anterior. Same compact units as formatShort. */
 export function formatDelta(seconds: number, locale: Locale = "es"): string {
   const rounded = Math.round(seconds);
   if (Math.abs(rounded) < 1) return locale === "en" ? "same" : "igual";
   const sign = rounded > 0 ? "+" : "−";
-  return `${sign} ${formatClock(Math.abs(rounded))}`;
+  return `${sign} ${formatShort(Math.abs(rounded), locale)}`;
 }
 
 export function deltaLabel(seconds: number, locale: Locale = "es"): string {
