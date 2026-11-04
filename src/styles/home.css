@@ -6,6 +6,7 @@
   isolation: isolate;
   display: grid;
   grid-template-columns: minmax(18rem, 0.9fr) minmax(16rem, 1.1fr);
+  column-gap: clamp(1.5rem, 3.5vw, 3rem);
   align-items: center;
   min-height: 0;
   width: 100%;
@@ -36,6 +37,9 @@
   z-index: 5;
   min-width: 0;
   max-width: min(40rem, 100%);
+  /* Keep copy clear of the scene without shrinking the art. */
+  padding-right: clamp(0.75rem, 2vw, 1.75rem);
+  box-sizing: border-box;
 }
 
 .eyebrow-pill {
@@ -79,7 +83,7 @@
 }
 
 .hero__lead {
-  max-width: 34rem;
+  max-width: 100%;
   margin: 1.6rem 0 0;
   color: #b7c6cc;
   font-size: 1rem;
@@ -109,7 +113,7 @@
 }
 
 .hero__note {
-  max-width: 36rem;
+  max-width: 100%;
   margin: 0.55rem 0 0;
   color: #9aaeb6;
   font-size: 0.875rem;
