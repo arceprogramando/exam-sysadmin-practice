@@ -1,0 +1,22 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "astro",
+  "trailingSlash": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    }
+  ],
+  "redirects": [
+    { "source": "/simulacro", "destination": "/practica/", "permanent": true },
+    { "source": "/simulacro/", "destination": "/practica/", "permanent": true },
+    { "source": "/en/simulacro", "destination": "/en/personal-practice/", "permanent": true },
+    { "source": "/en/simulacro/", "destination": "/en/personal-practice/", "permanent": true },
+    { "source": "/en/practice", "destination": "/en/personal-practice/", "permanent": true },
+    { "source": "/en/practice/", "destination": "/en/personal-practice/", "permanent": true },
+    { "source": "/en/estadisticas/", "destination": "/en/stats/", "permanent": true },
+    { "source": "/en/glosario/", "destination": "/en/glossary/", "permanent": true }
+  ]
+}
