@@ -583,7 +583,7 @@ function labRow(
     row.lastSec == null ? "—" : formatShort(row.lastSec, locale),
     row.avgSec == null ? "—" : formatShort(row.avgSec, locale),
     row.bestSec == null ? "—" : formatShort(row.bestSec, locale),
-    delta == null ? "—" : `${formatDelta(delta, locale)} · ${deltaLabel(delta, locale)}`,
+    delta == null ? "—" : formatDelta(delta, locale),
     row.lastSkipped
       ? ui.skipTask
       : row.videosReviewed

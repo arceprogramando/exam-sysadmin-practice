@@ -30,7 +30,7 @@ export function formatDelta(seconds: number, locale: Locale = "es"): string {
   const rounded = Math.round(seconds);
   if (Math.abs(rounded) < 1) return locale === "en" ? "same" : "igual";
   const sign = rounded > 0 ? "+" : "−";
-  return `${sign}${formatClock(Math.abs(rounded))}`;
+  return `${sign} ${formatClock(Math.abs(rounded))}`;
 }
 
 export function deltaLabel(seconds: number, locale: Locale = "es"): string {
