@@ -1,0 +1,21 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getUI } from "../../lib/i18n";
+import { PAUSABLE_ENABLED } from "../../lib/storage";
+
+const ui = getUI("en");
+---
+
+<Base title={ui.statsTitle} description={ui.statsDescription} locale="en" route="stats">
+  <div class="mx-auto max-w-5xl px-5 py-8">
+    <h1 class="text-3xl font-semibold tracking-tight">{ui.statsHeading}</h1>
+    {PAUSABLE_ENABLED && <p class="mt-2 max-w-2xl text-muted">{ui.statsIntro}</p>}
+    <div id="stats-root" class="mt-6"></div>
+  </div>
+</Base>
+
+<script>
+  import { mountStats } from "../../scripts/stats-app";
+  const root = document.getElementById("stats-root");
+  if (root) mountStats(root);
+</script>
