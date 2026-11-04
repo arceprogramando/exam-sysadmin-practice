@@ -55,7 +55,15 @@ function saveUi(): void {
   if (!runId || typeof sessionStorage === "undefined") return;
   sessionStorage.setItem(
     UI_KEY,
-    JSON.stringify({ runId, screen, helpVisible, floatX, floatY }),
+    JSON.stringify({
+      runId,
+      screen,
+      helpVisible,
+      floatX,
+      floatY,
+      visitStart,
+      labIndex: current()?.currentIndex ?? null,
+    }),
   );
 }
 
@@ -70,15 +78,34 @@ function loadUi(): void {
       helpVisible?: boolean;
       floatX?: number | null;
       floatY?: number | null;
+      visitStart?: number | null;
+      labIndex?: number | null;
     };
     if (data.runId !== runId) return;
     if (data.screen === "lab" || data.screen === "board") screen = data.screen;
     helpVisible = Boolean(data.helpVisible);
     if (typeof data.floatX === "number") floatX = data.floatX;
     if (typeof data.floatY === "number") floatY = data.floatY;
+    if (typeof data.visitStart === "number") visitStart = data.visitStart;
+    if (typeof data.labIndex === "number") {
+      const run = loadStore().runs.find((item) => item.id === runId);
+      if (run && run.currentIndex !== data.labIndex) {
+        run.currentIndex = data.labIndex;
+        replaceRun(run);
+      }
+    }
   } catch {
     /* ignore */
   }
+}
+
+/** Guarda el tramo abierto del lab en durationSec (F5, cerrar pestaña, volver al tablero). */
+function persistVisit(run: Run | undefined = current()): void {
+  if (!run || run.status !== "in_progress") return;
+  if (visitStart == null) return;
+  flushVisit(run.labs[run.currentIndex]);
+  commit(run);
+  saveUi();
 }
 
 export function mountExam(host: HTMLElement): void {
@@ -90,10 +117,14 @@ export function mountExam(host: HTMLElement): void {
   }
   runId = run.id;
   loadUi();
-  if (screen === "lab" && !run.pausedAt) visitStart = Date.now();
+  // No reiniciar visitStart en F5: si venía en sessionStorage, el reloj del lab sigue.
+  if (screen === "lab" && !run.pausedAt && visitStart == null) visitStart = Date.now();
+  saveUi();
   expireIfNeeded();
   render();
   if (current()?.status === "in_progress") tickTimer = window.setInterval(tick, 250);
+  window.addEventListener("pagehide", onPageHide);
+  document.addEventListener("visibilitychange", onVisibilityChange);
 }
 
 function current(): Run | undefined {
@@ -181,6 +212,21 @@ function flushVisit(record: LabRecord | undefined): void {
   if (!record || visitStart == null) return;
   record.durationSec = (record.durationSec ?? 0) + Math.max(0, (Date.now() - visitStart) / 1000);
   visitStart = null;
+}
+
+function onPageHide(): void {
+  persistVisit();
+}
+
+function onVisibilityChange(): void {
+  if (document.visibilityState === "hidden") persistVisit();
+  if (document.visibilityState === "visible") {
+    const run = current();
+    if (run?.status === "in_progress" && screen === "lab" && !run.pausedAt && visitStart == null) {
+      visitStart = Date.now();
+      saveUi();
+    }
+  }
 }
 
 function render(): void {
