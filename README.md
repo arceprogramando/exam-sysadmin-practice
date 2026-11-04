@@ -13,8 +13,6 @@ Los enunciados son práctica propia sobre dos VMs (`client` `172.16.1.12`, `serv
 
 ## Flujos
 
-Cada caso anota qué quiere la persona, qué ve, qué hace y qué cambia en esa misma pantalla. El gráfico de temas vive en Estadísticas. Marcar un lab no lo muestra.
-
 ```mermaid
 flowchart TD
   inicio[Inicio]
@@ -23,75 +21,73 @@ flowchart TD
   cierre[Cierre]
   stats[Estadísticas]
   inicio -->|Empezar o seguir| lista
-  lista -->|Entrar| enunciado
-  enunciado -->|Done, volver a ver o no lo entiendo| lista
-  lista -->|Cerrar, o se acaban las 3 horas| cierre
-  cierre -->|Ver mis tiempos| stats
   inicio -->|Ver mis tiempos| stats
+  lista -->|Entrar| enunciado
+  enunciado -->|Done / Revisit / No lo entiendo| lista
+  enunciado -->|Volver a la lista| lista
+  lista -->|Cerrar práctica| cierre
+  lista -->|Se acaban las 3 horas| cierre
+  cierre -->|Ver mis tiempos| stats
+  cierre -->|Inicio| inicio
 ```
 
 ### Empezar
 
-Quiere medir una práctica o retomar la que dejó. Ve la edición (10 o 9), dos modos y, si hay una en curso, **Seguí donde quedaste**.
+En el inicio elegís la edición (10 = Flatpak en la lista principal; 9 = Podman). Hoy el modo activo es **sin pausas** (3 horas de corrido). El modo con pausas está en el código pero **apagado** (`PAUSABLE_ENABLED = false`).
 
 | Acción | Qué cambia ahí |
 |---|---|
-| Empezar sin pausas | Entra a la lista. Reloj de 3 horas, sin botón de pausa. |
-| Práctica con pausas | Entra a la lista. El reloj flotante tiene Pausa. |
-| Seguí donde quedaste | Si la versión elegida es la de la práctica abierta, el botón dice seguir en esa versión. |
-| Empezar otra versión | Si elegís la otra, los botones de abajo abren una práctica nueva y la abierta queda en el historial. |
-
-La edición 10 cuenta Flatpak y deja Podman afuera de lo pendiente. La 9 hace al revés. Elegirla en el inicio no cambia una práctica ya abierta.
+| Empezar | Abre la lista de labs. Reloj global de 3 horas, sin botón de pausa. |
+| Seguí donde quedaste | Si hay una práctica `in_progress`, retoma esa lista. |
+| Empezar otra edición | Si cambiás 10 ↔ 9 y empezás de nuevo, la práctica abierta pasa al historial como abandonada. |
+| Ver mis tiempos | Va a Estadísticas. |
 
 ### Hacer un lab
 
-Quiere resolver el enunciado. Ve el título, los objetivos y el reloj. La ayuda no está.
+En la lista ves client / server / extras. Al entrar: enunciado, objetivos y relojes (global + este lab). La ayuda no está hasta que la pedís.
 
 | Acción | Qué cambia ahí |
 |---|---|
-| Entrar | Abre el enunciado y arranca el reloj de ese lab. |
-| Pedí ayuda | Aparecen pasos, comandos y videos. El lab queda marcado con ayuda. |
-| Done | Vuelve a la lista, tachado, y pide la dificultad. |
-| Volver a ver | Vuelve a la lista, marcado para retomar. |
-| No lo entiendo | Vuelve a la lista como pasado. No cuenta como hecho. |
-| Rehacer | El reloj de ese lab vuelve a cero y suma un intento. Sigue en el enunciado. |
-| Volver a la lista | El enunciado se cierra. El tiempo de la visita queda guardado. |
-| Deshacer | Durante unos segundos se puede volver al estado anterior. |
+| Entrar | Abre el enunciado. Si es la primera vez, arranca el reloj de ese lab. |
+| Pedí ayuda | Muestra pasos, comandos y videos. Marca el lab con ayuda. |
+| Done | Vuelve a la lista; pedís dificultad en esa fila. |
+| Revisit (volver después) | Vuelve a la lista marcado para retomar. |
+| No lo entiendo | Vuelve a la lista como pasado; no cuenta como hecho. |
+| Rehacer | Pone el reloj de ese lab en cero, suma un intento; seguís en el enunciado. |
+| Volver a la lista | Cierra el enunciado. El tiempo de esa visita se guarda en el lab. |
 
-En ese instante la pantalla no dice a qué tema sumó el lab. El gráfico, en Estadísticas, usa la mejor marca de todas las prácticas de ese modo, también la que está en curso.
+F5 o cambiar de pestaña: el tiempo del lab **sigue** (se acumula en `localStorage` / sesión). No hay Deshacer.
+
+Al marcar, en la fila del lab ves estado y dificultad. El **gráfico de temas no** aparece en la lista ni en el enunciado.
 
 ### Reloj
 
-Los dos modos tienen 3 horas. La pausa solo existe en el modo con pausas.
-
 ```mermaid
 flowchart TD
-  reloj[Reloj de 3 horas]
-  fijo[Sin pausas]
-  pausable[Con pausas]
-  reloj --> fijo
-  reloj --> pausable
-  fijo --> sigue[Sigue aunque cambies de lab]
-  pausable --> pausa[Pausar detiene el reloj]
-  fijo --> fin[Al llegar a cero: cierre por tiempo]
-  pausable --> fin
+  reloj[Reloj global 3 horas]
+  reloj --> corre[Corre siempre en la práctica abierta]
+  corre --> labs[Podés cambiar de lab: el global no se reinicia]
+  labs --> labTimer[Cada lab acumula su propio tiempo al visitarlo]
+  corre --> fin[Al llegar a cero: cierre por tiempo]
 ```
 
-En sin pausas, una pista extra compite con el reloj y el enunciado. El gráfico de temas es esa pista si aparece en la lista o en el enunciado.
+El reloj global no se pausa (modo pausable desactivado). El de cada lab suma solo mientras estás en ese enunciado (y se conserva al volver).
 
 ### Cerrar
 
-Quiere saber cómo le fue. Ve el tiempo total, el recuento y cada lab con su marca. **Ver mis tiempos** lleva a Estadísticas. El gráfico no está en este cierre, que es cuando la pregunta pasa a ser qué tema falta.
+Desde la lista: **Cerrar práctica**, o se agotan las 3 horas. Ves tiempo total, recuento (done / revisit / rehacer / no entiendo / ayuda) y la tabla de labs. **Ver mis tiempos** → Estadísticas. **Inicio** → home. No hay gráfico de temas en este cierre.
 
 ### Estadísticas
 
-Quiere comparar tiempos. Ve primero el gráfico de temas y después la mejora, la tabla por lab y el historial. Hay una pantalla para sin pausas y otra para con pausas.
+Orden actual de la pantalla:
 
-El gráfico no dice qué lab lo movió. Para ver la causa hay que abrir el tema y leer la lista de labs. Quien acaba de marcar Apache tiene que salir de la práctica, entrar a Estadísticas y reconocer el tema SELinux y firewall.
+1. Gráfico / cobertura por temas  
+2. Mejora vs la práctica anterior  
+3. Totales  
+4. Tabla por lab  
+5. Historial  
+6. Export / import  
 
-### Decisiones
+Como el modo con pausas está apagado, no hay pestañas fixed/pausable: todo es el modo sin pausas.
 
-1. El gráfico responde la pregunta al cerrar la práctica y al elegir qué practicar antes de empezar. En Estadísticas la pregunta de esa pantalla es el tiempo.
-2. En la lista y en el enunciado, sobre todo sin pausas, compite con el reloj y con el enunciado.
-3. Al marcar, en la fila de ese lab: el tema y cómo quedó. Una línea. El gráfico completo no.
-4. Sacar el gráfico de arriba de Estadísticas. El cierre es su lugar. En Estadísticas puede quedar, debajo de los tiempos, la lista corta de temas flojos.
+El gráfico no dice qué lab movió cada tema: hay que abrir el tema y mirar la lista de labs.
