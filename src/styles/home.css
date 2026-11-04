@@ -36,10 +36,7 @@
   position: relative;
   z-index: 5;
   min-width: 0;
-  max-width: min(40rem, 100%);
-  /* Keep copy clear of the scene without shrinking the art. */
-  padding-right: clamp(0.75rem, 2vw, 1.75rem);
-  box-sizing: border-box;
+  max-width: 40rem;
 }
 
 .eyebrow-pill {
@@ -69,7 +66,9 @@
 
 .hero h1 {
   margin: 0;
-  max-width: 11ch;
+  /* Line break comes from the <br />; do not force wraps with a tight ch width. */
+  width: max-content;
+  max-width: 100%;
   color: #f4f7f8;
   font-size: clamp(3rem, 4.4vw, 5.2rem);
   font-weight: 700;
@@ -83,7 +82,7 @@
 }
 
 .hero__lead {
-  max-width: 100%;
+  max-width: 34rem;
   margin: 1.6rem 0 0;
   color: #b7c6cc;
   font-size: 1rem;
