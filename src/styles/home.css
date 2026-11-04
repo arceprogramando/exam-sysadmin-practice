@@ -5,7 +5,8 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(18rem, 0.9fr) minmax(16rem, 1.1fr);
+  grid-template-columns: minmax(20rem, 1fr) minmax(18rem, 0.95fr);
+  column-gap: clamp(1.5rem, 4vw, 3.5rem);
   align-items: center;
   min-height: 0;
   width: 100%;
@@ -34,6 +35,7 @@
 .hero__copy {
   position: relative;
   z-index: 5;
+  min-width: 0;
   max-width: 40rem;
 }
 
@@ -169,12 +171,14 @@
   z-index: 2;
   width: 100%;
   height: 32rem;
+  overflow: hidden;
   pointer-events: none;
 }
 
 .hero-world {
   position: absolute;
   inset: 0;
+  left: 8%;
 }
 
 .hero .moon {
@@ -196,16 +200,16 @@
 }
 
 .hero .mountain--back {
-  right: -2rem;
-  width: 36rem;
+  right: -1rem;
+  width: 34rem;
   height: 13rem;
   opacity: 0.7;
 }
 
 .hero .mountain--front {
-  right: 12rem;
+  right: 8rem;
   bottom: 5.2rem;
-  width: 28rem;
+  width: 24rem;
   height: 9rem;
   background: linear-gradient(130deg, #10232b, #071117 60%);
 }
@@ -213,9 +217,10 @@
 .hero .ice-ground {
   position: absolute;
   z-index: 3;
-  right: -4%;
+  right: -2%;
   bottom: 0;
-  width: 110%;
+  left: 12%;
+  width: auto;
   height: 9rem;
   border-top: 1px solid rgb(211 239 244 / 28%);
   background:
@@ -747,8 +752,9 @@
 
 .band__head {
   display: grid;
-  grid-template-columns: auto minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 1.5rem 2rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 1.5rem;
+  row-gap: 0.85rem;
   align-items: end;
   margin-bottom: 3.2rem;
 }
@@ -765,15 +771,17 @@
 
 .band__head h2 {
   margin: 0;
+  min-width: 0;
   color: #f4f7f8;
-  font-size: clamp(2.6rem, 5vw, 4.4rem);
+  font-size: clamp(2.4rem, 4.5vw, 4.2rem);
   font-weight: 700;
   letter-spacing: -0.05em;
-  line-height: 0.95;
-  white-space: nowrap;
+  line-height: 1.02;
 }
 
 .band__head > p:last-child {
+  grid-column: 1 / -1;
+  max-width: 36rem;
   margin: 0;
   color: #b7c6cc;
   font-size: 0.95rem;

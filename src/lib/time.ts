@@ -10,16 +10,19 @@ export function formatClock(totalSeconds: number): string {
   return [h, m, r].map((n) => String(n).padStart(2, "0")).join(":");
 }
 
-export function formatShort(totalSeconds: number, locale: Locale = "es"): string {
+/** Compact lab times: 5m 3s, 1h 5m — stays on one line in narrow table cells. */
+export function formatShort(totalSeconds: number, _locale: Locale = "es"): string {
   const s = Math.max(0, Math.round(totalSeconds));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const r = s % 60;
-  const hour = locale === "en" ? "hr" : "h";
-  const second = locale === "en" ? "sec" : "s";
-  if (h > 0) return `${h} ${hour} ${m} min`;
-  if (m > 0) return `${m} min ${r} ${second}`;
-  return `${r} ${second}`;
+  if (h > 0) {
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+  if (m > 0) {
+    return r > 0 ? `${m}m ${r}s` : `${m}m`;
+  }
+  return `${r}s`;
 }
 
 /** Negativo = más rápido que la vez anterior. */
