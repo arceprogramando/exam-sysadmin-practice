@@ -25,7 +25,7 @@ const COPY = {
     lab16Aria: "Flujo del lab swap: partición libre en sdb, mkswap, swapon y fstab.",
     lab17Title: "Flujo de este lab (resize de vo)",
     lab17Caption:
-      "Dos capas: LV (lvs) y filesystem (df). Al achicar: desmontar, alinear las dos (mejor con -r), remontar. El PDF pide ~50 MB.",
+      "Dos capas: LV (lvs) y filesystem (df). Al achicar: desmontar, alinear las dos (mejor con -r), remontar. El lab pide ~50 MB.",
     lab17Aria: "Flujo del lab resize: umount, achicar LV y filesystem juntos, mount y comprobar.",
     diskStrip: "Disco extra (sdb ~1 GB)",
     restSwap: "libre → swap",
@@ -49,7 +49,7 @@ const COPY = {
     lab16Aria: "Swap lab flow: free partition on sdb, mkswap, swapon, and fstab.",
     lab17Title: "Flow for this lab (resize vo)",
     lab17Caption:
-      "Two layers: LV (lvs) and filesystem (df). When shrinking: unmount, align both (best with -r), remount. The PDF wants ~50 MB.",
+      "Two layers: LV (lvs) and filesystem (df). When shrinking: unmount, align both (best with -r), remount. The lab wants ~50 MB.",
     lab17Aria: "Resize lab flow: umount, shrink LV and filesystem together, mount and check.",
     diskStrip: "Extra disk (sdb ~1 GB)",
     restSwap: "free → swap",

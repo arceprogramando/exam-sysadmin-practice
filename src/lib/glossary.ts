@@ -764,7 +764,7 @@ const es: GlossaryEntry[] = [
   {
     term: "vo",
     definition:
-      "Nombre del LV en el lab de resize / video Q15b. Vive en el VG vgroup. Ruta: /dev/vgroup/vo.\n\nPrep típica del video: lvcreate -L 180M -n vo vgroup. Después se extiende a ~230M con lvextend (y -r o resize2fs). En el PDF el blanco suele ser ~50 MB con lvresize -r.",
+      "Nombre del LV en el lab de resize / video Q15b. Vive en el VG vgroup. Ruta: /dev/vgroup/vo.\n\nPrep típica del video: lvcreate -L 180M -n vo vgroup. Después se extiende a ~230M con lvextend (y -r o resize2fs). El blanco del lab suele ser ~50 MB con lvresize -r.",
     example: "lvcreate -L 180M -n vo vgroup · lvextend -L 230M -r /dev/vgroup/vo",
     tldr: { page: "lvcreate", platform: "linux" },
   },
@@ -1585,7 +1585,7 @@ const en: GlossaryEntry[] = [
   {
     term: "vo",
     definition:
-      "LV name in the resize lab / video Q15b. Lives in VG vgroup. Path: /dev/vgroup/vo.\n\nTypical video prep: lvcreate -L 180M -n vo vgroup. Then extend to ~230M with lvextend (and -r or resize2fs). In the PDF the target is often ~50 MB with lvresize -r.",
+      "LV name in the resize lab / video Q15b. Lives in VG vgroup. Path: /dev/vgroup/vo.\n\nTypical video prep: lvcreate -L 180M -n vo vgroup. Then extend to ~230M with lvextend (and -r or resize2fs). The lab target is often ~50 MB with lvresize -r.",
     example: "lvcreate -L 180M -n vo vgroup · lvextend -L 230M -r /dev/vgroup/vo",
     tldr: { page: "lvcreate", platform: "linux" },
   },

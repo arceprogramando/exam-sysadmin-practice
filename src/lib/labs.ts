@@ -636,7 +636,7 @@ export const LABS: Lab[] = [
       "Copiarlos a /root/erikfiles.",
       "Conservar la estructura de directorios.",
     ],
-    note: "En el PDF la carpeta de destino usa el nombre viejo del usuario. Acá el destino es /root/erikfiles.",
+    note: "El destino es /root/erikfiles.",
     help: {
       tip: "El enunciado dice files: -type f. Dueño: -user erik (no hay «creado por»). Último día: -mtime -1 (el 1 solo no alcanza).\nPrimero mirá con find. Después mkdir del destino. Para conservar la ruta: cp --parents (con s). Sin eso los archivos caen sueltos en /root/erikfiles.\nPodés copiar a mano cada ruta, o un solo find con -exec. Al final del -exec va \\; (punto y coma escapado), no \\+: el plus junta todos los paths en un solo cp y --parents falla si los padres son distintos.\n2>/dev/null esconde Permission denied. Si aparecen basuras de /proc, sumá -xdev al find (no baja a otros filesystems). El -p de cp (atributos) el lab no lo pide.",
       videoHint: "Video de este lab: Q12.",
@@ -698,7 +698,7 @@ export const LABS: Lab[] = [
       "UID: 1111.",
       "Contraseña del ejercicio: lalala.",
     ],
-    note: "En el PDF el usuario tenía otro nombre. Acá es arce, para no usar el hostname viejo del material original.",
+    note: "El usuario de este lab es arce.",
     help: {
       tip: "Si el UID 1111 ya existe, id 1111 te lo dice antes de que useradd falle.",
       videoHint: "Video de este lab: Q14.",
@@ -802,7 +802,7 @@ export const LABS: Lab[] = [
       "Dejar vo cerca de 50 MB con el filesystem alineado: lvreduce/lvresize con -r, o resize2fs y después lvreduce.",
       "Volver a montar y comprobar con lvs y df.",
     ],
-    note: "En el PDF/examen vo ya existe: no hace falta la prep. En tu VM, después de Q15 (wshare) y Q16 (swap), el video Q17 crea otra partición LVM (~130M) para vo. PE = 10M; 12 extents → LV 120M; achicar a 5 extents → 50M.",
+    note: "En el enunciado vo ya puede existir: no hace falta la prep. En tu VM, después de Q15 (wshare) y Q16 (swap), el video Q17 crea otra partición LVM (~130M) para vo. PE = 10M; 12 extents → LV 120M; achicar a 5 extents → 50M.",
     help: {
       tip: "-L (mayúscula) = megabytes. -l (minúscula) = cantidad de extents.\nCon PE de 10M: -l 5 = 50 MB exactos. Así no adivinás el número de resize2fs.\nAgrandar: lvextend. Achicar: lvreduce / lvresize.\n-r = LVM mueve el filesystem en el mismo paso (recomendado al achicar: menos error).\nSin -r al achicar: primero resize2fs al tamaño final y después lvreduce; si no coinciden, falla.\nDesmontá antes de achicar. e2fsck -f es buena práctica, no siempre obligatorio.\ndf suele mostrar menos que lvs: reserva de ext4.",
       videoHint: "Q17: prep en sda3, vo con -l 12, umount, resize2fs + lvreduce -l 5 (o lvreduce -r -l 5). Q15b: agrandar con lvextend -r. En v10 conviene saber subir y bajar.",
@@ -947,7 +947,7 @@ export const LABS: Lab[] = [
       "Etiquetarla localhost/text2pdf:latest.",
       "Verificar que la imagen existe en la máquina.",
     ],
-    note: "Está en el PDF. En RHCSA 10 no es prioridad: el tema de contenedores es Flatpak. Si practicás la 9, este lab sí entra en la lista. Sin internet no se puede clonar.",
+    note: "En la edición con Flatpak este lab no es prioridad: el tema de contenedores es Flatpak. Si practicás la edición con Podman, este lab sí entra en la lista. Sin internet no se puede clonar.",
     help: {
       tip: "El nombre que pide el lab es el tag completo localhost/text2pdf:latest. podman images tiene que mostrar esa línea.",
       videoHint: "Q20a/b son registry privado. Q21 arma la imagen y el autostart. Para v10 priorizá Flatpak.",
@@ -1008,7 +1008,7 @@ export const LABS: Lab[] = [
       "Que arranque al boot con un servicio systemd de usuario.",
       "loginctl enable-linger student, para que el servicio viva sin una sesión activa.",
     ],
-    note: "Si student no existe en la box, crealo para este lab. Sigue siendo tema de contenedores del PDF, no de Flatpak.",
+    note: "Si student no existe en la box, crealo para este lab. Es tema de contenedores con Podman, no de Flatpak.",
     help: {
       tip: "El servicio de usuario no es el de root. Hace falta systemctl --user, y linger para que arranque sin que student esté logueado.",
       videoHint: "Video de este lab: Q21 (systemd y linger).",
