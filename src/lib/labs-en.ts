@@ -495,14 +495,14 @@ export const LAB_EN: Record<string, LabEn> = {
       "Keep the directory structure.",
     ],
     note: "In the PDF the destination folder uses the user's old name. Here the destination is /root/erikfiles.",
-    tip: "You have to keep the path under /root/erikfiles. cp --parents recreates the folders. A plain cp without --parents dumps loose files in the destination.\nfind must skip the destination folder. If it enters, it copies the copy and fills the disk.\n\nWatch out for /proc (and /sys, /dev): not normal files. If erik has open processes, /proc has files owned by erik with a fresh mtime. find / -user erik grabs them and cp --parents fills /root/erikfiles/proc/… with junk (lots of fdinfo). 2>/dev/null only hides errors; it does not skip /proc. Also -prune /proc /sys /dev.\nCheck: find /root/erikfiles -type f ! -path '*/proc/*' should show useful paths (e.g. under home), not only proc.",
+    tip: "The wording says files: -type f. Owner: -user erik (there is no «created by»). Last day: -mtime -1 (bare 1 is not enough).\nList with find first. Then mkdir the destination. To keep the path: cp --parents (with the s). Without it, files land loose in /root/erikfiles.\nYou can copy each path by hand, or one find with -exec. End -exec with \\; (escaped semicolon), not \\+: plus packs every path into one cp and --parents fails when parents differ.\n2>/dev/null hides Permission denied. If /proc junk shows up, add -xdev (do not cross filesystems). cp -p (attributes) is not required.",
     videoHint: 'Video for this lab: Q12.',
     videos: ['Q12: find and copy keeping paths'],
     why: [
-      "Owner erik, modified less than 1 day ago.\n-prune skips: destination /root/erikfiles (or it copies the copy), and /proc /sys /dev (or you fill the tree with process junk).\n2>/dev/null hides Permission denied; it does not replace pruning /proc.\n-print is required: with -prune, find no longer prints on its own.",
-      "Destination.",
-      "Same search, but copy. {} = each path (e.g. /home/erik/a.txt). cp --parents -p that-path /root/erikfiles → /root/erikfiles/home/erik/…\nWithout pruning /proc: you end up with /root/erikfiles/proc/PID/fdinfo/… and almost nothing useful.\nWithout pruning the destination: it copies itself in a loop and can fill the disk.",
-      "There should be files outside proc (paths like home/…). If you only see proc/, find entered /proc: wipe the destination and redo with -prune.",
+      "List. Owner erik, files only, touched in the last day. 2>/dev/null drops Permission denied. If /proc is noisy: find / -xdev -user erik -type f -mtime -1 2>/dev/null.",
+      "Create the destination before copying.",
+      "Same search, then copy. {} is each file. cp --parents lands as /root/erikfiles/home/erik/…\n\\; = one cp per file. With \\+ it fails when parents differ.\n-xdev skips /proc and friends. Without -xdev it can still work; if you see proc junk, redo with -xdev.\nBy hand: cp --parents /path/to/file /root/erikfiles/",
+      "You should see the structure (home/erik/…). If empty, erik had no -mtime -1 files: su - erik, touch one, run find again.",
     ],
   },
   "lab-13": {
@@ -671,6 +671,7 @@ export const LAB_EN: Record<string, LabEn> = {
     videos: ['Q18: Recommended tuned profile'],
     why: [
       "Repos on the client first; then install. enable --now starts it now and keeps it for the next boot. Without enable, tuned does not come back on reboot and the profile is not reapplied.",
+      "Check whether the daemon is up. active (running) = on now. Also: systemctl is-active tuned (active/inactive) and systemctl is-enabled tuned (enabled/disabled for boot).",
       "It only says which one fits. It changes nothing and does not save it.",
       "NAME is what recommend printed. It applies it now and saves it in /etc/tuned/active_profile. That file is what survives a reboot.",
       "It must show the same name. After reboot, run it again: if the service stayed enabled, it reads active_profile and stays the same.",
@@ -877,7 +878,7 @@ export const LAB_EN: Record<string, LabEn> = {
       "Check that after logout, all three are still there.",
     ],
     note: "On the exam the ticket may set another URL, remote, APP_ID, and user. Here: Flathub + Calculator + Gedit (system) + Firefox (erik). The next lab uninstalls Gedit; Calculator and Firefox stay.",
-    tip: "For everyone: flatpak install --system. Only for erik: su - erik -c 'flatpak install --user …' (not sudo -u erik flatpak --user). If flatpak is missing: dnf install -y flatpak. System remote ≠ erik's --user remote. APP_ID as search prints it: org.mozilla.firefox (lowercase f), org.gnome.gedit.",
+    tip: "For everyone: flatpak install --system. Only for erik: su - erik -c 'flatpak install --user …' (not sudo -u erik flatpak --user). If flatpak is missing: dnf install -y flatpak. System remote ≠ erik's --user remote. APP_ID as search prints it: org.mozilla.firefox (lowercase f), org.gnome.gedit.\nIf you installed wrong (e.g. Firefox with --system and it was erik-only): flatpak list to see Installation=system/user, then uninstall that scope and install again correctly. System: flatpak uninstall -y --system APP_ID. erik user: su - erik -c 'flatpak uninstall -y --user APP_ID'.",
     videoHint: "Q23 saves the remote with the URL from the task and installs with --system. If it says login required, he logs in with podman login. He also rolls back a commit and uses mask: this lab does not ask for that. The other video shows the remote a desktop already has, how to delete it, run, update, and uninstall. It starts at 3:19.",
     videos: ["Q23: Flatpak (RHCSA 10)", "Flatpak management · RHCSA 10 review"],
     why: [
@@ -893,7 +894,8 @@ export const LAB_EN: Record<string, LabEn> = {
       "Same store on erik's account. Do not use sudo -u … flatpak --user: flatpak refuses. su -c runs it as erik. On the exam: user and URL from the ticket.",
       "On Flathub the Application ID is org.mozilla.firefox (lowercase f). Not org.mozilla.Firefox or org.gnome.Firefox. Copy the id as printed.",
       "Only for erik. root with --user installs for root. Same rule: no sudo -u with --user. On the exam: user and APP_ID from the ticket.",
-      "System: Calculator + Gedit. User erik: Firefox. All three must remain after logout.",
+      "System: Calculator + Gedit. User erik: Firefox. All three must remain after logout. In list, check the Installation column: system vs user.",
+      "Fix if you installed Firefox for everyone and it was erik-only. Remove the system copy. Then: su - erik -c 'flatpak install --user -y flathub org.mozilla.firefox'.\nIf it was the other way (extra user install): su - erik -c 'flatpak uninstall -y --user org.mozilla.firefox'.\nDo not remove Calculator or Gedit here unless those were wrong too.",
     ],
   },
   "extra-05": {

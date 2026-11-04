@@ -518,8 +518,8 @@ const es: GlossaryEntry[] = [
   {
     term: "find",
     definition:
-      "Busca archivos por nombre, dueño, tipo o fecha. -user es el dueño, -type f es archivo, -mtime -1 es el último día. -exec COMANDO {} \\; corre ese comando con cada resultado. 2>/dev/null esconde los Permission denied.",
-    example: "find / -user erik -mtime -1 -type f",
+      "Busca en el árbol. Si el enunciado no limita la ruta, empezás en /. -user es el dueño (no «quién lo creó»). -type f = archivo, no directorio. -mtime -1 = modificado en el último día; el 1 solo no alcanza.\n2>/dev/null esconde Permission denied.\n-xdev no baja a otros filesystems (así evitás basura de /proc).\n-exec COMANDO {} \\; corre el comando una vez por resultado. {} es la ruta. El \\; cierra el -exec. Con \\+ junta varios paths en un solo comando: con cp --parents suele fallar si los padres son distintos.\nPara conservar carpetas al copiar: cp --parents (ver cp).",
+    example: "find / -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles \\; 2>/dev/null",
     tldr: { page: "find" },
   },
   {
@@ -532,8 +532,8 @@ const es: GlossaryEntry[] = [
   {
     term: "systemctl",
     definition:
-      "Maneja unidades de systemd. status no cambia nada. start y stop son de ahora. enable lo deja para el próximo boot y disable lo saca. enable --now arranca ya y lo deja para el boot. restart vuelve a leer la configuración.",
-    example: "systemctl enable --now httpd · systemctl status httpd",
+      "Maneja unidades de systemd. status no cambia nada: muestra si el demonio está arriba (active/running). is-active responde active o inactive. is-enabled dice si arranca al boot (enabled/disabled). start y stop son de ahora. enable lo deja para el próximo boot y disable lo saca. enable --now arranca ya y lo deja para el boot. restart vuelve a leer la configuración.",
+    example: "systemctl enable --now tuned · systemctl status tuned · systemctl is-active tuned · systemctl is-enabled tuned",
     tldr: { page: "systemctl", platform: "linux" },
   },
   {
@@ -641,8 +641,8 @@ const es: GlossaryEntry[] = [
   {
     term: "flatpak",
     definition:
-      "Instala aplicaciones aparte de dnf.\n\nSi el comando no existe en la máquina, primero hay que instalar el paquete con dnf (repos DNF ya configurados): dnf install -y flatpak. Sin eso, remote-add e install no corren.\n\nUn remote es el almacén de apps (parecido a un .repo de dnf): URL + un nombre corto. Ese nombre no tiene que ser flathub; en el examen suele ser el del ticket. flathub es solo el almacén público para practicar en casa.\n\nremote-add registra el almacén (no instala apps). install baja una app. --user es de esa cuenta, --system es de la máquina. list muestra lo instalado. uninstall saca una. El remote de sistema no le aparece a otro usuario cuando usa --user.",
-    example: "dnf install -y flatpak · flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo · flatpak install -y --system flathub org.gnome.Calculator",
+      "Instala aplicaciones aparte de dnf.\n\nSi el comando no existe en la máquina, primero hay que instalar el paquete con dnf (repos DNF ya configurados): dnf install -y flatpak. Sin eso, remote-add e install no corren.\n\nUn remote es el almacén de apps (parecido a un .repo de dnf): URL + un nombre corto. Ese nombre no tiene que ser flathub; en el examen suele ser el del ticket. flathub es solo el almacén público para practicar en casa.\n\nremote-add registra el almacén (no instala apps). install baja una app. --system = toda la máquina; --user = solo esa cuenta. Por defecto: si sos root, flatpak usa --system (no hace falta escribirlo); si sos un usuario normal, usa --user. Como root, flatpak install -y flathub org.gnome.Calculator ya queda system. Para erik hay que instalar como erik con --user (o su - erik -c '… --user …'): si lo instalás vos como root sin --user, queda para todos.\nlist muestra lo instalado (columna Installation: system o user). uninstall saca una: flatpak uninstall -y --system APP_ID o, en esa cuenta, flatpak uninstall -y --user APP_ID. Si instalaste Firefox system y era solo erik, desinstalá system y volvé a instalar --user como erik. El remote de sistema no le aparece a otro usuario cuando usa --user.",
+    example: "dnf install -y flatpak · flatpak install -y flathub org.gnome.Calculator · flatpak uninstall -y --system org.mozilla.firefox · su - erik -c 'flatpak install --user -y flathub org.mozilla.firefox'",
     tldr: { page: "flatpak", platform: "linux" },
   },
   {
@@ -1339,8 +1339,8 @@ const en: GlossaryEntry[] = [
   {
     term: "find",
     definition:
-      "Finds files by name, owner, type, or age. -user is the owner, -type f is a file, -mtime -1 is the last day. -exec COMMAND {} \\; runs that command on each result. 2>/dev/null hides Permission denied.",
-    example: "find / -user erik -mtime -1 -type f",
+      "Searches the tree. If the question does not limit the path, start at /. -user is the owner (not «who created it»). -type f = file, not directory. -mtime -1 = modified in the last day; bare 1 is not enough.\n2>/dev/null hides Permission denied.\n-xdev does not descend other filesystems (avoids /proc junk).\n-exec COMMAND {} \\; runs the command once per hit. {} is the path. \\; closes -exec. \\+ packs many paths into one command: with cp --parents that often fails when parents differ.\nTo keep folders when copying: cp --parents (see cp).",
+    example: "find / -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles \\; 2>/dev/null",
     tldr: { page: "find" },
   },
   {
@@ -1353,8 +1353,8 @@ const en: GlossaryEntry[] = [
   {
     term: "systemctl",
     definition:
-      "Manages systemd units. status changes nothing. start and stop are for now. enable leaves it for the next boot and disable removes that. enable --now starts it now and leaves it for boot. restart makes it read the configuration again.",
-    example: "systemctl enable --now httpd · systemctl status httpd",
+      "Manages systemd units. status changes nothing: it shows whether the daemon is up (active/running). is-active answers active or inactive. is-enabled says if it starts at boot (enabled/disabled). start and stop are for now. enable leaves it for the next boot and disable removes that. enable --now starts it now and leaves it for boot. restart makes it read the configuration again.",
+    example: "systemctl enable --now tuned · systemctl status tuned · systemctl is-active tuned · systemctl is-enabled tuned",
     tldr: { page: "systemctl", platform: "linux" },
   },
   {
@@ -1462,8 +1462,8 @@ const en: GlossaryEntry[] = [
   {
     term: "flatpak",
     definition:
-      "Installs applications apart from dnf.\n\nIf the command is missing on the machine, install the package with dnf first (DNF repos already set up): dnf install -y flatpak. Without that, remote-add and install will not run.\n\nA remote is the app store (like a dnf .repo): URL + a short name. That name does not have to be flathub; on the exam it is usually whatever the ticket says. flathub is only the public store for home practice.\n\nremote-add registers the store (it does not install apps). install downloads an app. --user is that account, --system is the machine. list shows what is installed. uninstall removes one. A system remote does not show up for another user when they use --user.",
-    example: "dnf install -y flatpak · flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo · flatpak install -y --system flathub org.gnome.Calculator",
+      "Installs applications apart from dnf.\n\nIf the command is missing on the machine, install the package with dnf first (DNF repos already set up): dnf install -y flatpak. Without that, remote-add and install will not run.\n\nA remote is the app store (like a dnf .repo): URL + a short name. That name does not have to be flathub; on the exam it is usually whatever the ticket says. flathub is only the public store for home practice.\n\nremote-add registers the store (it does not install apps). install downloads an app. --system = whole machine; --user = that account only. Default: as root, flatpak uses --system (you do not have to type it); as a normal user, it uses --user. As root, flatpak install -y flathub org.gnome.Calculator is already system. For erik, install as erik with --user (or su - erik -c '… --user …'): if you install as root without --user, it lands for everyone.\nlist shows what is installed (Installation column: system or user). uninstall removes one: flatpak uninstall -y --system APP_ID or, on that account, flatpak uninstall -y --user APP_ID. If Firefox landed system and it was erik-only, uninstall system and install --user as erik. A system remote does not show up for another user when they use --user.",
+    example: "dnf install -y flatpak · flatpak install -y flathub org.gnome.Calculator · flatpak uninstall -y --system org.mozilla.firefox · su - erik -c 'flatpak install --user -y flathub org.mozilla.firefox'",
     tldr: { page: "flatpak", platform: "linux" },
   },
   {

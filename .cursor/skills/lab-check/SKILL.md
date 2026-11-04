@@ -104,7 +104,7 @@ Probe multi-lab de ejemplo (root@client): ver [probes.md](probes.md) § “Pasad
   - `NOPASSWD:` solo donde el lab lo pide (felipe + passwd); no lo exijas en `%sysadm` useradd.
   - Preferí evidencia `sudo -l -U USUARIO` además (o en vez) del archivo: confirma qué aplica de verdad.
   - FALTAs típicas: `sysadm` sin `%`; `NOPASSWD` faltante en felipe; `passwd`/`useradd` sin path; regla solo en un comentario; thiago con privilegios de sysadm.
-- **find → /root/erikfiles (lab-12):** si `find /root/erikfiles` solo muestra `proc/…` y `sin_proc=0`, FALTA. Hay que `-prune` de `/proc` `/sys` `/dev` (y del destino). Ver [examples/lab-12.md](examples/lab-12.md).
+- **find → /root/erikfiles (lab-12):** si `find /root/erikfiles` solo muestra `proc/…` y `sin_proc=0`, FALTA. Camino del video: `find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles \\;`. Vacío total también es FALTA si no hay evidencia de archivos de erik. Ver [examples/lab-12.md](examples/lab-12.md).
 - **Flatpak (extra-04):** system vs user; no `sudo -u`+`--user`; id `org.mozilla.firefox` en minúsculas. Ver [examples/extra-04.md](examples/extra-04.md).
 - **cron logger (lab-07):** el texto tiene que coincidir (`Ex200 Testing` sin espacio raro).
 

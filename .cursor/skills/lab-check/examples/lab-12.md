@@ -6,6 +6,19 @@
 - Copiados a `/root/erikfiles`
 - Conservar estructura de rutas (`cp --parents`)
 
+## Camino del video (Q12)
+
+```bash
+find / -user erik -type f -mtime -1 2>/dev/null
+mkdir -p /root/erikfiles
+find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles \; 2>/dev/null
+ls -R /root/erikfiles
+```
+
+- `-mtime -1` (no `1` solo).
+- `-exec … \;` (no `\+` con `--parents` y padres distintos).
+- `-xdev` opcional pero evita basura de `/proc`.
+
 ## Probe
 
 ```bash
@@ -21,19 +34,19 @@ echo "sin_proc=$(find /root/erikfiles -type f ! -path '*/proc/*' 2>/dev/null | w
 sin_proc > 0
 ```
 
-Rutas bajo `home/` (u otras reales), no solo `proc/`.
-
-## Ejemplo FALTA · entró a /proc
+## Ejemplo FALTA · vacío
 
 ```text
-/root/erikfiles/proc/2606/task/2606/fdinfo/0
-...
-total=49
+total=0
+```
+
+No había archivos de erik con `-mtime -1`, o el destino no existía cuando corriste el `cp`.
+
+## Ejemplo FALTA · solo /proc
+
+```text
+/root/erikfiles/proc/2606/...
 sin_proc=0
 ```
 
-- Procesos de erik crean ficheros en `/proc` con dueño erik y mtime fresco.
-- `find / -user erik` los agarra; `cp --parents` arma `/root/erikfiles/proc/...`.
-- `2>/dev/null` no evita copiar `/proc`.
-
-Arreglo: `rm -rf /root/erikfiles` y volver a correr el find con `-prune` de `/root/erikfiles`, `/proc`, `/sys`, `/dev`.
+Repetir con `-xdev` (o sin incluir `/proc` en la práctica).

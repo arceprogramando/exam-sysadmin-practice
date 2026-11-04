@@ -638,18 +638,18 @@ export const LABS: Lab[] = [
     ],
     note: "En el PDF la carpeta de destino usa el nombre viejo del usuario. Acá el destino es /root/erikfiles.",
     help: {
-      tip: "Hay que conservar la ruta bajo /root/erikfiles. cp --parents recrea las carpetas. Un cp sin --parents deja los archivos sueltos en el destino.\nfind tiene que saltear esa carpeta destino. Si entra, copia la copia y llena el disco.\n\nCuidado con /proc (y /sys, /dev): no son archivos normales. Si erik tiene procesos abiertos, bajo /proc aparecen ficheros con dueño erik y mtime reciente. Un find / -user erik los agarra y cp --parents te llena /root/erikfiles/proc/… de basura (cientos de fdinfo). 2>/dev/null solo esconde errores; no evita copiar /proc. Hay que -prune también /proc /sys /dev.\nComprobación: find /root/erikfiles -type f ! -path '*/proc/*' tiene que listar cosas útiles (ej. bajo home), no solo proc.",
+      tip: "El enunciado dice files: -type f. Dueño: -user erik (no hay «creado por»). Último día: -mtime -1 (el 1 solo no alcanza).\nPrimero mirá con find. Después mkdir del destino. Para conservar la ruta: cp --parents (con s). Sin eso los archivos caen sueltos en /root/erikfiles.\nPodés copiar a mano cada ruta, o un solo find con -exec. Al final del -exec va \\; (punto y coma escapado), no \\+: el plus junta todos los paths en un solo cp y --parents falla si los padres son distintos.\n2>/dev/null esconde Permission denied. Si aparecen basuras de /proc, sumá -xdev al find (no baja a otros filesystems). El -p de cp (atributos) el lab no lo pide.",
       videoHint: "Video de este lab: Q12.",
       videos: [{ title: "Q12: find y copiar conservando rutas", url: YT.find }],
       commands: [
-        { cmd: "find / \\( -path /root/erikfiles -o -path /proc -o -path /sys -o -path /dev \\) -prune -o -user erik -mtime -1 -type f -print 2>/dev/null", why: "Dueño erik, modificado hace menos de 1 día.\n-prune saltea: el destino /root/erikfiles (si no, copia la copia), y /proc /sys /dev (si no, te llenás de basura de procesos de erik).\n2>/dev/null esconde Permission denied; no reemplaza al prune de /proc.\n-print hace falta: con -prune, find ya no imprime solo.", as: "root" },
-        { cmd: "mkdir -p /root/erikfiles", why: "Destino.", as: "root" },
+        { cmd: "find / -user erik -type f -mtime -1 2>/dev/null", why: "Lista. Dueño erik, solo archivos, tocados en el último día. 2>/dev/null saca los Permission denied. Si molestan /proc y compañía: find / -xdev -user erik -type f -mtime -1 2>/dev/null.", as: "root" },
+        { cmd: "mkdir -p /root/erikfiles", why: "Crear el destino antes de copiar.", as: "root" },
         {
-          cmd: "find / \\( -path /root/erikfiles -o -path /proc -o -path /sys -o -path /dev \\) -prune -o -user erik -mtime -1 -type f -exec cp --parents -p {} /root/erikfiles \\; 2>/dev/null",
-          why: "Misma búsqueda, pero copia. {} = cada ruta (ej. /home/erik/a.txt). cp --parents -p esa-ruta /root/erikfiles → /root/erikfiles/home/erik/…\nSin prune de /proc: terminás con /root/erikfiles/proc/PID/fdinfo/… y casi nada útil.\nSin prune del destino: se copia a sí mismo en bucle y puede llenar el disco.",
+          cmd: "find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles \\; 2>/dev/null",
+          why: "Misma búsqueda y copia. {} es cada archivo. cp --parents deja /root/erikfiles/home/erik/…\n\\; = un cp por archivo. Con \\+ falla si las rutas tienen padres distintos.\n-xdev evita /proc y similares. Sin -xdev también puede andar; si ves basura de proc, repetí con -xdev.\nA mano: cp --parents /ruta/al/archivo /root/erikfiles/",
           as: "root",
         },
-        { cmd: "find /root/erikfiles -type f ! -path '*/proc/*' | head", why: "Tiene que haber archivos fuera de proc (rutas tipo home/…). Si solo ves proc/, el find entró a /proc: borrá el destino y repetí con -prune.", as: "root" },
+        { cmd: "ls -R /root/erikfiles", why: "Tiene que verse la estructura (home/erik/…). Si la carpeta quedó vacía, erik no tenía archivos con -mtime -1: creá uno con su - erik y touch, y volvé a correr el find.", as: "root" },
       ],
     },
   },
@@ -893,6 +893,7 @@ export const LABS: Lab[] = [
       videos: [{ title: "Q18: Perfil recomendado de tuned", url: YT.tuned }],
       commands: [
         { cmd: "dnf repolist && dnf install -y tuned && systemctl enable --now tuned", why: "Primero repos en el client; después install. enable --now lo arranca ya y lo deja para el próximo boot. Sin enable, al reiniciar tuned no vuelve y el perfil no se reaplica.", as: "root" },
+        { cmd: "systemctl status tuned", why: "Mirar si el demonio está arriba. active (running) = encendido ahora. También: systemctl is-active tuned (active/inactive) y systemctl is-enabled tuned (enabled/disabled para el boot).", as: "root" },
         { cmd: "tuned-adm recommend", why: "Solo dice cuál conviene. No cambia nada y no lo guarda.", as: "root" },
         { cmd: "tuned-adm profile NOMBRE", why: "NOMBRE es el que imprimió recommend. Lo aplica ahora y lo guarda en /etc/tuned/active_profile. Ese archivo es lo que sobrevive al reboot.", as: "root" },
         { cmd: "tuned-adm active", why: "Tiene que mostrar el mismo nombre. Después de reboot, repetilo: si el servicio quedó enable, lee active_profile y sigue igual.", as: "root" },
@@ -1138,7 +1139,7 @@ export const LABS: Lab[] = [
     ],
     note: "En el examen el ticket puede poner otra URL, remote, APP_ID y usuario. Acá: Flathub + Calculator + Gedit (sistema) + Firefox (erik). El próximo lab desinstala Gedit; Calculator y Firefox se quedan.",
     help: {
-      tip: "Para todos: flatpak install --system. Solo para erik: su - erik -c 'flatpak install --user …' (no sudo -u erik flatpak --user). Si falta flatpak: dnf install -y flatpak. Remote de sistema ≠ remote --user de erik. APP_ID tal cual search: org.mozilla.firefox (f minúscula), org.gnome.gedit.",
+      tip: "Para todos: flatpak install --system. Solo para erik: su - erik -c 'flatpak install --user …' (no sudo -u erik flatpak --user). Si falta flatpak: dnf install -y flatpak. Remote de sistema ≠ remote --user de erik. APP_ID tal cual search: org.mozilla.firefox (f minúscula), org.gnome.gedit.\nSi instalaste mal (ej. Firefox con --system y era solo erik): flatpak list para ver Installation=system/user, después uninstall de ese ámbito y volvé a instalar bien. System: flatpak uninstall -y --system APP_ID. User de erik: su - erik -c 'flatpak uninstall -y --user APP_ID'.",
       videoHint: "Q23 guarda el remote con la URL del enunciado e instala con --system. Si dice login required, entra con podman login. También baja de commit y usa mask: este lab no lo pide. El otro video muestra el remote que ya trae el escritorio, cómo borrarlo, run, update y uninstall. Arranca en el minuto 3:19.",
       videos: [
         { title: "Q23: Flatpak (RHCSA 10)", url: YT.flatpak },
@@ -1157,7 +1158,8 @@ export const LABS: Lab[] = [
         { cmd: "su - erik -c 'flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo'", why: "Mismo depósito, en la cuenta de erik. El remote de sistema no alcanza para --user. No uses sudo -u … flatpak --user: flatpak se niega (Negándose a operar bajo sudo con --user). su -c corre el comando como erik sin ese bloqueo. En el examen: usuario y URL del ticket.", as: "root" },
         { cmd: "flatpak search Firefox", why: "En Flathub el Application ID es org.mozilla.firefox (f minúscula). No org.mozilla.Firefox ni org.gnome.Firefox. Copiá el id tal cual sale.", as: "root" },
         { cmd: "su - erik -c 'flatpak install --user -y flathub org.mozilla.firefox'", why: "Solo para erik. Si lo instalás como root con --user, queda en root. Tampoco sudo -u erik flatpak --user: flatpak lo rechaza. En el examen: usuario y APP_ID del ticket.", as: "root" },
-        { cmd: "flatpak list && su - erik -c 'flatpak list --user'", why: "Sistema: Calculator + Gedit. Usuario erik: Firefox. Las tres tienen que seguir tras logout.", as: "root" },
+        { cmd: "flatpak list && su - erik -c 'flatpak list --user'", why: "Sistema: Calculator + Gedit. Usuario erik: Firefox. Las tres tienen que seguir tras logout. En list mirá la columna Installation: system vs user.", as: "root" },
+        { cmd: "flatpak uninstall -y --system org.mozilla.firefox", why: "Arreglo si instalaste Firefox para todos y era solo erik. Sacá la copia system. Después: su - erik -c 'flatpak install --user -y flathub org.mozilla.firefox'.\nSi el error fue al revés (user de más): su - erik -c 'flatpak uninstall -y --user org.mozilla.firefox'.\nNo borres Calculator ni Gedit acá salvo que también las hayas puesto mal.", as: "root" },
       ],
     },
   },
