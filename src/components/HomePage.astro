@@ -1,0 +1,231 @@
+---
+import Base from "../layouts/Base.astro";
+import { getUI, routePath, type Locale } from "../lib/i18n";
+import { YT_PLAYLIST, LAB_REPO, REDHAT_EXAM_VIDEO } from "../lib/labs";
+import { PAUSABLE_ENABLED } from "../lib/storage";
+import "../styles/home.css";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const ui = getUI(locale);
+const statsFixed = `${routePath(locale, "stats")}?mode=fixed`;
+---
+
+<Base title={ui.homeTitle} description={ui.homeDescription} locale={locale} route="home">
+  <section class="hero">
+    <div class="hero__stars" aria-hidden="true"></div>
+    <div class="hero__copy">
+      <p class="eyebrow-pill"><i aria-hidden="true"></i>{ui.kicker}</p>
+      <h1>{ui.headlineLead}<br /><em>{ui.headlineMark}</em></h1>
+      <p class="hero__lead">
+        {ui.leadBefore}<a class="underline decoration-line underline-offset-2" href={REDHAT_EXAM_VIDEO} target="_blank" rel="noopener noreferrer">{ui.videoTitle}</a>{ui.leadAfter}
+      </p>
+      <div class="hero__edition">
+        <p id="edition-label" class="hero__label">{ui.editionLabel}</p>
+        <div class="choice" role="group" aria-labelledby="edition-label">
+          <button id="edition-v10" class="choice-option is-on" type="button" aria-pressed="true">{ui.editionV10}</button>
+          <button id="edition-v9" class="choice-option" type="button" aria-pressed="false">{ui.editionV9}</button>
+        </div>
+        <p class="hero__note">{ui.editionNote}</p>
+        <p id="edition-next" class="hero__note hidden"></p>
+      </div>
+      <div id="resume-wrap" class="hidden">
+        <button id="resume-exam" class="hero-btn" type="button">{ui.resume}</button>
+        <p id="start-note" class="hero__note"></p>
+      </div>
+      <div id="start-wrap" class="hero__actions-row">
+        <p id="start-modes-label" class="sr-only">{ui.startModesLabel}</p>
+        <button id="start-fixed" class="hero-btn" type="button">{PAUSABLE_ENABLED ? ui.startFixed : ui.start}</button>
+        <button id="start-pausable" class:list={["btn btn-quiet", { hidden: !PAUSABLE_ENABLED }]} type="button">{ui.startPausable}</button>
+        <a class="hero-quiet" data-see-stats href={statsFixed}>{ui.seeStats}</a>
+      </div>
+      <div id="start-hints">
+        <p class="hero__note">{ui.startFixedHint}</p>
+        <p class:list={["hero__note", { hidden: !PAUSABLE_ENABLED }]}>{ui.modesNote}</p>
+      </div>
+    </div>
+    <div class="hero-scene" aria-hidden="true">
+      <div class="hero-world">
+      <div class="moon"></div>
+      <div class="mountain mountain--back"></div>
+      <div class="mountain mountain--front"></div>
+      <div class="base-station">
+        <div class="base-station__antenna"><i></i></div>
+        <div class="base-station__roof"></div>
+        <div class="base-station__side"></div>
+        <div class="base-station__front">
+          <span class="base-station__label">LAB 01</span>
+          <div class="base-station__door"><i></i><i></i><i></i></div>
+          <div class="base-station__window"><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="ice-ground"></div>
+      <div class="penguin penguin--walking hero-penguin">
+        <div class="penguin__shadow"></div>
+        <div class="penguin__wing penguin__wing--back"></div>
+        <div class="penguin__body">
+          <div class="penguin__belly"></div>
+          <div class="penguin__eye"></div>
+          <div class="penguin__beak"></div>
+        </div>
+        <div class="penguin__wing penguin__wing--front"></div>
+        <div class="penguin__foot penguin__foot--left"></div>
+        <div class="penguin__foot penguin__foot--right"></div>
+        <div class="beanie" aria-hidden="true">
+          <div class="beanie__body"></div>
+          <div class="beanie__cuff"></div>
+          <div class="beanie__pom"></div>
+        </div>
+      </div>
+      <div class="distant-penguin">
+        <div class="penguin penguin--walking" data-direction="left">
+          <div class="penguin__shadow"></div>
+          <div class="penguin__wing penguin__wing--back"></div>
+          <div class="penguin__body">
+            <div class="penguin__belly"></div>
+            <div class="penguin__eye"></div>
+            <div class="penguin__beak"></div>
+          </div>
+          <div class="penguin__wing penguin__wing--front"></div>
+          <div class="penguin__foot penguin__foot--left"></div>
+          <div class="penguin__foot penguin__foot--right"></div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </section>
+  <section class="band" aria-labelledby="delta-title">
+    <div class="band__head">
+      <p class="band__kicker">/ {ui.statsModeFixed}</p>
+      <h2 id="delta-title">{ui.improvementFixed}</h2>
+      <p>{ui.timesNote}</p>
+    </div>
+    <div class="feature-grid">
+      <article class="feature-card">
+        <div class="feature-card__top"><span>01</span><span>{ui.improvementFixed}</span></div>
+        <div class="feature-art feature-art--layers" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <div class="feature-art__lock">✓</div>
+        </div>
+        <h3 id="stat-delta-fixed">{ui.loading}</h3>
+        <p>{ui.startFixedHint}</p>
+        <div class="feature-card__line" aria-hidden="true"></div>
+      </article>
+      <article class="feature-card">
+        <div class="feature-card__top"><span>02</span><span>{ui.best}</span></div>
+        <div class="feature-art feature-art--code" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <h3 id="stat-fixed-best">—</h3>
+        <dl class="feature-stats">
+          <div>
+            <dt>{ui.runs}</dt>
+            <dd id="stat-fixed-runs">—</dd>
+          </div>
+          <div>
+            <dt>{ui.withHelp}</dt>
+            <dd id="stat-fixed-help">—</dd>
+          </div>
+          <div>
+            <dt>{ui.passed}</dt>
+            <dd id="stat-fixed-skip">—</dd>
+          </div>
+        </dl>
+        <div class="feature-card__line" aria-hidden="true"></div>
+      </article>
+      <article class="feature-card">
+        <div class="feature-card__top"><span>03</span><span>{ui.lastClose}</span></div>
+        <div class="feature-art feature-art--nodes" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <h3><a data-see-stats href={statsFixed}>{ui.seeStats}</a></h3>
+        <p id="times-note">{ui.timesNote}</p>
+        <p id="last-run" class="feature-last hidden"><span data-when></span><span data-detail></span></p>
+        <div class="feature-card__line" aria-hidden="true"></div>
+      </article>
+    </div>
+    <div class="hidden" hidden>
+      <span id="stat-delta-pausable"></span>
+      <span id="stat-pausable-runs"></span>
+      <span id="stat-pausable-best"></span>
+      <span id="stat-pausable-help"></span>
+      <span id="stat-pausable-skip"></span>
+    </div>
+  </section>
+  <section class="shell" aria-labelledby="shell-title">
+    <div class="shell__copy">
+      <p class="band__kicker">{ui.shellKicker}</p>
+      <h2 id="shell-title">{ui.shellTitleLead}<br /><span class="shell__mark">{ui.shellTitleMark}</span></h2>
+      <p>{ui.shellLead}</p>
+      <dl class="shell__stats">
+        <div>
+          <dt>{ui.runs}</dt>
+          <dd id="shell-runs">—</dd>
+        </div>
+        <div>
+          <dt>{ui.best}</dt>
+          <dd id="shell-best">—</dd>
+        </div>
+        <div>
+          <dt>{ui.withHelp}</dt>
+          <dd id="shell-help">—</dd>
+        </div>
+      </dl>
+    </div>
+    <figure class="term">
+      <div class="term__bar" aria-hidden="true">
+        <span><i></i><i></i><i></i></span>
+        <span>{ui.shellWindow}</span>
+        <span></span>
+      </div>
+      <div class="term__body">
+        <div id="home-term-log" class="term__log" role="log" aria-live="polite" aria-relevant="additions" aria-label={ui.shellOutputLabel}>
+          <p class="term__note">{ui.shellIntro}</p>
+        </div>
+        <div class="term__form">
+          <label class="sr-only" for="home-term-input">{ui.shellPromptLabel}</label>
+          <span class="term__mark" aria-hidden="true">❯</span>
+          <input
+            id="home-term-input"
+            class="term__input"
+            type="text"
+            name="practice-glossary"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            enterkeyhint="send"
+            placeholder={ui.shellPromptHint}
+            aria-controls="home-term-log"
+          />
+        </div>
+      </div>
+    </figure>
+  </section>
+  <section id="pinguino" class="buddy" aria-labelledby="buddy-title">
+    <div class="buddy__copy">
+      <p class="band__kicker">{ui.penguinKicker}</p>
+      <h2 id="buddy-title">{ui.penguinTitle}</h2>
+      <p>{ui.penguinCaption}</p>
+      <p class="buddy__hint">{ui.penguinOrbitHint}</p>
+    </div>
+    <div class="buddy__stage" data-buddy-stage data-sign-text={ui.penguinSignText} aria-hidden="true">
+      <canvas class="buddy__canvas" data-buddy-canvas></canvas>
+    </div>
+  </section>
+  <footer class="mx-auto max-w-5xl px-5 py-10 text-sm leading-relaxed text-muted">
+      <p>
+        {ui.footerBefore}<a class="text-ink underline decoration-line underline-offset-2" href={YT_PLAYLIST}>{ui.footerPlaylist}</a>{ui.footerAndRepo}<a class="text-ink underline decoration-line underline-offset-2" href={LAB_REPO}>{ui.footerRepo}</a>{ui.footerAfterRepo}
+      </p>
+    </footer>
+  <noscript>
+    <p class="mx-auto max-w-5xl px-5 text-sm">{ui.noscript}</p>
+  </noscript>
+</Base>
+
+<script>
+  import { mountHome } from "../scripts/home-status";
+  import { mountHomeTerminal } from "../scripts/home-terminal";
+  import { mountHomeBuddy } from "../scripts/home-buddy";
+  mountHome();
+  mountHomeTerminal();
+  mountHomeBuddy();
+</script>
