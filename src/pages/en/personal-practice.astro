@@ -1,0 +1,16 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getUI } from "../../lib/i18n";
+
+const ui = getUI("en");
+---
+
+<Base title={ui.examTitle} description={ui.examDescription} locale="en" route="practice">
+  <div id="exam-root" class="mx-auto max-w-5xl px-5 py-6"></div>
+</Base>
+
+<script>
+  import { mountExam } from "../../scripts/exam-app";
+  const root = document.getElementById("exam-root");
+  if (root) mountExam(root);
+</script>
