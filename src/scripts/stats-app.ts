@@ -729,9 +729,9 @@ function exportJsonFilename(store: Store): string {
   const mm = String(now.getMinutes()).padStart(2, "0");
   const stamp = `${y}-${mo}-${d}-${hh}h${mm}`;
   if (pageLocale() === "en") {
-    return `rhcsa-stats(${n}-practice-runs)-${stamp}.json`;
+    return `exam-sysadmin-stats(${n}-practice-runs)-${stamp}.json`;
   }
-  return `rhcsa-estadisticas(${n}-practicas)-${stamp}.json`;
+  return `exam-sysadmin-estadisticas(${n}-practicas)-${stamp}.json`;
 }
 
 function tools(): HTMLElement {

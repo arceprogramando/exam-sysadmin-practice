@@ -10,7 +10,7 @@ export const REDHAT_EXAM_VIDEO_TITLE = "video público sobre el formato del exam
 
 export const LAB_REPO = "https://github.com/nbaud/rhcsa_lab";
 
-/** Videos exactos de la serie RHCSA (EX200), en el orden de esa playlist. */
+/** Videos de la playlist de práctica, en ese orden. */
 const yt = (id: string) => `https://www.youtube.com/watch?v=${id}`;
 
 const YT = {
@@ -390,7 +390,7 @@ export const LABS: Lab[] = [
       videos: [
         { title: "Q03: Repositorios YUM/DNF", url: YT.repos },
         {
-          title: "RHCSA Exam: How to Manually Configure a Local YUM/DNF Repository (No Internet!) · Mingtao SUN",
+          title: "How to Manually Configure a Local YUM/DNF Repository (No Internet!) · Mingtao SUN",
           url: YT.reposLocal,
         },
       ],
@@ -1142,8 +1142,8 @@ export const LABS: Lab[] = [
       tip: "Para todos: flatpak install --system. Solo para erik: su - erik -c 'flatpak install --user …' (no sudo -u erik flatpak --user). Si falta flatpak: dnf install -y flatpak. Remote de sistema ≠ remote --user de erik. APP_ID tal cual search: org.mozilla.firefox (f minúscula), org.gnome.gedit.\nSi instalaste mal (ej. Firefox con --system y era solo erik): flatpak list para ver Installation=system/user, después uninstall de ese ámbito y volvé a instalar bien. System: flatpak uninstall -y --system APP_ID. User de erik: su - erik -c 'flatpak uninstall -y --user APP_ID'.",
       videoHint: "Q23 guarda el remote con la URL del enunciado e instala con --system. Si dice login required, entra con podman login. También baja de commit y usa mask: este lab no lo pide. El otro video muestra el remote que ya trae el escritorio, cómo borrarlo, run, update y uninstall. Arranca en el minuto 3:19.",
       videos: [
-        { title: "Q23: Flatpak (RHCSA 10)", url: YT.flatpak },
-        { title: "Gestión de Flatpak · revisión RHCSA 10", url: YT.flatpakReview },
+        { title: "Q23: Flatpak", url: YT.flatpak },
+        { title: "Gestión de Flatpak · revisión", url: YT.flatpakReview },
       ],
       commands: [
         { cmd: "dnf install -y flatpak", why: "Primero: si flatpak no está (orden no encontrada), instalalo desde el repo DNF. Repos de esta máquina ya tienen que andar (lab Repositorios DNF). En el examen a veces conviene --repo=BaseOS --repo=AppStream para no mezclar otros repos.", as: "root" },
@@ -1187,8 +1187,8 @@ export const LABS: Lab[] = [
       tip: "El APP_ID se copia de flatpak list tal cual (org.gnome.gedit). --delete-data limpia datos de la app. --unused no toca un runtime que Calculator o Firefox todavía usan.",
       videoHint: "La revisión muestra uninstall, --delete-data y --unused. Q23 no lo hace como tarea: saca Thunderbird de paso.",
       videos: [
-        { title: "Gestión de Flatpak · revisión RHCSA 10", url: YT.flatpakReview },
-        { title: "Q23: Flatpak (RHCSA 10)", url: YT.flatpak },
+        { title: "Gestión de Flatpak · revisión", url: YT.flatpakReview },
+        { title: "Q23: Flatpak", url: YT.flatpak },
       ],
       commands: [
         { cmd: "flatpak list", why: "Tiene que verse org.gnome.gedit (system). También Calculator. Firefox de erik: su - erik -c 'flatpak list --user'.", as: "root" },

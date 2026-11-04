@@ -214,7 +214,7 @@ export const LAB_EN: Record<string, LabEn> = {
     videoHint: 'Videos for this lab: Q03, and another channel (Mingtao SUN) on a local repo by hand, with no internet.',
     videos: [
       'Q03: YUM/DNF repositories',
-      'RHCSA Exam: How to Manually Configure a Local YUM/DNF Repository (No Internet!) · Mingtao SUN',
+      'How to Manually Configure a Local YUM/DNF Repository (No Internet!) · Mingtao SUN',
     ],
     why: [
       "The page that explains gpgcheck, enabled, and baseurl. Read it before writing the file.",
@@ -880,7 +880,7 @@ export const LAB_EN: Record<string, LabEn> = {
     note: "On the exam the ticket may set another URL, remote, APP_ID, and user. Here: Flathub + Calculator + Gedit (system) + Firefox (erik). The next lab uninstalls Gedit; Calculator and Firefox stay.",
     tip: "For everyone: flatpak install --system. Only for erik: su - erik -c 'flatpak install --user …' (not sudo -u erik flatpak --user). If flatpak is missing: dnf install -y flatpak. System remote ≠ erik's --user remote. APP_ID as search prints it: org.mozilla.firefox (lowercase f), org.gnome.gedit.\nIf you installed wrong (e.g. Firefox with --system and it was erik-only): flatpak list to see Installation=system/user, then uninstall that scope and install again correctly. System: flatpak uninstall -y --system APP_ID. erik user: su - erik -c 'flatpak uninstall -y --user APP_ID'.",
     videoHint: "Q23 saves the remote with the URL from the task and installs with --system. If it says login required, he logs in with podman login. He also rolls back a commit and uses mask: this lab does not ask for that. The other video shows the remote a desktop already has, how to delete it, run, update, and uninstall. It starts at 3:19.",
-    videos: ["Q23: Flatpak (RHCSA 10)", "Flatpak management · RHCSA 10 review"],
+    videos: ["Q23: Flatpak", "Flatpak management · review"],
     why: [
       "First: if flatpak is missing (command not found), install it from the DNF repo. Repos on this machine must already work (DNF repos lab). On the exam --repo=BaseOS --repo=AppStream can help avoid mixing other repos.",
       "Which stores (remotes) already exist. If the task's store is missing, add it.",
@@ -918,7 +918,7 @@ export const LAB_EN: Record<string, LabEn> = {
     note: "If Gedit is missing (you skipped the previous lab), install it first: flatpak install -y --system flathub org.gnome.gedit. Do not remove Calculator or erik's Firefox.",
     tip: "Copy the APP_ID from flatpak list as printed (org.gnome.gedit). --delete-data clears app data. --unused will not drop a runtime Calculator or Firefox still need.",
     videoHint: "The review shows uninstall, --delete-data, and --unused. Q23 does not do it as the task: he removes Thunderbird in passing.",
-    videos: ["Flatpak management · RHCSA 10 review", "Q23: Flatpak (RHCSA 10)"],
+    videos: ["Flatpak management · review", "Q23: Flatpak"],
     why: [
       "You should see org.gnome.gedit (system). Also Calculator. erik's Firefox: su - erik -c 'flatpak list --user'.",
       "Only if you skipped the previous lab and gedit is missing.",

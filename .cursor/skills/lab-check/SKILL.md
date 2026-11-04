@@ -1,7 +1,7 @@
 ---
 name: lab-check
 description: >-
-  Revisa si un lab RHCSA del repo quedó hecho bien en la VM: compara evidencia
+  Revisa si un lab del repo de práctica quedó hecho bien en la VM: compara evidencia
   (salida de comandos, captura o SSH) contra el objetivo del lab. Detecta errores
   típicos como useradd -g vs -G, sudoers, find que copia /proc, Flatpak
   system/user. Usar cuando el usuario diga revisar lab, chequear lab, ¿está
