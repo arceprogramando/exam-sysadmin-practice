@@ -21,11 +21,7 @@ const statsFixed = `${routePath(locale, "stats")}?mode=fixed`;
       <p class="eyebrow-pill"><i aria-hidden="true"></i>{ui.kicker}</p>
       <h1 class="hero__title">
         <span class="hero__title-lead">{ui.headlineLead}</span>
-        <em class="hero__title-mark">
-          {ui.headlineMark.map((line) => (
-            <span class="hero__title-line">{line}</span>
-          ))}
-        </em>
+        <em class="hero__title-mark">{ui.headlineMark}</em>
       </h1>
       <p class="hero__lead">
         {ui.leadBefore}<a class="underline decoration-line underline-offset-2" href={REDHAT_EXAM_VIDEO} target="_blank" rel="noopener noreferrer">{ui.videoTitle}</a>{ui.leadAfter}
