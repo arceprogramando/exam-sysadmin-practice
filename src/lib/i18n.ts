@@ -117,7 +117,8 @@ export interface Copy {
   hello: string;
   kicker: string;
   headlineLead: string;
-  headlineMark: string;
+  /** Accent lines under the lead (rendered inside <em>, one per entry). */
+  headlineMark: string[];
   shellKicker: string;
   shellTitleLead: string;
   shellTitleMark: string;
@@ -390,7 +391,7 @@ const es: Copy = {
   hello: "Hola, me estoy preparando para un examen de sysadmin Linux el 6 de noviembre, y estoy usando esto como práctica personal.",
   kicker: "Práctica personal · examen sysadmin",
   headlineLead: "Primero lo que",
-  headlineMark: "ya sabés hacer.",
+  headlineMark: ["ya sabés", "hacer."],
   shellKicker: "/ En la terminal",
   shellTitleLead: "Se escribe.",
   shellTitleMark: "Se comprueba.",
@@ -687,7 +688,7 @@ const en: Copy = {
   hello: "I am preparing for a Linux sysadmin exam on November 6, and I am using this as personal practice.",
   kicker: "Personal practice · sysadmin exam",
   headlineLead: "Do what you",
-  headlineMark: "already know.",
+  headlineMark: ["already", "know."],
   shellKicker: "/ In the terminal",
   shellTitleLead: "You type it.",
   shellTitleMark: "You check it.",
