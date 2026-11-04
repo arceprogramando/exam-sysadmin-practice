@@ -69,7 +69,7 @@
 
 .hero h1 {
   margin: 0;
-  max-width: min(100%, 24ch);
+  max-width: 11ch;
   color: #f4f7f8;
   font-size: clamp(3rem, 4.4vw, 5.2rem);
   font-weight: 700;
