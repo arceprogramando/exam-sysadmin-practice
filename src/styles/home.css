@@ -64,10 +64,11 @@
   box-shadow: 0 0 10px #7bd2c4;
 }
 
-.hero h1 {
+.hero__title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   margin: 0;
-  /* Line break comes from the <br />; do not force wraps with a tight ch width. */
-  width: max-content;
   max-width: 100%;
   color: #f4f7f8;
   font-size: clamp(3rem, 4.4vw, 5.2rem);
@@ -76,7 +77,13 @@
   line-height: 0.94;
 }
 
-.hero h1 em {
+.hero__title-lead,
+.hero__title-mark,
+.hero__title-line {
+  display: block;
+}
+
+.hero__title-mark {
   color: var(--hero-hot);
   font-style: normal;
 }
@@ -589,7 +596,7 @@
     transform-origin: center bottom;
   }
 
-  .hero h1 {
+  .hero__title {
     max-width: 100%;
     font-size: clamp(2.2rem, 6.4vw, 3.8rem);
   }
@@ -608,7 +615,7 @@
     transform: translateX(-48%) scale(0.46);
   }
 
-  .hero h1 {
+  .hero__title {
     font-size: clamp(1.65rem, 7.5vw, 2.2rem);
   }
 }
@@ -1018,13 +1025,21 @@
   min-width: 0;
 }
 
-.shell__copy h2 {
+.shell__title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   margin: 0;
   color: #f4f7f8;
   font-size: clamp(2.55rem, 4.4vw, 4.1rem);
   font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 1.05;
+}
+
+.shell__title-lead,
+.shell__mark {
+  display: block;
 }
 
 .shell__copy > p {
@@ -1140,16 +1155,20 @@
   }
 }
 
-html[data-theme="light"] .hero h1,
+html[data-theme="light"] .hero__title,
 html[data-theme="light"] .hero__lead a,
 html[data-theme="light"] .band__head h2,
 html[data-theme="light"] .feature-card h3,
 html[data-theme="light"] .feature-stats dd,
 html[data-theme="light"] .feature-last .stat-value,
 html[data-theme="light"] .feature-last [data-detail],
-html[data-theme="light"] .shell__copy h2,
+html[data-theme="light"] .shell__title,
 html[data-theme="light"] .shell__stats dd {
   color: var(--color-ink);
+}
+
+html[data-theme="light"] .hero__title-mark {
+  color: var(--hero-hot);
 }
 
 html[data-theme="light"] .hero__lead,
@@ -1416,9 +1435,8 @@ html[data-theme="light"] .buddy__stage {
   }
 
   .band__head h2,
-  .shell__copy h2 {
+  .shell__title {
     font-size: clamp(1.55rem, 7.5vw, 2.4rem);
-    white-space: normal;
   }
 
   .shell {

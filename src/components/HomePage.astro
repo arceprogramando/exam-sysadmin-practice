@@ -19,15 +19,11 @@ const statsFixed = `${routePath(locale, "stats")}?mode=fixed`;
     <div class="hero__stars" aria-hidden="true"></div>
     <div class="hero__copy">
       <p class="eyebrow-pill"><i aria-hidden="true"></i>{ui.kicker}</p>
-      <h1>
-        {ui.headlineLead}
-        <br />
-        <em>
-          {ui.headlineMark.map((line, i) => (
-            <>
-              {i > 0 ? <br /> : null}
-              {line}
-            </>
+      <h1 class="hero__title">
+        <span class="hero__title-lead">{ui.headlineLead}</span>
+        <em class="hero__title-mark">
+          {ui.headlineMark.map((line) => (
+            <span class="hero__title-line">{line}</span>
           ))}
         </em>
       </h1>
@@ -165,7 +161,10 @@ const statsFixed = `${routePath(locale, "stats")}?mode=fixed`;
   <section class="shell" aria-labelledby="shell-title">
     <div class="shell__copy">
       <p class="band__kicker">{ui.shellKicker}</p>
-      <h2 id="shell-title">{ui.shellTitleLead}<br /><span class="shell__mark">{ui.shellTitleMark}</span></h2>
+      <h2 id="shell-title" class="shell__title">
+        <span class="shell__title-lead">{ui.shellTitleLead}</span>
+        <span class="shell__mark">{ui.shellTitleMark}</span>
+      </h2>
       <p>{ui.shellLead}</p>
       <dl class="shell__stats">
         <div>
