@@ -1,0 +1,13 @@
+---
+import { lvmDiagramHtml } from "../lib/lvm-diagram";
+import type { Locale } from "../lib/i18n";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const html = lvmDiagramHtml(locale === "en" ? "en" : "es");
+---
+
+<Fragment set:html={html} />
