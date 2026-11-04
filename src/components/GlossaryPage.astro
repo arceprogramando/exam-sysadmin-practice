@@ -1,0 +1,312 @@
+---
+import Base from "../layouts/Base.astro";
+import { exampleCommands, glossaryFor, TLDR_REPO, tldrUrl } from "../lib/glossary";
+import { getUI, type Locale } from "../lib/i18n";
+import LvmFlowDiagram from "./LvmFlowDiagram.astro";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const ui = getUI(locale);
+const entries = glossaryFor(locale);
+
+function slugTerm(term: string): string {
+  return term
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+const clientEntries = entries.map((entry) => ({
+  term: entry.term,
+  aliases: entry.aliases ?? [],
+  definition: entry.definition,
+  example: entry.example ?? "",
+  slug: slugTerm(entry.term),
+}));
+---
+
+<Base title={ui.glossaryTitle} description={ui.glossaryDescription} locale={locale} route="glossary">
+  <div class="mx-auto max-w-5xl px-5 py-8">
+    <h1 class="text-3xl font-semibold tracking-tight">{ui.glossaryHeading}</h1>
+    <p class="mt-2 max-w-2xl text-muted">
+      {ui.glossaryIntro}
+      {" "}
+      <a class="text-ink underline decoration-line underline-offset-2" href={TLDR_REPO} target="_blank" rel="noopener noreferrer">{ui.glossaryTldrRepo}<span class="sr-only">, {ui.opensNew}</span></a>.
+    </p>
+    <label class="mt-6 block max-w-xl">
+      <span class="sr-only">{ui.glossarySearch}</span>
+      <input
+        id="glossary-search"
+        type="search"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder={ui.glossarySearch}
+        class="w-full rounded-full border border-line bg-card px-4 py-3 text-base text-ink placeholder:text-muted focus-visible:border-accent"
+      />
+    </label>
+    <p id="glossary-empty" class="mt-6 hidden text-sm text-muted">{ui.glossarySearchEmpty}</p>
+    <script is:inline type="application/json" id="glossary-data" set:html={JSON.stringify(clientEntries).replaceAll("<", "\\u003c")}></script>
+    <dl id="glossary-list" class="mt-6 overflow-hidden rounded-3xl border border-line bg-card">
+      {
+        entries.map((entry) => (
+          <div
+            class="glossary-entry border-b border-line px-5 py-5 last:border-b-0"
+            id={`g-${slugTerm(entry.term)}`}
+            data-term={entry.term}
+          >
+            <dt class="glossary-term-row">
+              <span class="glossary-term font-mono text-lg font-semibold tracking-tight">{entry.term}</span>
+              <button
+                type="button"
+                class="cmd-copy"
+                data-copy={entry.term}
+                aria-label={`${ui.copyCmd}: ${entry.term}`}
+              >
+                <svg class="cmd-copy-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                  <path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path>
+                </svg>
+              </button>
+            </dt>
+            <dd class="glossary-definition mt-2 whitespace-pre-line text-[1.05rem] leading-relaxed text-ink/90">{entry.definition}</dd>
+            {entry.term === "LVM" ? (
+              <dd class="mt-4">
+                <LvmFlowDiagram locale={locale} />
+              </dd>
+            ) : null}
+            <div class="glossary-commands" data-example={entry.example ?? ""}>
+              {
+                exampleCommands(entry.example).map((cmd) => (
+                  <dd class="cmd-row glossary-example-row">
+                    <code class="cmd-text glossary-example" data-cmd={cmd}>{cmd}</code>
+                    <button
+                      type="button"
+                      class="cmd-copy"
+                      data-copy={cmd}
+                      aria-label={`${ui.copyCmd}: ${cmd}`}
+                    >
+                      <svg class="cmd-copy-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                        <path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path>
+                      </svg>
+                    </button>
+                  </dd>
+                ))
+              }
+            </div>
+            {entry.tldr ? (
+              <dd class="mt-3 text-sm">
+                <a
+                  class="font-medium text-ink underline decoration-line underline-offset-2"
+                  href={tldrUrl(entry.tldr)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {ui.glossaryTldr}<span class="sr-only">, {ui.opensNew}</span>
+                </a>
+              </dd>
+            ) : null}
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</Base>
+
+<script>
+  import { getUI, pageLocale } from "../lib/i18n";
+
+  type ClientEntry = {
+    term: string;
+    aliases: string[];
+    definition: string;
+    example: string;
+    slug: string;
+  };
+
+  const input = document.getElementById("glossary-search") as HTMLInputElement | null;
+  const empty = document.getElementById("glossary-empty");
+  const list = document.getElementById("glossary-list");
+  const dataNode = document.getElementById("glossary-data");
+  const ui = getUI(pageLocale());
+
+  if (!input || !empty || !list || !dataNode) {
+    /* glossary UI needs the search box and catalog JSON */
+  } else {
+    const searchInput = input;
+    const emptyEl = empty;
+    const listEl = list;
+    const catalog = JSON.parse(dataNode.textContent || "[]") as ClientEntry[];
+    const byTerm = new Map(catalog.map((entry) => [entry.term, entry]));
+    const nodes = Array.from(listEl.querySelectorAll<HTMLElement>(".glossary-entry"));
+
+    type LinkWord = { word: string; targetTerm: string };
+    const linkWords: LinkWord[] = [];
+    for (const entry of catalog) {
+      linkWords.push({ word: entry.term, targetTerm: entry.term });
+      for (const alias of entry.aliases) linkWords.push({ word: alias, targetTerm: entry.term });
+    }
+    linkWords.sort((a, b) => b.word.length - a.word.length);
+
+    function escapeHtml(value: string): string {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function escapeRegExp(value: string): string {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    /** No lookbehind: works in older browsers too. */
+    function linkify(text: string, selfTerm: string): string {
+      type Hit = { index: number; length: number; word: string; targetTerm: string };
+      const hits: Hit[] = [];
+      for (const item of linkWords) {
+        if (item.targetTerm === selfTerm) continue;
+        const re = new RegExp(`(^|[^\\w.-])(${escapeRegExp(item.word)})(?=[^\\w.-]|$)`, "gi");
+        let match: RegExpExecArray | null;
+        while ((match = re.exec(text))) {
+          const index = match.index + match[1].length;
+          const word = match[2];
+          const length = word.length;
+          const overlaps = hits.some((hit) => index < hit.index + hit.length && index + length > hit.index);
+          if (!overlaps) hits.push({ index, length, word, targetTerm: item.targetTerm });
+        }
+      }
+      hits.sort((a, b) => a.index - b.index || b.length - a.length);
+      let out = "";
+      let cursor = 0;
+      for (const hit of hits) {
+        if (hit.index < cursor) continue;
+        out += escapeHtml(text.slice(cursor, hit.index));
+        out += `<button type="button" class="glossary-ref" data-jump="${escapeHtml(hit.targetTerm)}">${escapeHtml(hit.word)}</button>`;
+        cursor = hit.index + hit.length;
+      }
+      out += escapeHtml(text.slice(cursor));
+      return out;
+    }
+
+    function highlightHtml(html: string, query: string): string {
+      if (!query) return html;
+      const parts = html.split(/(<[^>]+>)/);
+      const needle = query.toLowerCase();
+      return parts
+        .map((part) => {
+          if (!part || part.startsWith("<")) return part;
+          const lower = part.toLowerCase();
+          let out = "";
+          let index = 0;
+          while (index < part.length) {
+            const at = lower.indexOf(needle, index);
+            if (at === -1) {
+              out += part.slice(index);
+              break;
+            }
+            out += part.slice(index, at);
+            out += `<mark class="glossary-hit">${part.slice(at, at + needle.length)}</mark>`;
+            index = at + needle.length;
+          }
+          return out;
+        })
+        .join("");
+    }
+
+    function paint(node: HTMLElement, query: string): void {
+      const termName = node.dataset.term ?? "";
+      const entry = byTerm.get(termName);
+      if (!entry) return;
+      const termEl = node.querySelector<HTMLElement>(".glossary-term");
+      const defEl = node.querySelector<HTMLElement>(".glossary-definition");
+      if (termEl) termEl.innerHTML = highlightHtml(escapeHtml(entry.term), query);
+      if (defEl) defEl.innerHTML = highlightHtml(linkify(entry.definition, entry.term), query);
+      for (const example of node.querySelectorAll<HTMLElement>(".glossary-example")) {
+        const cmd = example.dataset.cmd ?? "";
+        example.innerHTML = highlightHtml(escapeHtml(cmd), query);
+      }
+    }
+
+    function jumpTo(term: string): void {
+      const target = nodes.find((node) => (node.dataset.term ?? "").toLowerCase() === term.toLowerCase());
+      if (!target) return;
+      for (const node of nodes) node.classList.remove("hidden", "glossary-entry-flash");
+      listEl.classList.remove("hidden");
+      emptyEl.classList.add("hidden");
+      searchInput.value = "";
+      for (const node of nodes) paint(node, "");
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("glossary-entry-flash");
+      window.setTimeout(() => target.classList.remove("glossary-entry-flash"), 1600);
+    }
+
+    listEl.addEventListener("click", (event) => {
+      const btn = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>(".glossary-ref");
+      if (!btn) return;
+      event.preventDefault();
+      jumpTo(btn.dataset.jump ?? "");
+    });
+
+    for (const btn of listEl.querySelectorAll<HTMLButtonElement>(".cmd-copy")) {
+      btn.addEventListener("click", async () => {
+        const text = btn.getAttribute("data-copy") ?? "";
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.setAttribute("title", ui.copiedCmd);
+          btn.classList.add("is-copied");
+          window.setTimeout(() => {
+            btn.setAttribute("title", ui.copyCmd);
+            btn.classList.remove("is-copied");
+          }, 1500);
+        } catch {
+          /* clipboard may be blocked */
+        }
+      });
+    }
+
+    function rank(term: string, aliases: string[], q: string): number {
+      const t = term.toLowerCase();
+      const als = aliases.map((alias) => alias.toLowerCase());
+      if (t === q || als.includes(q)) return 0;
+      if (t.startsWith(q) || als.some((alias) => alias.startsWith(q))) return 1;
+      if (t.includes(q) || als.some((alias) => alias.includes(q))) return 2;
+      return 3;
+    }
+
+    const filter = () => {
+      const q = searchInput.value.trim();
+      const qLower = q.toLowerCase();
+      const visible: HTMLElement[] = [];
+      for (const node of nodes) {
+        const entry = byTerm.get(node.dataset.term ?? "");
+        if (!entry) continue;
+        const hay = `${entry.term} ${entry.aliases.join(" ")} ${entry.definition} ${entry.example}`.toLowerCase();
+        const match = !qLower || hay.includes(qLower);
+        node.classList.toggle("hidden", !match);
+        if (match) {
+          paint(node, qLower);
+          visible.push(node);
+        }
+      }
+      if (qLower) {
+        visible.sort(
+          (a, b) => {
+            const ea = byTerm.get(a.dataset.term ?? "")!;
+            const eb = byTerm.get(b.dataset.term ?? "")!;
+            return rank(ea.term, ea.aliases, qLower) - rank(eb.term, eb.aliases, qLower) || ea.term.localeCompare(eb.term);
+          },
+        );
+      }
+      for (const node of qLower ? visible : nodes) listEl.append(node);
+      emptyEl.classList.toggle("hidden", visible.length > 0);
+      listEl.classList.toggle("hidden", visible.length === 0);
+    };
+
+    searchInput.addEventListener("input", filter);
+    filter();
+  }
+</script>
