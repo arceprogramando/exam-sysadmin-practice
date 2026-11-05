@@ -228,6 +228,8 @@ export interface Copy {
   groupBoth: string;
   groupExtras: string;
   marksLegend: string;
+  foldDone: string;
+  unfoldDone: (count: number) => string;
   emptyGroup: string;
   passedMeta: string;
   stuckNote: string;
@@ -513,6 +515,8 @@ const es: Copy = {
   groupBoth: "En las dos",
   groupExtras: "Extras, si te queda tiempo",
   marksLegend: "Revisit (volver después) · Done (ya está)",
+  foldDone: "Ocultar hechas",
+  unfoldDone: (count) => `Mostrar ${count} hechas`,
   emptyGroup: "Nada en este grupo.",
   passedMeta: "pasado, no lo entendiste",
   stuckNote: "Por encima de muy alto. Es el que más te trabó.",
@@ -810,6 +814,8 @@ const en: Copy = {
   groupBoth: "On both",
   groupExtras: "Extras, if you have time",
   marksLegend: "Revisit (come back later) · Done (finished)",
+  foldDone: "Hide finished",
+  unfoldDone: (count) => `Show ${count} finished`,
   emptyGroup: "Nothing in this group.",
   passedMeta: "skipped, you did not understand it",
   stuckNote: "Above very high. This is the one that stalled you the most.",
