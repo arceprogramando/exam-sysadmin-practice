@@ -340,12 +340,16 @@ function machineOf(lab: Lab): "client" | "server" | "both" {
   return "client";
 }
 
+function ratedDone(record: LabRecord | undefined): boolean {
+  return record?.status === "done" && record.difficulty != null;
+}
+
 function taskGroup(run: Run, title: string, groupKey: string, items: { lab: Lab; index: number }[], intro?: HTMLElement): HTMLElement {
   const section = el("section", "overflow-hidden rounded-3xl border border-line bg-card");
   const head = el("div", "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-4 py-3 sm:px-5");
   const titleRow = el("div", "flex flex-wrap items-center gap-3");
   titleRow.append(el("h2", "font-semibold", title));
-  const doneCount = items.filter((item) => run.labs[item.index]?.status === "done").length;
+  const doneCount = items.filter((item) => ratedDone(run.labs[item.index])).length;
   const shown = openFold().has(groupKey);
   if (doneCount) {
     const foldBtn = button(shown ? copy().foldDone : copy().unfoldDone(doneCount), "fold-done");
@@ -370,7 +374,7 @@ function taskGroup(run: Run, title: string, groupKey: string, items: { lab: Lab;
     return section;
   }
   for (const item of items) {
-    if (run.labs[item.index]?.status === "done" && !shown) continue;
+    if (ratedDone(run.labs[item.index]) && !shown) continue;
     section.append(taskRow(run, item.lab, item.index));
   }
   return section;
