@@ -1456,11 +1456,14 @@ html[data-theme="light"] .buddy__stage {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   max-height: 16rem;
   min-height: 0;
   margin-bottom: 0.85rem;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .term__log .term__entry {
