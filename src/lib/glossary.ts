@@ -103,10 +103,11 @@ const es: GlossaryEntry[] = [
   },
   {
     term: "grep",
+    aliases: ["grep -R", "grep -r"],
     definition:
-      "Filtra líneas. Imprime las que contienen el texto y descarta el resto. Lee un archivo (grep FRASE ARCHIVO) o lo que llega por un pipe (comando | grep FRASE). -E permite varias frases separadas por | dentro de las comillas: cada | es un «o». Sin -E, ese | es un carácter más. -i ignora mayúsculas. ^ al principio de la frase exige que la línea empiece así. -w exige la palabra entera.",
+      "Filtra líneas. Imprime las que contienen el texto y descarta el resto. Lee un archivo (grep FRASE ARCHIVO) o lo que llega por un pipe (comando | grep FRASE). -E permite varias frases separadas por | dentro de las comillas: cada | es un «o». Sin -E, ese | es un carácter más. -i ignora mayúsculas. ^ al principio de la frase exige que la línea empiece así. -w exige la palabra entera.\n\n-R entra en una carpeta y lee los archivos de adentro, también los de las subcarpetas. Sin -R, si el argumento es una carpeta, grep dice «Es un directorio» y no busca. -r hace la misma búsqueda en este lab.\n\ngrep -R PermitRootLogin /etc/ssh/sshd_config.d/ encontró la línea activa en 01-permitrootlogin.conf. Un grep del archivo sshd_config solo ve ese archivo: las líneas con # no cuentan.",
     example:
-      "man dnf.conf | grep -E 'baseurl|gpgcheck|enabled' → de la página del manual, solo las líneas con una de esas tres · grep ich /usr/share/dict/words > /root/lines → palabras que contienen ich, guardadas en ese archivo · grep '^Listen' /etc/httpd/conf/httpd.conf → líneas que empiezan con Listen",
+      "man dnf.conf | grep -E 'baseurl|gpgcheck|enabled' → de la página del manual, solo las líneas con una de esas tres · grep ich /usr/share/dict/words > /root/lines → palabras que contienen ich, guardadas en ese archivo · grep -R PermitRootLogin /etc/ssh/sshd_config.d/",
     tldr: { page: "grep" },
   },
   {
@@ -852,6 +853,59 @@ const es: GlossaryEntry[] = [
     example: "chroot /sysroot",
     tldr: { page: "chroot" },
   },
+  {
+    term: "ssh",
+    aliases: ["BatchMode", "known_hosts"],
+    definition:
+      "Cliente. ssh USUARIO@HOST abre una sesión en la otra máquina. En el lab, desde el client: ssh root@172.16.1.13.\n\nLa primera vez pregunta si confiás en la huella del server y la guarda en ~/.ssh/known_hosts. Si reinstalaste esa máquina y la huella cambió, ssh se niega hasta que borres esa línea.\n\nCon llave no pide la contraseña de la cuenta: el client demuestra que tiene la privada y el server tiene la pública en authorized_keys.\n\nBatchMode=yes (ssh -o BatchMode=yes) no pregunta contraseña ni passphrase. Si la llave no sirve, corta al toque. La prueba del lab es ssh -o BatchMode=yes root@172.16.1.13 hostname: tiene que imprimir el hostname del server y volver.",
+    example: "ssh root@172.16.1.13 · ssh -o BatchMode=yes root@172.16.1.13 hostname",
+    tldr: { page: "ssh" },
+  },
+  {
+    term: "sshd",
+    aliases: ["sshd_config", "/etc/ssh/sshd_config"],
+    definition:
+      "El servicio SSH que escucha en el server. ssh es el cliente; sshd es el que deja entrar.\n\nLa config está en /etc/ssh/sshd_config y, si hay archivos ahí, en /etc/ssh/sshd_config.d/. Un cambio no aplica solo: systemctl restart sshd.\n\nEl valor que sshd usa de verdad lo muestra sshd -T. Un grep del archivo principal puede callar aunque la regla esté en el directorio .d.",
+    example: "sshd -T | grep permitrootlogin · systemctl restart sshd",
+    tldr: { page: "sshd", platform: "linux" },
+  },
+  {
+    term: "PermitRootLogin",
+    aliases: ["permitrootlogin", "prohibit-password", "01-permitrootlogin.conf"],
+    definition:
+      "Decide si root puede entrar por SSH.\n\n• no: root no entra, ni con llave.\n• prohibit-password: root entra con llave. La contraseña de root por SSH no alcanza. La llave del lab sí.\n• yes: root entra con contraseña o con llave.\n\nEn el server del lab el archivo principal solo tiene un comentario: #PermitRootLogin prohibit-password. El # lo apaga. La línea que sshd usa está en /etc/ssh/sshd_config.d/01-permitrootlogin.conf y dice PermitRootLogin yes.\n\nPara ver el valor en uso: sshd -T | grep permitrootlogin. Sale en minúsculas. Para encontrar el archivo: grep -R PermitRootLogin /etc/ssh/sshd_config.d/.\n\nDespués de cambiarla: systemctl restart sshd.",
+    example: "sshd -T | grep permitrootlogin · grep -R PermitRootLogin /etc/ssh/sshd_config.d/",
+  },
+  {
+    term: "ssh-keygen",
+    aliases: ["ssh-key-gen", "passphrase"],
+    definition:
+      "Crea la pareja de llaves en la máquina desde la que vas a entrar. En el lab es el client, como root.\n\nssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519\n\n• -t elige el tipo. El lab usa ed25519.\n• -f es la ruta de la privada. La pública queda al lado, mismo nombre más .pub: /root/.ssh/id_ed25519.pub.\n• -N es la passphrase, escrita en el comando para que no pregunte. '' es vacía.\n\nLa passphrase no es la contraseña de root. Es un candado del archivo de la privada. Con '' ese archivo solo ya alcanza para entrar, y un script no se frena a pedir una frase. Por eso la privada se queda en el client, modo 600, y no se copia.\n\nSi dice que el archivo ya existe, no lo pises: esa llave ya está.\n\nSin -f y sin -N, ssh-keygen pregunta la ruta y la passphrase a mano.",
+    example: "ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519",
+    tldr: { page: "ssh-keygen" },
+  },
+  {
+    term: "ed25519",
+    aliases: ["id_ed25519", "id_ed25519.pub"],
+    definition:
+      "Tipo de llave que pide -t ed25519. Es una curva elíptica. La privada es corta, firmar es rápido, y OpenSSH en Rocky 9 y 10 la acepta. Por eso el lab la usa en vez de armar una RSA larga.\n\nEl nombre del archivo dice el tipo. id_ed25519 es la privada: se queda en el client, en /root/.ssh/. id_ed25519.pub es la pública: esa es la que ssh-copy-id manda al server.\n\n-t rsa -b 4096 también entra (el archivo sería id_rsa). El lab no la pide.\n\nDSA no se genera más: OpenSSH lo dejó.",
+    example: "ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519",
+    tldr: { page: "ssh-keygen" },
+  },
+  {
+    term: "ssh-copy-id",
+    definition:
+      "Manda la llave pública al server y la agrega a authorized_keys. Se corre en el client, una vez.\n\nssh-copy-id -i /root/.ssh/id_ed25519.pub root@172.16.1.13\n\n• -i es qué pública mandar. Tiene que ser el .pub. La privada no se copia.\n• root@172.16.1.13 es la cuenta y la máquina de destino. Pide la contraseña de root del server esa vez. Después la llave ocupa ese lugar.\n\nEn el server queda una línea nueva en /root/.ssh/authorized_keys. Si ~/.ssh no existía, ssh-copy-id lo crea y deja los permisos que sshd acepta: carpeta 700, archivo 600. Con la carpeta abierta a otros, sshd ignora la llave y vuelve a pedir contraseña.",
+    example: "ssh-copy-id -i /root/.ssh/id_ed25519.pub root@172.16.1.13",
+    tldr: { page: "ssh-copy-id" },
+  },
+  {
+    term: "authorized_keys",
+    aliases: ["/root/.ssh/authorized_keys", ".ssh/authorized_keys"],
+    definition:
+      "Archivo en el home de la cuenta que recibe la conexión. Para root del server: /root/.ssh/authorized_keys.\n\nCada línea es una llave pública. Si la privada del client corresponde a una de esas líneas, sshd deja entrar sin contraseña.\n\nssh-copy-id agrega la línea. También podés pegar a mano el contenido de id_ed25519.pub.\n\nLa privada no va en este archivo.",
+    example: "ssh-copy-id -i /root/.ssh/id_ed25519.pub root@172.16.1.13",
+  },
 ];
 
 const en: GlossaryEntry[] = [
@@ -924,10 +978,11 @@ const en: GlossaryEntry[] = [
   },
   {
     term: "grep",
+    aliases: ["grep -R", "grep -r"],
     definition:
-      "Filters lines. It prints the ones that contain the text and drops the rest. It reads a file (grep PHRASE FILE) or whatever arrives on a pipe (command | grep PHRASE). -E allows several phrases split by | inside the quotes: each | is an \"or\". Without -E, that | is just another character. -i ignores case. ^ at the start of the phrase requires the line to begin that way. -w requires the whole word.",
+      "Filters lines. It prints the ones that contain the text and drops the rest. It reads a file (grep PHRASE FILE) or whatever arrives on a pipe (command | grep PHRASE). -E allows several phrases split by | inside the quotes: each | is an \"or\". Without -E, that | is just another character. -i ignores case. ^ at the start of the phrase requires the line to begin that way. -w requires the whole word.\n\n-R goes into a directory and reads the files inside, including subdirectories. Without -R, if the argument is a directory, grep says \"Is a directory\" and does not search. -r does the same search in this lab.\n\ngrep -R PermitRootLogin /etc/ssh/sshd_config.d/ found the active line in 01-permitrootlogin.conf. A grep of the sshd_config file only sees that file: lines with # do not count.",
     example:
-      "man dnf.conf | grep -E 'baseurl|gpgcheck|enabled' → from the manual page, only the lines with one of those three · grep ich /usr/share/dict/words > /root/lines → words that contain ich, saved in that file · grep '^Listen' /etc/httpd/conf/httpd.conf → lines that start with Listen",
+      "man dnf.conf | grep -E 'baseurl|gpgcheck|enabled' → from the manual page, only the lines with one of those three · grep ich /usr/share/dict/words > /root/lines → words that contain ich, saved in that file · grep -R PermitRootLogin /etc/ssh/sshd_config.d/",
     tldr: { page: "grep" },
   },
   {
@@ -1670,6 +1725,59 @@ const en: GlossaryEntry[] = [
     definition: "Makes this shell treat another directory as /. In an rd.break rescue, / is the initramfs in memory and the installed disk is mounted at /sysroot. chroot /sysroot enters it, so passwd and touch write to the disk instead of memory. exit leaves, and / is the initramfs again.",
     example: "chroot /sysroot",
     tldr: { page: "chroot" },
+  },
+  {
+    term: "ssh",
+    aliases: ["BatchMode", "known_hosts"],
+    definition:
+      "Client. ssh USER@HOST opens a session on the other machine. In the lab, from the client: ssh root@172.16.1.13.\n\nThe first time it asks you to trust the server's fingerprint and stores it in ~/.ssh/known_hosts. If you reinstalled that machine and the fingerprint changed, ssh refuses until you delete that line.\n\nWith a key it does not ask for the account password: the client proves it has the private key and the server has the public key in authorized_keys.\n\nBatchMode=yes (ssh -o BatchMode=yes) does not ask for a password or a passphrase. If the key does not work, it fails immediately. The lab check is ssh -o BatchMode=yes root@172.16.1.13 hostname: it has to print the server hostname and return.",
+    example: "ssh root@172.16.1.13 · ssh -o BatchMode=yes root@172.16.1.13 hostname",
+    tldr: { page: "ssh" },
+  },
+  {
+    term: "sshd",
+    aliases: ["sshd_config", "/etc/ssh/sshd_config"],
+    definition:
+      "The SSH service that listens on the server. ssh is the client; sshd is what lets you in.\n\nThe config is in /etc/ssh/sshd_config and, when files are present, in /etc/ssh/sshd_config.d/. A change does not apply by itself: systemctl restart sshd.\n\nsshd -T shows the value sshd actually uses. A grep of the main file can stay quiet even when the rule lives in the .d directory.",
+    example: "sshd -T | grep permitrootlogin · systemctl restart sshd",
+    tldr: { page: "sshd", platform: "linux" },
+  },
+  {
+    term: "PermitRootLogin",
+    aliases: ["permitrootlogin", "prohibit-password", "01-permitrootlogin.conf"],
+    definition:
+      "Decides whether root can log in over SSH.\n\n• no: root cannot log in, even with a key.\n• prohibit-password: root logs in with a key. Root's password over SSH is not enough. The lab key is.\n• yes: root logs in with a password or a key.\n\nOn the lab server the main file only has a comment: #PermitRootLogin prohibit-password. The # turns it off. The line sshd uses is in /etc/ssh/sshd_config.d/01-permitrootlogin.conf and it says PermitRootLogin yes.\n\nTo see the value in use: sshd -T | grep permitrootlogin. It prints in lowercase. To find the file: grep -R PermitRootLogin /etc/ssh/sshd_config.d/.\n\nAfter you change it: systemctl restart sshd.",
+    example: "sshd -T | grep permitrootlogin · grep -R PermitRootLogin /etc/ssh/sshd_config.d/",
+  },
+  {
+    term: "ssh-keygen",
+    aliases: ["ssh-key-gen", "passphrase"],
+    definition:
+      "Creates the key pair on the machine you will log in from. In the lab that is the client, as root.\n\nssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519\n\n• -t picks the type. The lab uses ed25519.\n• -f is the path of the private key. The public key is written beside it, same name plus .pub: /root/.ssh/id_ed25519.pub.\n• -N is the passphrase, written in the command so it does not ask. '' is empty.\n\nThe passphrase is not root's password. It is a lock on the private-key file. With '' that file alone is enough to log in, and a script does not stop to ask for a phrase. That is why the private key stays on the client, mode 600, and is not copied.\n\nIf it says the file already exists, do not overwrite it: that key is already there.\n\nWithout -f and without -N, ssh-keygen asks for the path and the passphrase by hand.",
+    example: "ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519",
+    tldr: { page: "ssh-keygen" },
+  },
+  {
+    term: "ed25519",
+    aliases: ["id_ed25519", "id_ed25519.pub"],
+    definition:
+      "Key type requested by -t ed25519. It is an elliptic curve. The private key is short, signing is fast, and OpenSSH on Rocky 9 and 10 accepts it. That is why the lab uses it instead of building a long RSA key.\n\nThe filename says the type. id_ed25519 is the private key: it stays on the client, in /root/.ssh/. id_ed25519.pub is the public key: that is what ssh-copy-id sends to the server.\n\n-t rsa -b 4096 also works (the file would be id_rsa). The lab does not ask for it.\n\nDSA is no longer generated: OpenSSH dropped it.",
+    example: "ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519",
+    tldr: { page: "ssh-keygen" },
+  },
+  {
+    term: "ssh-copy-id",
+    definition:
+      "Sends the public key to the server and appends it to authorized_keys. Run it on the client, once.\n\nssh-copy-id -i /root/.ssh/id_ed25519.pub root@172.16.1.13\n\n• -i is which public key to send. It has to be the .pub. The private key is not copied.\n• root@172.16.1.13 is the account and the destination machine. It asks for the server's root password that one time. After that the key takes that place.\n\nOn the server a new line lands in /root/.ssh/authorized_keys. If ~/.ssh did not exist, ssh-copy-id creates it and sets the permissions sshd accepts: directory 700, file 600. If the directory is open to others, sshd ignores the key and asks for the password again.",
+    example: "ssh-copy-id -i /root/.ssh/id_ed25519.pub root@172.16.1.13",
+    tldr: { page: "ssh-copy-id" },
+  },
+  {
+    term: "authorized_keys",
+    aliases: ["/root/.ssh/authorized_keys", ".ssh/authorized_keys"],
+    definition:
+      "File in the home of the account that receives the connection. For root on the server: /root/.ssh/authorized_keys.\n\nEach line is a public key. If the client's private key matches one of those lines, sshd lets you in without a password.\n\nssh-copy-id appends the line. You can also paste the contents of id_ed25519.pub by hand.\n\nThe private key does not go in this file.",
+    example: "ssh-copy-id -i /root/.ssh/id_ed25519.pub root@172.16.1.13",
   },
 ];
 
