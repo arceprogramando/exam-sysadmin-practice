@@ -131,9 +131,17 @@ const es: GlossaryEntry[] = [
   },
   {
     term: "getfacl",
-    definition: "Muestra las ACL de un archivo o directorio: user, group, other y mask. Sirve para verificar el lab, no solo el chmod.",
+    definition:
+      "Muestra las ACL de un archivo o directorio: user::, user:nombre:, group::, mask:: y other:. Sirve para verificar el lab, no solo el chmod. La línea mask:: es el techo de las ACL nombradas: ver la entrada mask.",
     example: "getfacl /var/tmp/fstab",
     tldr: { page: "getfacl", platform: "linux" },
+  },
+  {
+    term: "mask · máscara ACL",
+    aliases: ["mask", "mask::", "máscara ACL", "máscara"],
+    definition:
+      "En getfacl, mask:: es el techo de lo que pueden valer las ACL extra: user:nombre: (erik, felipe, …) y a menudo el group:: efectivo. No es un usuario llamado mask.\n\nSi user:erik:rw- y mask::rw-, el permiso efectivo de erik es rw-. Si la máscara fuera solo r--, aunque diga rw- el efectivo queda en lectura. getfacl -e (o un comentario #effective:) muestra ese corte.\n\nNo limita user:: (dueño) ni other::. Cuando hacés setfacl -m u:erik:rw, el sistema suele subir mask:: a rw- solo, para que la escritura de erik sea posible.",
+    example: "getfacl /var/tmp/fstab → mirá mask:: junto a user:erik:",
   },
   {
     term: "setfacl",
@@ -239,7 +247,7 @@ const es: GlossaryEntry[] = [
     term: "LVM",
     aliases: ["Logical Volume Manager"],
     definition:
-      "Logical Volume Manager: una forma de usar discos por capas, con nombres, en vez de depender solo de /dev/sdb1.\n\nCapas (nombres reales)\n• PV (Physical Volume): disco o partición marcado con pvcreate.\n• VG (Volume Group): uno o más PV juntos en un tanque de espacio.\n• LV (Logical Volume): pedazo con nombre cortado del VG; se formatea y se monta.\n\n¿Para qué sirve?\nUn sysadmin lo usa cuando Operaciones pide un espacio compartido (archivos de un servicio, dumps, datos) que tenga nombre, se monte en una carpeta, y más adelante se pueda agrandar sin borrar todo y reparticionar a mano.\n\nFlujo\ndisco o partición → PV → VG → LV → sistema de archivos → montaje.\n\nAnalogía LEGO (solo para visualizar): el PV es una placa que preparás; el VG es juntar placas en una plataforma; el LV es el edificio encima que usás de verdad. Los PE son los ladrillos de tamaño fijo con los que el VG reparte espacio.\n\next4 y /mnt/wshare ya no son LVM: son el formato y el montaje encima del LV.",
+      "Logical Volume Manager: una forma de usar discos por capas, con nombres, en vez de depender solo de /dev/sdb1.\n\nCapas (nombres reales)\n• PV (Physical Volume): disco o partición marcado con pvcreate.\n• VG (Volume Group): uno o más PV juntos en un tanque de espacio.\n• PE (Physical Extent): ladrillo de tamaño fijo dentro del VG (ej. 8 MiB con vgcreate -s 8M). No es un disco aparte: es la unidad con la que el VG reparte espacio.\n• LV (Logical Volume): pedazo con nombre cortado del VG (un montón de PE); se formatea y se monta.\n\n¿Para qué sirve?\nUn sysadmin lo usa cuando Operaciones pide un espacio compartido (archivos de un servicio, dumps, datos) que tenga nombre, se monte en una carpeta, y más adelante se pueda agrandar sin borrar todo y reparticionar a mano.\n\nFlujo\ndisco o partición → PV → VG (repartido en PE) → LV → sistema de archivos → montaje.\n\nAnalogía LEGO (solo para visualizar): el PV es una placa que preparás; el VG es juntar placas en una plataforma; los PE son los ladrillos de tamaño fijo; el LV es el edificio (N ladrillos) que usás de verdad.\n\nEjemplo del lab: 50 PE × 8 MiB = 400 MB (lvcreate -l 50).\n\next4 y /mnt/wshare ya no son LVM: son el formato y el montaje encima del LV.",
     example: "pvcreate /dev/sdb1 · vgcreate -s 8M wgroup /dev/sdb1 · lvcreate -n wshare -l 50 wgroup · mkfs.ext4 /dev/wgroup/wshare · mkdir -p /mnt/wshare · mount /dev/wgroup/wshare /mnt/wshare",
   },
   {
@@ -519,8 +527,8 @@ const es: GlossaryEntry[] = [
   {
     term: "find",
     definition:
-      "Busca en el árbol. Si el enunciado no limita la ruta, empezás en /. -user es el dueño (no «quién lo creó»). -type f = archivo, no directorio. -mtime -1 = modificado en el último día; el 1 solo no alcanza.\n2>/dev/null esconde Permission denied.\n-xdev no baja a otros filesystems (así evitás basura de /proc).\n-exec COMANDO {} \\; corre el comando una vez por resultado. {} es la ruta. El \\; cierra el -exec. Con \\+ junta varios paths en un solo comando: con cp --parents suele fallar si los padres son distintos.\nPara conservar carpetas al copiar: cp --parents (ver cp).",
-    example: "find / -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles \\; 2>/dev/null",
+      "Busca en el árbol. Si el enunciado no limita la ruta, empezás en /. -user es el dueño (no «quién lo creó»). -type f = archivo, no directorio. -mtime -1 = modificado en el último día; el 1 solo no alcanza.\n2>/dev/null esconde Permission denied.\n-xdev no baja a otros filesystems (así evitás basura de /proc). Tiene que ir con guión. En videos a veces escriben find / xdev …: eso no es la opción — find busca una carpeta llamada xdev; si no existe, 2>/dev/null se come el error y igual puede entrar /proc.\n-exec COMANDO {} \\; corre el comando una vez por resultado. {} es la ruta. El \\; cierra el -exec. Con \\+ junta varios paths en un solo comando: con cp --parents suele fallar si los padres son distintos (en el video a veces usan \\+; acá conviene \\;).\nPara conservar carpetas al copiar: cp --parents (ver cp).",
+    example: "find / -xdev -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles/ \\; 2>/dev/null",
     tldr: { page: "find" },
   },
   {
@@ -648,14 +656,17 @@ const es: GlossaryEntry[] = [
   },
   {
     term: "lsblk",
-    definition: "Lista discos y particiones en árbol. -f agrega el sistema de archivos y el UUID. El disco que tiene / y /boot no se reparte de nuevo.",
-    example: "lsblk -f",
+    definition:
+      "Lista discos y particiones en árbol. Sin opciones ves NAME, SIZE, TYPE y MOUNTPOINTS. Con -f sumás FSTYPE, UUID y el punto de montaje.\n\nQué mirar (server de práctica):\n• sda = disco del sistema. Tiene /, /boot, a veces /boot/efi. No lo reparticiones ni lo uses de PV.\n• sdb = disco extra (en el lab suele ser ~1G). Ahí va el LVM (pvcreate / partición). Si FSTYPE está vacío, todavía no está formateado ni es PV.\n• TYPE disk = disco entero; part = partición; lvm = LV (aparece después de lvcreate).\n• MOUNTPOINTS: si dice / o /boot, es el sistema: no lo toques.\n\nEjemplo real (lsblk -f en el server, antes del LVM):\nsda → sda2 vfat /boot/efi · sda3 xfs /boot · sda4 xfs /\nsdb → sin FSTYPE ni mount (el disco libre del lab).\n\nQué quedarte: cuál es el disco libre (sdb), cuál es el del sistema (sda con /), y con -f el UUID si después lo ponés en fstab.",
+    example: "lsblk · lsblk -f",
     tldr: { page: "lsblk", platform: "linux" },
   },
   {
     term: "blkid",
-    definition: "Muestra UUID y tipo de un dispositivo. Ese UUID es el que va en fstab si la línea no usa el nombre /dev, que puede cambiar de orden.",
-    example: "blkid /dev/sdb1",
+    aliases: ["UUID"],
+    definition:
+      "Muestra el UUID y el tipo (TYPE) de un dispositivo. No monta ni formatea nada: solo lee.\n\n¿Para qué sirve?\nPara armar la línea de /etc/fstab sin usar /dev/sdb2 o /dev/mapper/…. Esos nombres pueden cambiar; el UUID no.\n\nQué mirar en la salida:\n• UUID=\"…\" → el valor que pegás en fstab (sin comillas)\n• TYPE=\"ext4\" o TYPE=\"swap\" → confirma que formateaste bien\n\nEn los labs:\n• wshare → blkid /dev/wgroup/wshare (el LV, no sdb1)\n• swap → blkid /dev/sdb2 (la partición swap, no wshare)\n\nEjemplo real:\n/dev/wgroup/wshare: UUID=\"d92a4399-…\" TYPE=\"ext4\"\n\nSi blkid no muestra nada útil, todavía no hay filesystem/swap (falta mkfs o mkswap). lsblk -f también muestra UUID, pero blkid es el comando típico para copiarlo.",
+    example: "blkid /dev/wgroup/wshare · blkid /dev/sdb2",
     tldr: { page: "blkid", platform: "linux" },
   },
   {
@@ -765,15 +776,15 @@ const es: GlossaryEntry[] = [
   {
     term: "vo",
     definition:
-      "Nombre del LV en el lab de resize / video Q15b. Vive en el VG vgroup. Ruta: /dev/vgroup/vo.\n\nPrep típica del video: lvcreate -L 180M -n vo vgroup. Después se extiende a ~230M con lvextend (y -r o resize2fs). El blanco del lab suele ser ~50 MB con lvresize -r.",
-    example: "lvcreate -L 180M -n vo vgroup · lvextend -L 230M -r /dev/vgroup/vo",
+      "Nombre del Logical Volume (LV) en el lab de resize (video Q17). No es un comando: es solo el nombre, como wshare en el lab anterior.\n\nVive en el VG vgroup. Ruta: /dev/vgroup/vo. Se monta en /mnt/vo.\n\nEn la prep: lvcreate -n vo -l 12 vgroup → 12 PE × 10 MB = 120 MB.\nDespués se achica: resize2fs … 50M y lvreduce -l 5 → 5 × 10 = 50 MB (el lab acepta 30–70).",
+    example: "lvcreate -n vo -l 12 vgroup · lvreduce -l 5 /dev/vgroup/vo · lvs /dev/vgroup/vo",
     tldr: { page: "lvcreate", platform: "linux" },
   },
   {
     term: "vgroup",
     definition:
-      "Nombre del VG en el lab de resize / video Q15b (distinto de wgroup del lab de wshare).\n\nPrep del video: vgcreate -s 10M vgroup /dev/sdb. -s 10M = cada PE mide 10 MB. Después lvcreate -L 180M -n vo vgroup.",
-    example: "vgcreate -s 10M vgroup /dev/sdb · vgs",
+      "Nombre del VG en el lab de resize / video Q17 (distinto de wgroup del lab de wshare).\n\nPrep: vgcreate -s 10M vgroup /dev/sdb3. -s 10M = cada PE mide 10 MB. Después lvcreate -n vo -l 12 vgroup (120 MB) y se achica a -l 5 (50 MB).",
+    example: "vgcreate -s 10M vgroup /dev/sdb3 · vgs",
     tldr: { page: "vgcreate", platform: "linux" },
   },
   {
@@ -1006,9 +1017,17 @@ const en: GlossaryEntry[] = [
   },
   {
     term: "getfacl",
-    definition: "Shows the ACLs on a file or directory: user, group, other, and mask. Use it to verify the lab, not only chmod.",
+    definition:
+      "Shows the ACLs on a file or directory: user::, user:name:, group::, mask::, and other:. Use it to verify the lab, not only chmod. The mask:: line is the ceiling for named ACLs: see the mask entry.",
     example: "getfacl /var/tmp/fstab",
     tldr: { page: "getfacl", platform: "linux" },
+  },
+  {
+    term: "mask · ACL mask",
+    aliases: ["mask", "mask::", "ACL mask"],
+    definition:
+      "In getfacl, mask:: is the ceiling for what extra ACLs can be worth: user:name: (erik, felipe, …) and often the effective group::. It is not a user named mask.\n\nIf user:erik:rw- and mask::rw-, erik's effective permission is rw-. If the mask were only r--, even with rw- written the effective stays read-only. getfacl -e (or a #effective: comment) shows that cut.\n\nIt does not limit user:: (owner) or other::. When you run setfacl -m u:erik:rw, the system usually raises mask:: to rw- on its own so erik's write can take effect.",
+    example: "getfacl /var/tmp/fstab → look at mask:: next to user:erik:",
   },
   {
     term: "setfacl",
@@ -1114,7 +1133,7 @@ const en: GlossaryEntry[] = [
     term: "LVM",
     aliases: ["Logical Volume Manager"],
     definition:
-      "Logical Volume Manager: a way to use disks in layers, with names, instead of depending only on raw /dev/sdb1.\n\nLayers (real names)\n• PV (Physical Volume): disk or partition marked with pvcreate.\n• VG (Volume Group): one or more PVs joined into a pool of space.\n• LV (Logical Volume): named slice cut from the VG; you format and mount it.\n\nWhat is it for?\nA sysadmin uses it when Ops wants a shared space (service files, dumps, data) that has a name, mounts on a folder, and can grow later without wiping everything and repartitioning by hand.\n\nFlow\ndisk or partition → PV → VG → LV → filesystem → mount.\n\nLEGO analogy (only to visualize): the PV is a plate you prepare; the VG is joining plates into a platform; the LV is the building on top that you actually use. PEs are the fixed-size bricks the VG hands out.\n\next4 and /mnt/wshare are no longer LVM: that is the format and the mount on top of the LV.",
+      "Logical Volume Manager: a way to use disks in layers, with names, instead of depending only on raw /dev/sdb1.\n\nLayers (real names)\n• PV (Physical Volume): disk or partition marked with pvcreate.\n• VG (Volume Group): one or more PVs joined into a pool of space.\n• PE (Physical Extent): fixed-size brick inside the VG (e.g. 8 MiB with vgcreate -s 8M). Not a separate disk: it is the unit the VG uses to hand out space.\n• LV (Logical Volume): named slice cut from the VG (a bunch of PEs); you format and mount it.\n\nWhat is it for?\nA sysadmin uses it when Ops wants a shared space (service files, dumps, data) that has a name, mounts on a folder, and can grow later without wiping everything and repartitioning by hand.\n\nFlow\ndisk or partition → PV → VG (split into PEs) → LV → filesystem → mount.\n\nLEGO analogy (only to visualize): the PV is a plate you prepare; the VG is joining plates into a platform; PEs are the fixed-size bricks; the LV is the building (N bricks) you actually use.\n\nLab example: 50 PEs × 8 MiB = 400 MB (lvcreate -l 50).\n\next4 and /mnt/wshare are no longer LVM: that is the format and the mount on top of the LV.",
     example: "pvcreate /dev/sdb1 · vgcreate -s 8M wgroup /dev/sdb1 · lvcreate -n wshare -l 50 wgroup · mkfs.ext4 /dev/wgroup/wshare · mkdir -p /mnt/wshare · mount /dev/wgroup/wshare /mnt/wshare",
   },
   {
@@ -1394,8 +1413,8 @@ const en: GlossaryEntry[] = [
   {
     term: "find",
     definition:
-      "Searches the tree. If the question does not limit the path, start at /. -user is the owner (not «who created it»). -type f = file, not directory. -mtime -1 = modified in the last day; bare 1 is not enough.\n2>/dev/null hides Permission denied.\n-xdev does not descend other filesystems (avoids /proc junk).\n-exec COMMAND {} \\; runs the command once per hit. {} is the path. \\; closes -exec. \\+ packs many paths into one command: with cp --parents that often fails when parents differ.\nTo keep folders when copying: cp --parents (see cp).",
-    example: "find / -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles \\; 2>/dev/null",
+      "Searches the tree. If the question does not limit the path, start at /. -user is the owner (not «who created it»). -type f = file, not directory. -mtime -1 = modified in the last day; bare 1 is not enough.\n2>/dev/null hides Permission denied.\n-xdev does not descend other filesystems (avoids /proc junk). It needs the dash. Videos sometimes type find / xdev …: that is not the option — find looks for a folder named xdev; if missing, 2>/dev/null eats the error and /proc can still sneak in.\n-exec COMMAND {} \\; runs the command once per hit. {} is the path. \\; closes -exec. \\+ packs many paths into one command: with cp --parents that often fails when parents differ (videos sometimes use \\+; here prefer \\;).\nTo keep folders when copying: cp --parents (see cp).",
+    example: "find / -xdev -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles/ \\; 2>/dev/null",
     tldr: { page: "find" },
   },
   {
@@ -1523,14 +1542,17 @@ const en: GlossaryEntry[] = [
   },
   {
     term: "lsblk",
-    definition: "Lists disks and partitions as a tree. -f adds the filesystem and the UUID. The disk that holds / and /boot is not partitioned again.",
-    example: "lsblk -f",
+    definition:
+      "Lists disks and partitions as a tree. With no options you see NAME, SIZE, TYPE, and MOUNTPOINTS. With -f you also get FSTYPE, UUID, and the mount point.\n\nWhat to look at (practice server):\n• sda = system disk. It has /, /boot, sometimes /boot/efi. Do not repartition it or use it as a PV.\n• sdb = extra disk (in the lab often ~1G). That is where LVM goes (pvcreate / a partition). If FSTYPE is empty, it is not formatted and not a PV yet.\n• TYPE disk = whole disk; part = partition; lvm = LV (shows up after lvcreate).\n• MOUNTPOINTS: if it says / or /boot, that is the system: leave it alone.\n\nReal example (lsblk -f on the server, before LVM):\nsda → sda2 vfat /boot/efi · sda3 xfs /boot · sda4 xfs /\nsdb → no FSTYPE and no mount (the free lab disk).\n\nWhat to keep: which disk is free (sdb), which is the system (sda with /), and with -f the UUID if you later put it in fstab.",
+    example: "lsblk · lsblk -f",
     tldr: { page: "lsblk", platform: "linux" },
   },
   {
     term: "blkid",
-    definition: "Prints the UUID and type of a device. That UUID is what goes in fstab when the line does not use the /dev name, which can change order.",
-    example: "blkid /dev/sdb1",
+    aliases: ["UUID"],
+    definition:
+      "Prints the UUID and type (TYPE) of a device. It does not mount or format anything: it only reads.\n\nWhat is it for?\nBuilding the /etc/fstab line without using /dev/sdb2 or /dev/mapper/…. Those names can change; the UUID does not.\n\nWhat to look at in the output:\n• UUID=\"…\" → the value you paste into fstab (no quotes)\n• TYPE=\"ext4\" or TYPE=\"swap\" → confirms the format step worked\n\nIn the labs:\n• wshare → blkid /dev/wgroup/wshare (the LV, not sdb1)\n• swap → blkid /dev/sdb2 (the swap partition, not wshare)\n\nReal example:\n/dev/wgroup/wshare: UUID=\"d92a4399-…\" TYPE=\"ext4\"\n\nIf blkid shows nothing useful, there is still no filesystem/swap (mkfs or mkswap is missing). lsblk -f also shows UUID, but blkid is the usual command to copy it from.",
+    example: "blkid /dev/wgroup/wshare · blkid /dev/sdb2",
     tldr: { page: "blkid", platform: "linux" },
   },
   {
@@ -1640,15 +1662,15 @@ const en: GlossaryEntry[] = [
   {
     term: "vo",
     definition:
-      "LV name in the resize lab / video Q15b. Lives in VG vgroup. Path: /dev/vgroup/vo.\n\nTypical video prep: lvcreate -L 180M -n vo vgroup. Then extend to ~230M with lvextend (and -r or resize2fs). The lab target is often ~50 MB with lvresize -r.",
-    example: "lvcreate -L 180M -n vo vgroup · lvextend -L 230M -r /dev/vgroup/vo",
+      "Name of the Logical Volume (LV) in the resize lab (video Q17). Not a command: just the name, like wshare in the previous lab.\n\nLives in VG vgroup. Path: /dev/vgroup/vo. Mounted at /mnt/vo.\n\nIn prep: lvcreate -n vo -l 12 vgroup → 12 PEs × 10 MB = 120 MB.\nThen shrink: resize2fs … 50M and lvreduce -l 5 → 5 × 10 = 50 MB (lab accepts 30–70).",
+    example: "lvcreate -n vo -l 12 vgroup · lvreduce -l 5 /dev/vgroup/vo · lvs /dev/vgroup/vo",
     tldr: { page: "lvcreate", platform: "linux" },
   },
   {
     term: "vgroup",
     definition:
-      "VG name in the resize lab / video Q15b (different from wgroup in the wshare lab).\n\nVideo prep: vgcreate -s 10M vgroup /dev/sdb. -s 10M = each PE is 10 MB. Then lvcreate -L 180M -n vo vgroup.",
-    example: "vgcreate -s 10M vgroup /dev/sdb · vgs",
+      "VG name in the resize lab / video Q17 (different from wgroup in the wshare lab).\n\nPrep: vgcreate -s 10M vgroup /dev/sdb3. -s 10M = each PE is 10 MB. Then lvcreate -n vo -l 12 vgroup (120 MB) and shrink to -l 5 (50 MB).",
+    example: "vgcreate -s 10M vgroup /dev/sdb3 · vgs",
     tldr: { page: "vgcreate", platform: "linux" },
   },
   {

@@ -8,6 +8,8 @@ export type RunStatus = "in_progress" | "completed" | "timed_out" | "abandoned";
 export type ExtrasChoice = "pending" | "continue" | "stop";
 export type Difficulty = "very_low" | "low" | "normal" | "high" | "very_high";
 export type ExamMode = "pausable" | "fixed";
+/** exam = simulacro con reloj. leftover = solo pendientes, sin límite de 3 h. */
+export type RunKind = "exam" | "leftover";
 
 /** Practice with pauses stays saved. Set this to true to show that mode again. */
 export const PAUSABLE_ENABLED = false;
@@ -44,6 +46,10 @@ export interface Run {
   status: RunStatus;
   currentIndex: number;
   extrasChoice: ExtrasChoice;
+  /** Missing on older runs = exam. */
+  kind?: RunKind;
+  /** Práctica de origen cuando kind es leftover. */
+  sourceRunId?: string | null;
   labs: LabRecord[];
 }
 
@@ -86,17 +92,36 @@ function activeSec(run: Run, now: number): number {
   return Math.max(0, elapsed);
 }
 
+export function runKind(run: Run): RunKind {
+  return run.kind === "leftover" ? "leftover" : "exam";
+}
+
+/** Labs sin terminar de verdad (no done, no skipped). */
+export function isLeftoverStatus(status: LabStatus): boolean {
+  return status === "pending" || status === "revisit" || status === "redo";
+}
+
+export function leftoverLabs(run: Run): LabRecord[] {
+  return countedLabs(run.labs, run.edition).filter((lab) => isLeftoverStatus(lab.status));
+}
+
 export function remainingSec(run: Run, now = Date.now()): number {
+  if (runKind(run) === "leftover") return Number.POSITIVE_INFINITY;
   return Math.max(0, run.globalLimitSec - activeSec(run, now));
 }
 
 export function wallSec(run: Run, now = Date.now()): number {
+  if (runKind(run) === "leftover") return activeSec(run, now);
   return Math.min(run.globalLimitSec, activeSec(run, now));
 }
 
 function alignRun(run: Run): void {
   if (run.mode !== "fixed" && run.mode !== "pausable") run.mode = "pausable";
   if (run.edition !== "v10" && run.edition !== "v9") run.edition = "v9";
+  if (run.kind !== "leftover") run.kind = "exam";
+  if (run.sourceRunId !== undefined && run.sourceRunId !== null && typeof run.sourceRunId !== "string") {
+    run.sourceRunId = null;
+  }
   if (typeof run.pausedSec !== "number") run.pausedSec = 0;
   if (!run.pausedAt) run.pausedAt = null;
   if (!Array.isArray(run.labs)) {
@@ -126,7 +151,9 @@ function normalizeLab(lab: LabRecord): LabRecord {
     labId: typeof lab.labId === "string" ? lab.labId : base.labId,
     startedAt: lab.startedAt ?? null,
     finishedAt: lab.finishedAt ?? null,
-    durationSec: typeof lab.durationSec === "number" ? lab.durationSec : null,
+    // Revisit no es un intento terminado: no cuenta tiempo en stats (ni datos viejos).
+    durationSec:
+      status === "revisit" ? null : typeof lab.durationSec === "number" ? lab.durationSec : null,
     status,
     usedHelp: Boolean(lab.usedHelp),
     attempts: typeof lab.attempts === "number" ? lab.attempts : 0,
@@ -190,7 +217,69 @@ export function startRun(mode: ExamMode = "fixed", edition: Edition = "v10"): Ru
     status: "in_progress",
     currentIndex: 0,
     extrasChoice: "pending",
+    kind: "exam",
+    sourceRunId: null,
     labs: LABS.map((lab) => blankLab(lab.id)),
+  };
+  store.runs.push(run);
+  saveStore(store);
+  return run;
+}
+
+/**
+ * Nueva práctica solo con labs pendientes/revisit/redo de un simulacro ya cerrado.
+ * Modo pausable: esos tiempos no entran al promedio del modo sin pausas.
+ */
+export function startLeftoverRun(sourceId: string): Run | null {
+  const store = loadStore();
+  const source = store.runs.find((run) => run.id === sourceId);
+  if (!source || source.status === "in_progress") return null;
+  if (runKind(source) === "leftover") return null;
+  const pending = leftoverLabs(source);
+  if (!pending.length) return null;
+
+  const nowIso = new Date().toISOString();
+  for (const run of store.runs) {
+    if (run.status !== "in_progress") continue;
+    if (run.pausedAt) {
+      run.pausedSec += Math.max(0, (Date.parse(nowIso) - Date.parse(run.pausedAt)) / 1000);
+      run.pausedAt = null;
+    }
+    run.status = "abandoned";
+    run.finishedAt = nowIso;
+  }
+
+  const labs = LABS.map((lab) => {
+    const from = source.labs.find((item) => item.labId === lab.id);
+    const next = normalizeLab(from ?? blankLab(lab.id));
+    if (!isLeftoverStatus(next.status)) return next;
+    next.durationSec = null;
+    next.startedAt = null;
+    next.finishedAt = null;
+    if (next.status === "redo") next.status = "pending";
+    return next;
+  });
+
+  const first = labs.findIndex(
+    (lab) => isLeftoverStatus(lab.status) && !SETUP_IDS.has(lab.labId) && !isOffEdition(lab.labId, source.edition ?? "v10"),
+  );
+
+  const run: Run = {
+    id: crypto.randomUUID(),
+    startedAt: nowIso,
+    finishedAt: null,
+    globalLimitSec: EXAM_LIMIT_SEC,
+    // Mismo modo que el simulacro para verse en el historial; kind=leftover lo saca de promedios.
+    mode: source.mode === "pausable" ? "pausable" : "fixed",
+    edition: source.edition === "v9" ? "v9" : "v10",
+    pausedAt: null,
+    pausedSec: 0,
+    status: "in_progress",
+    currentIndex: first >= 0 ? first : 0,
+    extrasChoice: "pending",
+    kind: "leftover",
+    sourceRunId: source.id,
+    labs,
   };
   store.runs.push(run);
   saveStore(store);
@@ -282,43 +371,55 @@ export function filterRuns(store: Store, mode?: ExamMode): Store {
   return { runs: store.runs.filter((run) => run.mode === mode) };
 }
 
+/**
+ * Solo labs Done con tiempo en un simulacro (kind exam).
+ * leftover / skipped / revisit / pending / redo no entran a promedio, mejor ni delta.
+ */
 export function finishedSamples(store: Store, labId: string): LabRecord[] {
   return store.runs
     .slice()
     .sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt))
+    .filter((run) => runKind(run) === "exam")
     .flatMap((run) => run.labs)
-    .filter(
-      (lab) =>
-        lab.labId === labId &&
-        lab.durationSec != null &&
-        (lab.status === "done" || lab.status === "skipped"),
-    );
+    .filter((lab) => lab.labId === labId && lab.durationSec != null && lab.status === "done");
+}
+
+/** Último resultado terminal (done o skipped) en simulacros, para filtros de stuck / videos. */
+function terminalSamples(store: Store, labId: string): LabRecord[] {
+  return store.runs
+    .slice()
+    .sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt))
+    .filter((run) => runKind(run) === "exam")
+    .flatMap((run) => run.labs)
+    .filter((lab) => lab.labId === labId && (lab.status === "done" || lab.status === "skipped"));
 }
 
 export function aggregates(store: Store, mode?: ExamMode): LabAggregate[] {
   const scoped = filterRuns(store, mode);
   return LABS.filter((lab) => lab.track !== "setup").map((lab) => {
     const samples = finishedSamples(scoped, lab.id);
+    const terminals = terminalSamples(scoped, lab.id);
+    const lastTerminal = terminals.at(-1);
     const durations = samples.map((sample) => sample.durationSec ?? 0);
     const last = samples.at(-1);
     const prev = samples.at(-2);
-    const lastDone = [...samples].reverse().find((sample) => sample.status === "done");
     const sum = durations.reduce((acc, n) => acc + n, 0);
+    const skippedOnly = terminals.filter((sample) => sample.status === "skipped");
     return {
       labId: lab.id,
       samples: samples.length,
-      done: samples.filter((sample) => sample.status === "done").length,
-      skipped: samples.filter((sample) => sample.status === "skipped").length,
+      done: samples.length,
+      skipped: skippedOnly.length,
       help: samples.filter((sample) => sample.usedHelp).length,
       avgSec: durations.length ? sum / durations.length : null,
       bestSec: durations.length ? Math.min(...durations) : null,
       lastSec: last?.durationSec ?? null,
       prevSec: prev?.durationSec ?? null,
-      lastDifficulty: lastDone?.difficulty ?? null,
-      lastSkipped: last?.status === "skipped" && !labVideosFullyReviewed(last, lab.id),
-      videosReviewed: last?.status === "skipped" && labVideosFullyReviewed(last, lab.id),
+      lastDifficulty: last?.difficulty ?? null,
+      lastSkipped: lastTerminal?.status === "skipped" && !labVideosFullyReviewed(lastTerminal, lab.id),
+      videosReviewed: lastTerminal?.status === "skipped" && labVideosFullyReviewed(lastTerminal, lab.id),
       reviewedVideoUrls:
-        last?.status === "skipped" ? reviewedUrlsForLab(last, lab.id) : [],
+        lastTerminal?.status === "skipped" ? reviewedUrlsForLab(lastTerminal, lab.id) : [],
     };
   });
 }

@@ -7,6 +7,7 @@
 - thiago: **secundario** `developer`, con shell, fuera de `sysadm`
 - diego: `/sbin/nologin`, fuera de `sysadm`
 - `%sysadm` puede `sudo useradd`; felipe `NOPASSWD` passwd
+- Como felipe: crear usuarios `joaquin` y `roman` (prueba del `sudo useradd`)
 
 ## Probe
 
@@ -14,6 +15,7 @@
 id felipe; id erik; id thiago; id diego
 getent group sysadm developer
 getent passwd diego
+getent passwd joaquin roman
 sudo -l -U felipe
 sudo -l -U thiago
 # opcional: ver el archivo (main o drop-in)

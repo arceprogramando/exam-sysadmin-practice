@@ -265,6 +265,12 @@ export interface Copy {
   timedOut: string;
   abandoned: string;
   inProgress: string;
+  continueLeftovers: (n: number) => string;
+  continueLeftoversHint: string;
+  leftoverBadge: string;
+  leftoverNote: string;
+  leftoverClock: string;
+  leftoverEmpty: string;
   statusPassed: string;
   statusRedo: string;
   statusOpen: string;
@@ -386,11 +392,11 @@ const es: Copy = {
   themeDark: "Oscuro",
   themeToLight: "Cambiar a modo claro",
   themeToDark: "Cambiar a modo oscuro",
-  bannerLead: "Práctica personal para un examen de sysadmin Linux el 6 de noviembre.",
+  bannerLead: "Práctica personal para un examen de sysadmin Linux en noviembre (fecha tentativa: 13; todavía no confirmada).",
   bannerTail: "No es un examen oficial.",
   homeTitle: "Práctica personal para un examen de sysadmin Linux",
-  homeDescription: "Hola, me estoy preparando para un examen de sysadmin Linux el 6 de noviembre y estoy usando esto como práctica personal.",
-  hello: "Hola, me estoy preparando para un examen de sysadmin Linux el 6 de noviembre, y estoy usando esto como práctica personal.",
+  homeDescription: "Hola, me estoy preparando para un examen de sysadmin Linux en noviembre (fecha tentativa: 13; todavía no confirmada) y estoy usando esto como práctica personal.",
+  hello: "Hola, me estoy preparando para un examen de sysadmin Linux en noviembre (fecha tentativa: 13; todavía no confirmada), y estoy usando esto como práctica personal.",
   kicker: "Práctica personal · examen sysadmin",
   headlineLead: "Primero lo que",
   headlineMark: "ya sabés hacer.",
@@ -526,7 +532,7 @@ const es: Copy = {
   difficultyAria: "Dificultad del puntaje",
   levels: levelsEs,
   helpAsked: "Ayuda pedida",
-  helpMarked: "Quedó marcado en las estadísticas de este lab. En una estación de examen esto no suele estar.",
+  helpMarked: "Quedó marcado en las estadísticas de este lab.",
   stepsTitle: "Detalle del enunciado",
   commandsTitle: "Comandos para mirar",
   copyCmd: "Copiar",
@@ -553,6 +559,14 @@ const es: Copy = {
   timedOut: "Se acabaron las 3 horas",
   abandoned: "Práctica abandonada",
   inProgress: "En curso",
+  continueLeftovers: (n) => (n === 1 ? "Continuar 1 pendiente" : `Continuar ${n} pendientes`),
+  continueLeftoversHint:
+    "Sin reloj de 3 horas. Solo los labs que no terminaste. Esos tiempos no entran al promedio ni al mejor del simulacro.",
+  leftoverBadge: "Pendientes · sin límite",
+  leftoverNote:
+    "Esto no es el simulacro: son solo los labs que quedaron sin Done. Podés terminarlos con calma; el reloj de 3 horas ya no corre.",
+  leftoverClock: "Sin límite",
+  leftoverEmpty: "No quedan labs pendientes en esta práctica.",
   statusPassed: "Pasado",
   statusRedo: "Rehacer",
   statusOpen: "Quedó abierto al cortar el tiempo",
@@ -573,7 +587,8 @@ const es: Copy = {
   statsTitle: "Estadísticas de la práctica",
   statsDescription: "Tiempos por lab, promedio, ayuda pedida y mejora contra la práctica anterior. Guardado en este navegador.",
   statsHeading: "Estadísticas",
-  statsIntro: "Separadas por modo. Sin pausas es la que importa para medir tiempos. Con pausas es práctica libre.",
+  statsIntro:
+    "Separadas por modo. Sin pausas es la que importa para medir tiempos. Con pausas es práctica libre. Promedio, mejor y delta solo cuentan labs marcados Done (terminados): revisit, skipped o sin terminar no entran. Verde = menos tiempo (mejor); rojo = más tiempo (peor).",
   coverageTitle: "Qué falta practicar",
   coverageLead: "Las barras agrupan los labs por tema. El largo es cuánto de ese grupo ya hiciste en este modo.",
   coverageNote:
@@ -685,11 +700,11 @@ const en: Copy = {
   themeDark: "Dark",
   themeToLight: "Switch to light mode",
   themeToDark: "Switch to dark mode",
-  bannerLead: "Personal practice for a Linux sysadmin exam on November 6.",
+  bannerLead: "Personal practice for a Linux sysadmin exam in November (tentative date: the 13th; not confirmed yet).",
   bannerTail: "This is not an official exam.",
   homeTitle: "Personal practice for a Linux sysadmin exam",
-  homeDescription: "I am preparing for a Linux sysadmin exam on November 6, and I am using this as personal practice.",
-  hello: "I am preparing for a Linux sysadmin exam on November 6, and I am using this as personal practice.",
+  homeDescription: "I am preparing for a Linux sysadmin exam in November (tentative date: the 13th; not confirmed yet), and I am using this as personal practice.",
+  hello: "I am preparing for a Linux sysadmin exam in November (tentative date: the 13th; not confirmed yet), and I am using this as personal practice.",
   kicker: "Personal practice · sysadmin exam",
   headlineLead: "Do what you",
   headlineMark: "already know.",
@@ -825,7 +840,7 @@ const en: Copy = {
   difficultyAria: "How hard the points felt",
   levels: levelsEn,
   helpAsked: "Help requested",
-  helpMarked: "This lab is marked in the stats. An exam station usually does not have this.",
+  helpMarked: "This lab is marked in the stats.",
   stepsTitle: "Task detail",
   commandsTitle: "Commands to look at",
   copyCmd: "Copy",
@@ -852,6 +867,14 @@ const en: Copy = {
   timedOut: "The 3 hours are over",
   abandoned: "Practice abandoned",
   inProgress: "In progress",
+  continueLeftovers: (n) => (n === 1 ? "Continue 1 leftover" : `Continue ${n} leftovers`),
+  continueLeftoversHint:
+    "No 3-hour clock. Only labs you did not finish. Those times do not enter the timed-run average or best.",
+  leftoverBadge: "Leftovers · no limit",
+  leftoverNote:
+    "This is not the timed exam: only labs that are not Done yet. Finish them at your pace; the 3-hour clock is off.",
+  leftoverClock: "No limit",
+  leftoverEmpty: "No leftover labs in this practice.",
   statusPassed: "Skipped",
   statusRedo: "Redo",
   statusOpen: "Still open when time ran out",
@@ -872,7 +895,8 @@ const en: Copy = {
   statsTitle: "Practice stats",
   statsDescription: "Time per lab, average, help requested, and improvement against the previous attempt. Stored in this browser.",
   statsHeading: "Stats",
-  statsIntro: "Split by mode. Without pauses is what matters for measuring times. With pauses is free practice.",
+  statsIntro:
+    "Split by mode. Without pauses is what matters for measuring times. With pauses is free practice. Average, best and delta only count labs marked Done: revisit, skipped or unfinished do not count. Green = less time (better); red = more time (worse).",
   coverageTitle: "What still needs practice",
   coverageLead: "The bars group the labs by topic. The length is how much of that group you have already done in this mode.",
   coverageNote:

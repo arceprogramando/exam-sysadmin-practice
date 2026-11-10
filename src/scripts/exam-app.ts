@@ -4,10 +4,14 @@ import { lvmLabFlowHtml } from "../lib/lvm-diagram";
 import {
   countedLabs,
   isHard,
+  isLeftoverStatus,
+  leftoverLabs,
   loadStore,
   remainingSec,
   deleteRun,
   replaceRun,
+  runKind,
+  startLeftoverRun,
   wallSec,
   type Difficulty,
   type LabRecord,
@@ -137,7 +141,9 @@ function commit(next: Run): void {
 
 function expireIfNeeded(): void {
   const run = current();
-  if (!run || run.status !== "in_progress" || run.pausedAt || remainingSec(run) > 0) return;
+  if (!run || run.status !== "in_progress" || runKind(run) === "leftover" || run.pausedAt || remainingSec(run) > 0) {
+    return;
+  }
   const finishedAt = new Date(Date.parse(run.startedAt) + (run.globalLimitSec + run.pausedSec) * 1000).toISOString();
   run.status = "timed_out";
   run.finishedAt = finishedAt;
@@ -178,11 +184,12 @@ function clockZone(left: number, limit: number): "good" | "warn" | "bad" {
 }
 
 function paintClock(run: Run): void {
-  const left = remainingSec(run);
+  const leftover = runKind(run) === "leftover";
+  const left = leftover ? wallSec(run) : remainingSec(run);
   const limit = Math.max(1, run.globalLimitSec);
-  const ratio = Math.min(1, Math.max(0, left / limit));
+  const ratio = leftover ? 1 : Math.min(1, Math.max(0, left / limit));
   const paused = run.mode === "pausable" && Boolean(run.pausedAt);
-  const zone = clockZone(left, limit);
+  const zone = leftover ? "good" : clockZone(left, limit);
   const toneClass = paused ? "text-ink" : zone === "bad" ? "text-bad" : zone === "warn" ? "text-warn" : "text-good";
   if (globalClock) {
     globalClock.textContent = formatClock(left);
@@ -295,7 +302,8 @@ function examView(run: Run): HTMLElement {
 
 function boardView(run: Run): HTMLElement {
   const page = el("div", "flex flex-col gap-6 pb-12");
-  page.append(clockBar(run, false), strategyNote(), taskList(run));
+  const leftover = runKind(run) === "leftover";
+  page.append(clockBar(run, false), leftover ? leftoverNote() : strategyNote(), taskList(run));
   const foot = el("div", "flex flex-col items-start gap-2");
   const close = button(copy().closeRun, "btn btn-quiet w-fit");
   close.addEventListener("click", () => closeRun());
@@ -318,16 +326,40 @@ function strategyNote(): HTMLElement {
   return note;
 }
 
+function leftoverNote(): HTMLElement {
+  const ui = copy();
+  const note = el("section", "strategy-note");
+  note.append(
+    el("h2", "strategy-note-title", ui.leftoverBadge),
+    el("p", "strategy-note-body", ui.leftoverNote),
+    el("p", "strategy-note-hint", ui.enterHint),
+  );
+  return note;
+}
+
+function visibleOnBoard(run: Run, record: LabRecord | undefined): boolean {
+  if (!record) return false;
+  if (runKind(run) !== "leftover") return true;
+  if (isLeftoverStatus(record.status)) return true;
+  if (record.status === "done" && record.finishedAt && Date.parse(record.finishedAt) >= Date.parse(run.startedAt)) {
+    return true;
+  }
+  return false;
+}
+
 function taskList(run: Run): HTMLElement {
   const wrap = el("div", "flex flex-col gap-6");
-  const indexed = labs().map((lab, index) => ({ lab, index }));
+  const indexed = labs()
+    .map((lab, index) => ({ lab, index, record: run.labs[index] }))
+    .filter((item) => visibleOnBoard(run, item.record));
   const pdf = indexed.filter((item) => item.lab.track === "pdf");
   wrap.append(taskGroup(run, copy().groupClient, "client", pdf.filter((item) => machineOf(item.lab) === "client")));
   wrap.append(taskGroup(run, copy().groupServer, "server", pdf.filter((item) => machineOf(item.lab) === "server")));
   const both = pdf.filter((item) => machineOf(item.lab) === "both");
   if (both.length) wrap.append(taskGroup(run, copy().groupBoth, "both", both));
   const extras = indexed.filter((item) => item.lab.track === "extra");
-  wrap.append(taskGroup(run, copy().groupExtras, "extras", extras));
+  if (extras.length) wrap.append(taskGroup(run, copy().groupExtras, "extras", extras));
+  if (!indexed.length) wrap.append(el("p", "rounded-3xl border border-line bg-card p-5 text-muted", copy().leftoverEmpty));
   return wrap;
 }
 
@@ -504,10 +536,13 @@ function radioMark(index: number, value: "revisit" | "done", label: string, chec
 
 function clockBar(run: Run, showLab: boolean): HTMLElement {
   const bar = el("section", "rounded-3xl border border-line bg-card p-4 sm:p-5");
+  if (runKind(run) === "leftover") {
+    bar.append(el("p", "mb-3 text-xs font-semibold tracking-[0.16em] text-good uppercase", copy().leftoverBadge));
+  }
   const counts = el("dl", "clock-counts");
   counts.style.setProperty("--clock-count", showLab ? "6" : "5");
-  const scored = countedLabs(run.labs, run.edition);
-  const leftTasks = scored.filter((item) => item.status !== "done" && item.status !== "skipped").length;
+  const scored = countedLabs(run.labs, run.edition).filter((item) => visibleOnBoard(run, item));
+  const leftTasks = scored.filter((item) => isLeftoverStatus(item.status)).length;
   const revisit = scored.filter((item) => item.status === "revisit").length;
   const done = scored.filter((item) => item.status === "done").length;
   const help = scored.filter((item) => item.usedHelp).length;
@@ -565,7 +600,11 @@ function syncFloat(run: Run): void {
     floatRoot = el("aside", "exam-float");
     floatRoot.setAttribute("aria-label", copy().clock);
     const handle = el("div", "exam-float-handle");
-    floatLabel = el("span", "", paused ? copy().paused : copy().clock);
+    floatLabel = el(
+      "span",
+      "",
+      paused ? copy().paused : runKind(run) === "leftover" ? copy().leftoverClock : copy().clock,
+    );
     handle.append(floatLabel, el("span", "exam-float-grip", "⠿"));
     handle.title = copy().floatDrag;
     const ring = el("div", "exam-ring");
@@ -607,7 +646,13 @@ function syncFloat(run: Run): void {
     });
   } else {
     floatRoot.dataset.paused = paused ? "true" : "false";
-    if (floatLabel) floatLabel.textContent = paused ? copy().paused : copy().clock;
+    if (floatLabel) {
+      floatLabel.textContent = paused
+        ? copy().paused
+        : runKind(run) === "leftover"
+          ? copy().leftoverClock
+          : copy().clock;
+    }
     paintClock(run);
     if (floatPauseBtn) {
       floatPauseBtn.textContent = paused ? copy().resumeClock : copy().pause;
@@ -798,12 +843,43 @@ function actions(run: Run): HTMLElement {
   return wrap;
 }
 
+async function beginLeftovers(source: Run): Promise<void> {
+  const pending = leftoverLabs(source);
+  if (!pending.length) {
+    await ask({
+      title: copy().leftoverBadge,
+      body: copy().leftoverEmpty,
+      confirmLabel: copy().askBack,
+    });
+    return;
+  }
+  const running = loadStore().runs.find((item) => item.status === "in_progress");
+  if (running) {
+    const ok = await ask({
+      title: copy().continueLeftovers(pending.length),
+      body: copy().confirmResumeOther,
+      confirmLabel: copy().continueLeftovers(pending.length),
+      cancelLabel: copy().askBack,
+    });
+    if (!ok) return;
+  }
+  const next = startLeftoverRun(source.id);
+  if (!next) return;
+  runId = next.id;
+  screen = "board";
+  helpVisible = false;
+  visitStart = null;
+  expiredOnce = false;
+  location.href = to("practice");
+}
+
 function summaryView(run: Run): HTMLElement {
   const scored = countedLabs(run.labs, run.edition);
   const done = scored.filter((item) => item.status === "done").length;
   const redo = scored.filter((item) => item.status === "done" && isHard(item.difficulty)).length;
   const skipped = scored.filter((item) => item.status === "skipped").length;
   const help = scored.filter((item) => item.usedHelp).length;
+  const pending = leftoverLabs(run);
   const titles: Record<Run["status"], string> = {
     completed: copy().closed,
     timed_out: copy().timedOut,
@@ -813,14 +889,24 @@ function summaryView(run: Run): HTMLElement {
   const page = el("div", "flex flex-col gap-6 pb-10");
   const head = el("section", "rounded-3xl border border-line bg-card p-6 sm:p-8");
   head.append(
-    el("p", "text-xs font-semibold tracking-[0.16em] text-muted uppercase", titles[run.status]),
+    el(
+      "p",
+      "text-xs font-semibold tracking-[0.16em] text-muted uppercase",
+      runKind(run) === "leftover" ? copy().leftoverBadge : titles[run.status],
+    ),
     el("h1", "stat-value mt-2 text-4xl font-semibold", formatClock(wallSec(run))),
     el("p", "mt-3 text-lg", copy().tally({ done, revisit: scored.filter((item) => item.status === "revisit").length, redo, skipped, help })),
     el("p", "mt-2 text-sm text-muted", copy().summaryHint),
   );
-  const row = el("div", "mt-6 flex flex-col gap-3 sm:flex-row");
+  const row = el("div", "mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap");
+  if (pending.length && runKind(run) === "exam" && (run.status === "timed_out" || run.status === "completed")) {
+    const cont = button(copy().continueLeftovers(pending.length), "btn btn-primary");
+    cont.addEventListener("click", () => beginLeftovers(run));
+    row.append(cont);
+    head.append(el("p", "mt-2 text-sm text-muted", copy().continueLeftoversHint));
+  }
   row.append(
-    link(to("stats"), copy().seeStats, "btn btn-primary"),
+    link(to("stats"), copy().seeStats, pending.length ? "btn btn-quiet" : "btn btn-primary"),
     link(to("home"), copy().backHome, "btn btn-quiet"),
   );
   const remove = button(copy().deleteRun, "btn btn-danger mt-4 w-fit");
@@ -848,7 +934,12 @@ function summaryView(run: Run): HTMLElement {
       left.append(flag);
     }
     left.append(el("p", "text-sm text-muted", statusText(record)));
-    line.append(left, el("p", "stat-value text-sm", record.durationSec == null ? "—" : formatShort(record.durationSec, pageLocale())));
+    const showTime =
+      record.status !== "revisit" && record.status !== "redo" && record.durationSec != null;
+    line.append(
+      left,
+      el("p", "stat-value text-sm", showTime ? formatShort(record.durationSec!, pageLocale()) : "—"),
+    );
     table.append(line);
   }
   page.append(table);
@@ -942,7 +1033,13 @@ function setMark(index: number, status: LabRecord["status"]): void {
   if (!run || run.status !== "in_progress") return;
   const record = run.labs[index];
   if (!record || labs()[index]?.track === "setup") return;
-  if (screen === "lab" && run.currentIndex === index) flushVisit(record);
+  // Revisit = todavía no terminó: no guardar tiempo parcial en estadísticas.
+  if (status === "revisit") {
+    if (screen === "lab" && run.currentIndex === index) visitStart = null;
+    record.durationSec = null;
+  } else if (screen === "lab" && run.currentIndex === index) {
+    flushVisit(record);
+  }
   record.status = status;
   if (status !== "done") record.difficulty = null;
   record.videosReviewed = false;

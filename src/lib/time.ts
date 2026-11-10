@@ -33,6 +33,29 @@ export function formatDelta(seconds: number, locale: Locale = "es"): string {
   return `${sign} ${formatClock(Math.abs(rounded))}`;
 }
 
+/** Menos tiempo = mejor. Compara un tiempo contra el mejor del mismo lab. */
+export function timeTone(sec: number, bestSec: number | null): "good" | "warn" | "bad" | null {
+  if (bestSec == null || bestSec <= 0 || !Number.isFinite(sec)) return null;
+  const ratio = sec / bestSec;
+  if (ratio <= 1.08) return "good";
+  if (ratio <= 1.6) return "warn";
+  return "bad";
+}
+
+/** Delta vs intento done anterior: negativo = más rápido = bien. */
+export function deltaTone(deltaSec: number): "good" | "bad" | null {
+  if (deltaSec <= -5) return "good";
+  if (deltaSec >= 5) return "bad";
+  return null;
+}
+
+export function toneClass(tone: "good" | "warn" | "bad" | null | undefined): string {
+  if (tone === "good") return "text-good";
+  if (tone === "warn") return "text-warn";
+  if (tone === "bad") return "text-bad";
+  return "";
+}
+
 export function deltaLabel(seconds: number, locale: Locale = "es"): string {
   if (locale === "en") {
     if (seconds <= -5) return "faster";

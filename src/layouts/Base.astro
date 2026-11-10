@@ -149,7 +149,7 @@ const otherHref = swapLocalePath(path, other);
         var el = document.getElementById("exam-days");
         if (!el) return;
         var locale = el.getAttribute("data-locale") || "es";
-        var exam = new Date(2026, 10, 6);
+        var exam = new Date(2026, 10, 13);
         var now = new Date();
         var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         var days = Math.round((exam.getTime() - today.getTime()) / 86400000);

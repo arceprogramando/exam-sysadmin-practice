@@ -97,7 +97,15 @@ function ensureUi(ui: ReturnType<typeof getUI>): void {
   document.body.append(tip);
   tip.addEventListener("mouseenter", () => window.clearTimeout(tipTimer));
   tip.addEventListener("mouseleave", queueHideTip);
-  document.addEventListener("scroll", hideTip, true);
+  document.addEventListener(
+    "scroll",
+    (event) => {
+      const target = event.target;
+      if (tip && target instanceof Node && tip.contains(target)) return;
+      hideTip();
+    },
+    true,
+  );
   input = overlay.querySelector("#glossary-popup-input");
   results = overlay.querySelector("#glossary-popup-results");
   empty = overlay.querySelector("#glossary-popup-empty");
@@ -365,11 +373,15 @@ function showTip(mark: HTMLElement, text: string): void {
   mark.setAttribute("aria-describedby", "glossary-tip");
   tip.textContent = text;
   tip.hidden = false;
+  tip.scrollTop = 0;
   const rect = mark.getBoundingClientRect();
   const tipRect = tip.getBoundingClientRect();
   const margin = 8;
   let top = rect.top - tipRect.height - margin;
   if (top < margin) top = rect.bottom + margin;
+  const maxTop = window.innerHeight - tipRect.height - margin;
+  if (top > maxTop) top = Math.max(margin, maxTop);
+  if (top < margin) top = margin;
   let left = rect.left;
   const maxLeft = window.innerWidth - tipRect.width - margin;
   if (left > maxLeft) left = Math.max(margin, maxLeft);

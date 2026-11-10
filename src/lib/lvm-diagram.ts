@@ -246,20 +246,18 @@ function lab17Flow(locale: Lang): string {
     t.lab17Aria,
     es
       ? [
-          { kicker: "Estado", body: "vo ya existe (o prep). Mirar lvs y df -h /mnt/vo.", tone: "warn" },
+          { kicker: "Prep", body: "Si no hay vo: fdisk sdb3 +130M 8e → vgroup PE 10M → vo -l 12 → ext4 /mnt/vo.", tone: "warn" },
           { kicker: "Desmontar", body: "umount /mnt/vo antes de achicar.", tone: "pv" },
-          { kicker: "Método A", body: "resize2fs … 50M → lvreduce -l 5 (PE 10M → 50 MB).", tone: "vg" },
-          { kicker: "Método B", body: "lvreduce -r -l 5 /dev/vgroup/vo — FS + LV juntos (tip del video).", tone: "lv" },
-          { kicker: "Opcional grow", body: "Práctica Q15b: lvextend -L 230M -r … (agrandar).", tone: "fs" },
-          { kicker: "Comprobar", body: "mount -a · lvs y df en ~30–70 MB, alineados.", tone: "fs" },
+          { kicker: "Achicar FS", body: "e2fsck -f → resize2fs … 50M (primero el ext4).", tone: "vg" },
+          { kicker: "Achicar LV", body: "lvreduce -l 5 (PE 10M → 50 MB).", tone: "lv" },
+          { kicker: "Comprobar", body: "mount -a · lvs y df en ~30–70 MB.", tone: "fs" },
         ]
       : [
-          { kicker: "State", body: "vo already exists (or prep). Check lvs and df -h /mnt/vo.", tone: "warn" },
+          { kicker: "Prep", body: "If vo is missing: fdisk sdb3 +130M 8e → vgroup PE 10M → vo -l 12 → ext4 /mnt/vo.", tone: "warn" },
           { kicker: "Unmount", body: "umount /mnt/vo before shrinking.", tone: "pv" },
-          { kicker: "Method A", body: "resize2fs … 50M → lvreduce -l 5 (PE 10M → 50 MB).", tone: "vg" },
-          { kicker: "Method B", body: "lvreduce -r -l 5 /dev/vgroup/vo — FS + LV together (video tip).", tone: "lv" },
-          { kicker: "Optional grow", body: "Q15b practice: lvextend -L 230M -r … (grow).", tone: "fs" },
-          { kicker: "Check", body: "mount -a · lvs and df near 30–70 MB, aligned.", tone: "fs" },
+          { kicker: "Shrink FS", body: "e2fsck -f → resize2fs … 50M (ext4 first).", tone: "vg" },
+          { kicker: "Shrink LV", body: "lvreduce -l 5 (PE 10M → 50 MB).", tone: "lv" },
+          { kicker: "Check", body: "mount -a · lvs and df near 30–70 MB.", tone: "fs" },
         ],
   );
 }

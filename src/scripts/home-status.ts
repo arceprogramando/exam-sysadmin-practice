@@ -8,6 +8,7 @@ import {
   isHard,
   loadStore,
   PAUSABLE_ENABLED,
+  runKind,
   startRun,
   wallSec,
   type ExamMode,
@@ -171,17 +172,18 @@ function syncHomeActions(): void {
 
 function fillModeSummary(store: Store, mode: ExamMode, prefix: string): void {
   const scoped = filterRuns(store, mode);
-  const comparable = scoped.runs
+  const examRuns = scoped.runs.filter((run) => runKind(run) === "exam");
+  const comparable = examRuns
     .filter((run) => run.status === "completed" || run.status === "timed_out")
     .sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt));
   const best = comparable.filter((run) => run.status === "completed").sort((a, b) => wallSec(a) - wallSec(b))[0];
-  const help = scoped.runs.reduce((sum, run) => sum + countedLabs(run.labs, run.edition).filter((lab) => lab.usedHelp).length, 0);
-  const skipped = scoped.runs.reduce(
+  const help = examRuns.reduce((sum, run) => sum + countedLabs(run.labs, run.edition).filter((lab) => lab.usedHelp).length, 0);
+  const skipped = examRuns.reduce(
     (sum, run) => sum + countedLabs(run.labs, run.edition).filter((lab) => lab.status === "skipped").length,
     0,
   );
 
-  setText(`${prefix}-runs`, String(scoped.runs.length));
+  setText(`${prefix}-runs`, String(examRuns.length));
   setText(`${prefix}-best`, best ? formatClock(wallSec(best)) : "—");
   setText(`${prefix}-help`, String(help));
   setText(`${prefix}-skip`, String(skipped));
@@ -196,7 +198,8 @@ function fillDelta(store: Store, mode: ExamMode, id: string): void {
   const ui = getUI(pageLocale());
   const locale = pageLocale();
   const scoped = filterRuns(store, mode);
-  const comparable = scoped.runs
+  const examRuns = scoped.runs.filter((run) => runKind(run) === "exam");
+  const comparable = examRuns
     .filter((run) => run.status === "completed" || run.status === "timed_out")
     .sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt));
   const latest = comparable.at(-1);
@@ -208,7 +211,7 @@ function fillDelta(store: Store, mode: ExamMode, id: string): void {
     delta.textContent = ui.deltaLine(formatDelta(diff, locale), deltaLabel(diff, locale));
   } else if (latest) {
     delta.textContent = ui.firstClose(formatClock(wallSec(latest)));
-  } else if (scoped.runs.length > 0) {
+  } else if (examRuns.length > 0) {
     delta.textContent = ui.openRun;
   } else {
     delta.textContent = ui.noCloseYet;

@@ -9,6 +9,7 @@ import {
   filterRuns,
   isHard,
   activeRun,
+  leftoverLabs,
   loadStore,
   markLabVideoReviewed,
   markLabVideosReviewed,
@@ -16,6 +17,8 @@ import {
   PAUSABLE_ENABLED,
   reopenRun,
   replaceStore,
+  runKind,
+  startLeftoverRun,
   wallSec,
   type Difficulty,
   type ExamMode,
@@ -23,7 +26,7 @@ import {
   type Run,
   type Store,
 } from "../lib/storage";
-import { deltaLabel, formatClock, formatDelta, formatShort, formatWhen } from "../lib/time";
+import { deltaLabel, deltaTone, formatClock, formatDelta, formatShort, formatWhen, timeTone, toneClass } from "../lib/time";
 import { ask } from "./ask";
 
 type LabFacet = "stuck" | "redo" | "help";
@@ -88,7 +91,10 @@ function view(): HTMLElement {
   }
 
   const comparable = store.runs
-    .filter((run) => run.status === "completed" || run.status === "timed_out")
+    .filter(
+      (run) =>
+        runKind(run) === "exam" && (run.status === "completed" || run.status === "timed_out"),
+    )
     .sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt));
   const latest = comparable.at(-1);
   const previous = comparable.at(-2);
@@ -161,11 +167,10 @@ function headline(
     );
     return card;
   }
-  const faster = delta < -5;
   card.append(
     el(
       "h1",
-      `stat-value mt-2 text-4xl font-semibold ${faster ? "text-good" : delta > 5 ? "text-bad" : "text-ink"}`,
+      `stat-value mt-2 text-4xl font-semibold ${toneClass(deltaTone(delta)) || "text-ink"}`,
       formatDelta(delta, locale),
     ),
     el("p", "mt-3 text-lg", `${deltaLabel(delta, locale)} ${ui.fasterThan(formatWhen(previous.startedAt, locale))}`),
@@ -353,11 +358,12 @@ function totals(runs: Run[]): HTMLElement {
   const help = runs.reduce((sum, run) => sum + countedLabs(run.labs, run.edition).filter((lab) => lab.usedHelp).length, 0);
   const skipped = runs.reduce((sum, run) => sum + countedLabs(run.labs, run.edition).filter((lab) => lab.status === "skipped").length, 0);
   const done = runs.reduce((sum, run) => sum + countedLabs(run.labs, run.edition).filter((lab) => lab.status === "done").length, 0);
-  const finished = runs.filter((run) => run.status === "completed" || run.status === "timed_out");
+  const examRuns = runs.filter((run) => runKind(run) === "exam");
+  const finished = examRuns.filter((run) => run.status === "completed" || run.status === "timed_out");
   const best = finished.filter((run) => run.status === "completed").sort((a, b) => wallSec(a) - wallSec(b))[0];
   const grid = el("section", "grid gap-3 sm:grid-cols-2 lg:grid-cols-5");
   grid.append(
-    tile(copy().simulacros, String(runs.length)),
+    tile(copy().simulacros, String(examRuns.length)),
     tile(copy().best, best ? formatClock(wallSec(best)) : "—"),
     tile(copy().labsDone, String(done)),
     tile(copy().withHelp, String(help)),
@@ -375,7 +381,9 @@ function tile(label: string, value: string): HTMLElement {
 function labTable(mode: ExamMode): HTMLElement {
   const ui = copy();
   const locale = pageLocale();
-  let allRows = aggregates(loadStore(), mode).filter((row) => row.samples > 0);
+  let allRows = aggregates(loadStore(), mode).filter(
+    (row) => row.samples > 0 || row.lastSkipped || row.videosReviewed,
+  );
   let query = "";
   const facets = new Set<LabFacet>();
   let sortKey: LabSortKey = "lab";
@@ -492,12 +500,16 @@ function labTable(mode: ExamMode): HTMLElement {
         labRow(row, {
           onAll: () => {
             if (!markLabVideosReviewed(row.labId, mode)) return;
-            allRows = aggregates(loadStore(), mode).filter((item) => item.samples > 0);
+            allRows = aggregates(loadStore(), mode).filter(
+              (item) => item.samples > 0 || item.lastSkipped || item.videosReviewed,
+            );
             paint();
           },
           onOne: (videoUrl) => {
             if (!markLabVideoReviewed(row.labId, mode, videoUrl)) return;
-            allRows = aggregates(loadStore(), mode).filter((item) => item.samples > 0);
+            allRows = aggregates(loadStore(), mode).filter(
+              (item) => item.samples > 0 || item.lastSkipped || item.videosReviewed,
+            );
             paint();
           },
         }),
@@ -595,10 +607,19 @@ function labRow(
           : "—",
     row.samples ? `${row.help}/${row.samples}` : "—",
   ];
+  const timeColors = [
+    "",
+    toneClass(row.lastSec == null ? null : timeTone(row.lastSec, row.bestSec)),
+    toneClass(row.avgSec == null ? null : timeTone(row.avgSec, row.bestSec)),
+    row.bestSec == null ? "" : "text-good",
+    toneClass(delta == null ? null : deltaTone(delta)),
+    "",
+    "",
+  ];
   cells.forEach((text, index) => {
     const td = document.createElement("td");
     td.className = `border-b border-line px-4 py-3 align-top ${index === 0 ? "font-medium" : index === 5 ? "" : "stat-value"} ${
-      index === 4 && delta != null && delta < -5 ? "text-good" : index === 4 && delta != null && delta > 5 ? "text-bad" : ""
+      timeColors[index] ?? ""
     } ${index === 5 && !row.lastSkipped && isHard(row.lastDifficulty) ? "font-medium text-warn" : ""}`;
     if (index === 5 && row.lastSkipped) {
       const wrap = el("div", "flex flex-col gap-2");
@@ -667,7 +688,13 @@ function history(runs: Run[]): HTMLElement {
     const li = el("li", "flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between");
     const text = el("div");
     text.append(
-      el("p", "font-medium", `${formatWhen(run.startedAt, pageLocale())} · ${statusLabel(run.status)}`),
+      el(
+        "p",
+        "font-medium",
+        `${formatWhen(run.startedAt, pageLocale())} · ${
+          runKind(run) === "leftover" ? copy().leftoverBadge : statusLabel(run.status)
+        }`,
+      ),
       el(
         "p",
         "stat-value text-sm text-muted",
@@ -693,6 +720,32 @@ function history(runs: Run[]): HTMLElement {
         location.href = to("practice");
       });
       actions.append(resume);
+    }
+    const pending = leftoverLabs(run);
+    if (
+      pending.length &&
+      runKind(run) === "exam" &&
+      (run.status === "timed_out" || run.status === "completed")
+    ) {
+      const cont = button(copy().continueLeftovers(pending.length), "btn btn-primary");
+      cont.title = copy().continueLeftoversHint;
+      cont.addEventListener("click", async () => {
+        const running = activeRun();
+        const ui = copy();
+        if (running) {
+          const ok = await ask({
+            title: ui.continueLeftovers(pending.length),
+            body: ui.confirmResumeOther,
+            confirmLabel: ui.continueLeftovers(pending.length),
+            cancelLabel: ui.askBack,
+          });
+          if (!ok) return;
+        }
+        const next = startLeftoverRun(run.id);
+        if (!next) return;
+        location.href = to("practice");
+      });
+      actions.append(cont);
     }
     const remove = button(copy().delete, "btn btn-quiet");
     remove.addEventListener("click", async () => {
