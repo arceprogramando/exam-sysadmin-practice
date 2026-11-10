@@ -322,12 +322,12 @@ function taskList(run: Run): HTMLElement {
   const wrap = el("div", "flex flex-col gap-6");
   const indexed = labs().map((lab, index) => ({ lab, index }));
   const pdf = indexed.filter((item) => item.lab.track === "pdf");
-  wrap.append(taskGroup(run, copy().groupClient, pdf.filter((item) => machineOf(item.lab) === "client")));
-  wrap.append(taskGroup(run, copy().groupServer, pdf.filter((item) => machineOf(item.lab) === "server")));
+  wrap.append(taskGroup(run, copy().groupClient, "client", pdf.filter((item) => machineOf(item.lab) === "client")));
+  wrap.append(taskGroup(run, copy().groupServer, "server", pdf.filter((item) => machineOf(item.lab) === "server")));
   const both = pdf.filter((item) => machineOf(item.lab) === "both");
-  if (both.length) wrap.append(taskGroup(run, copy().groupBoth, both));
+  if (both.length) wrap.append(taskGroup(run, copy().groupBoth, "both", both));
   const extras = indexed.filter((item) => item.lab.track === "extra");
-  wrap.append(taskGroup(run, copy().groupExtras, extras));
+  wrap.append(taskGroup(run, copy().groupExtras, "extras", extras));
   return wrap;
 }
 
@@ -340,10 +340,32 @@ function machineOf(lab: Lab): "client" | "server" | "both" {
   return "client";
 }
 
-function taskGroup(run: Run, title: string, items: { lab: Lab; index: number }[], intro?: HTMLElement): HTMLElement {
+function ratedDone(record: LabRecord | undefined): boolean {
+  return record?.status === "done" && record.difficulty != null;
+}
+
+function taskGroup(run: Run, title: string, groupKey: string, items: { lab: Lab; index: number }[], intro?: HTMLElement): HTMLElement {
   const section = el("section", "overflow-hidden rounded-3xl border border-line bg-card");
   const head = el("div", "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-4 py-3 sm:px-5");
-  head.append(el("h2", "font-semibold", title));
+  const titleRow = el("div", "flex flex-wrap items-center gap-3");
+  titleRow.append(el("h2", "font-semibold", title));
+  const doneCount = items.filter((item) => ratedDone(run.labs[item.index])).length;
+  const shown = openFold().has(groupKey);
+  if (doneCount) {
+    const foldBtn = button(shown ? copy().foldDone : copy().unfoldDone(doneCount), "fold-done");
+    foldBtn.setAttribute("aria-expanded", shown ? "true" : "false");
+    foldBtn.addEventListener("click", () => {
+      const open = openFold();
+      if (open.has(groupKey)) open.delete(groupKey);
+      else open.add(groupKey);
+      saveFold(open);
+      const y = window.scrollY;
+      render();
+      window.scrollTo(0, y);
+    });
+    titleRow.append(foldBtn);
+  }
+  head.append(titleRow);
   head.append(el("p", "text-right text-xs font-semibold text-muted", copy().marksLegend));
   section.append(head);
   if (intro) section.append(intro);
@@ -351,7 +373,10 @@ function taskGroup(run: Run, title: string, items: { lab: Lab; index: number }[]
     section.append(el("p", "px-5 py-4 text-sm text-muted", copy().emptyGroup));
     return section;
   }
-  for (const item of items) section.append(taskRow(run, item.lab, item.index));
+  for (const item of items) {
+    if (ratedDone(run.labs[item.index]) && !shown) continue;
+    section.append(taskRow(run, item.lab, item.index));
+  }
   return section;
 }
 
@@ -364,21 +389,17 @@ function taskRow(run: Run, lab: Lab, index: number): HTMLElement {
   const row = el(
     "div",
     `lab-row grid grid-cols-1 gap-2 border-b border-line px-4 py-3 last:border-b-0 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:px-5 ${
-      stuck ? "lab-stuck" : hard ? "bg-warn-soft" : done ? "opacity-60" : revisit ? "bg-warn-soft" : ""
+      stuck ? "lab-stuck" : hard ? "bg-warn-soft" : done ? "lab-done" : revisit ? "bg-warn-soft" : ""
     }`,
   );
   row.dataset.labIndex = String(index);
-  const marks = el("div", "flex items-center gap-4");
+  const marks = el("div", "lab-marks flex items-center gap-4");
   marks.append(radioMark(index, "revisit", copy().revisit, revisit), radioMark(index, "done", copy().done, done));
   const text = el("div", "min-w-0 text-left");
-  const title = el("span", `font-medium ${done && !hard ? "line-through" : ""}`, `${labCode(lab.id)} · ${lab.title}`);
+  const title = el("span", "font-medium", `${labCode(lab.id)} · ${lab.title}`);
   text.append(title);
-  if (lab.story) text.append(storyText(lab.story, "mt-1 block text-sm leading-relaxed text-ink/75"));
-  const meta = el(
-    "span",
-    "mt-0.5 block text-sm text-muted",
-    rowMeta(record, lab),
-  );
+  if (lab.story) text.append(el("p", "lab-story mt-1 block text-sm leading-relaxed", storyPreview(lab.story)));
+  const meta = el("span", "lab-meta mt-0.5 block text-sm text-muted", rowMeta(record, lab));
   text.append(meta);
   const enter = button(copy().enterLab, "btn btn-primary shrink-0");
   enter.addEventListener("click", () => openLab(index));
@@ -405,11 +426,11 @@ function rowMeta(record: LabRecord | undefined, lab: Lab): string {
 }
 
 function difficultyLine(index: number, selected: Difficulty | null, lab: Lab): HTMLElement {
-  const wrap = el("div", "flex flex-col gap-2 sm:col-span-3");
-  const line = el("div", "flex items-center gap-2 overflow-x-auto");
+  const wrap = el("div", "lab-difficulty flex flex-col gap-2 sm:col-span-3");
+  const line = el("div", "diff-line");
   line.dataset.difficulty = String(index);
   line.append(el("span", "shrink-0 text-xs font-semibold tracking-[0.12em] text-muted uppercase", copy().difficulty));
-  const group = el("div", "flex flex-nowrap items-center gap-1");
+  const group = el("div", "diff-pills");
   group.setAttribute("role", "radiogroup");
   group.setAttribute("aria-label", copy().difficultyAria);
   for (const item of copy().levels) {
@@ -445,6 +466,22 @@ function reviewVideos(lab: Lab): HTMLElement {
     note.append(list);
   }
   return note;
+}
+
+const FOLD_KEY = "arceprog:fold-done-open";
+
+function openFold(): Set<string> {
+  try {
+    const raw = sessionStorage.getItem(FOLD_KEY);
+    const ids = raw ? (JSON.parse(raw) as unknown) : [];
+    return new Set(Array.isArray(ids) ? ids.filter((id) => typeof id === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveFold(open: Set<string>): void {
+  sessionStorage.setItem(FOLD_KEY, JSON.stringify([...open]));
 }
 
 function radioMark(index: number, value: "revisit" | "done", label: string, checked: boolean): HTMLElement {
@@ -1149,6 +1186,15 @@ function slipMark(text: string): HTMLElement {
   });
   wrap.append(btn, pop);
   return wrap;
+}
+
+const STORY_PREVIEW = 174;
+
+function storyPreview(story: string): string {
+  const text = story.replace(/\s+/g, " ").trim();
+  if (text.length <= STORY_PREVIEW) return text;
+  const cut = text.slice(0, STORY_PREVIEW + 1).replace(/\s+\S*$/, "").trim();
+  return `${cut}…`;
 }
 
 function storyText(story: string, className: string): HTMLElement {

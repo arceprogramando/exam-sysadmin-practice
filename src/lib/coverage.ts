@@ -18,16 +18,16 @@ export const DOMAIN_ORDER = [
 export type DomainId = (typeof DOMAIN_ORDER)[number];
 
 const DOMAIN_LABS: Record<DomainId, string[]> = {
-  tools: ["lab-09", "lab-12", "lab-13"],
+  tools: ["lab-09", "lab-links", "lab-12", "lab-find-size", "lab-13"],
   software: ["lab-03", "extra-04", "extra-05", "lab-20", "lab-21", "lab-22"],
   scripts: ["extra-01"],
-  systems: ["lab-01-root-client", "lab-02-root-server", "lab-18"],
+  systems: ["lab-01-root-client", "lab-grub", "lab-02-root-server", "lab-18", "lab-journal"],
   storage: ["lab-15", "lab-16"],
   filesystems: ["lab-06", "lab-08", "lab-10", "lab-17"],
-  deploy: ["lab-07", "lab-11", "lab-19", "extra-02"],
-  network: ["lab-01", "lab-02"],
-  users: ["lab-05", "lab-14"],
-  security: ["lab-04", "extra-03"],
+  deploy: ["lab-07", "lab-at", "lab-11", "lab-19", "extra-02"],
+  network: ["lab-01", "lab-02", "lab-ssh-key"],
+  users: ["lab-05", "lab-pwquality", "lab-14"],
+  security: ["lab-04", "lab-fcontext", "extra-03"],
 };
 
 const assigned = new Set(Object.values(DOMAIN_LABS).flat());
