@@ -35,32 +35,47 @@ El usuario nombra un lab (`lab-10`, ACL, Q08, “el de fstab”), pide chequear 
 
 5. **Respuesta** (español, corta):
 
+El número de la izquierda es el de la lista en `/practica/`, el de `labCode` en `src/lib/labs.ts` (dos dígitos). No pongas ahí el id (`lab-05`). Setup es `00` y no entra en los porcentajes. Edición v10 salvo que el usuario haya dicho v9. Ordená la tabla por ese número.
+
 Un lab:
 
 ```markdown
-## lab-XX · [título corto]
+## 06 · [título corto]
 
 | Objetivo | Estado | Evidencia |
 |----------|--------|-----------|
 | … | OK / FALTA / DUDOSO | … |
 
-**Veredicto:** cumple / no cumple / incompleto
+**Veredicto:** bien / mal / incompleta / no realizada
 **Siguiente probe** (solo si hace falta): `comando`
 ```
 
-Varios labs (como en una pasada de VM):
+Varios labs (como en una pasada de VM). Una fila por lab que cuenta. Cada lab entra en una sola bolsa:
+
+- **bien**: todos los objetivos OK.
+- **incompleta**: hay trabajo y al menos un objetivo OK y otro FALTA o DUDOSO (la IP está, el hostname no).
+- **mal**: se ve que lo intentaron y ningún objetivo queda OK (cron con el texto cambiado, grupo primario, find que copió `/proc`).
+- **no realizada**: no hay rastro de que hayan empezado (el archivo no existe, el servicio no está instalado, sigue el valor de fábrica).
 
 ```markdown
 ## Chequeo client/server
 
-| Lab | Veredicto | Qué vi |
-|-----|-----------|--------|
-| 05 | no cumple | gid=sysadm → usaron -g |
-| 10 | cumple | getfacl OK |
+| Nº | Veredicto | Qué vi |
+|----|-----------|--------|
+| 05 | mal | gid=sysadm → usaron -g |
+| 12 | bien | getfacl OK |
+| 03 | incompleta | IP 172.16.1.12/24; hostname client.rhcsa.lab |
+| 09 | no realizada | atd no está instalado |
 
 ### Porcentaje (lista principal)
-- Cumplen: N / TOTAL ≈ P%
-- Casi / mal / no chequeados: …
+TOTAL = labs que cuentan (sin setup, sin el tema de la otra edición).
+
+- Bien: A / TOTAL ≈ P%
+- Mal: B / TOTAL ≈ P%
+- Incompletas: C / TOTAL ≈ P%
+- No realizadas: D / TOTAL ≈ P%
+
+A + B + C + D = TOTAL. Si alguna no se pudo mirar, va en una quinta línea (No chequeadas) y las cinco suman TOTAL.
 ```
 
 Una línea de arreglo por FALTA, sin pegar el walkthrough entero.
@@ -81,8 +96,10 @@ Probe multi-lab de ejemplo (root@client): ver [probes.md](probes.md) § “Pasad
 
 - Contá labs `track` principal vía `labs.ts` + `trackFor`/`isOffEdition` (v10: Flatpak cuenta; Podman no).
 - Setup (teclado) **no** cuenta.
-- Solo marcar **cumple** con evidencia OK. “Casi” (ej. cron con texto distinto) **no** suma al numerador.
-- Sé explícito: *N cumplen / TOTAL lista ≈ P%*; aparte listá no chequeados y FALTA.
+- **bien** solo con todos los objetivos OK. Un acierto parcial es **incompleta**, no bien.
+- Un intento cuyo resultado no cumple ningún objetivo es **mal**, no “casi”.
+- Sin rastro de trabajo es **no realizada**.
+- Cerrá con los cuatro porcentajes sobre el mismo TOTAL. Tienen que sumar el TOTAL (más no chequeadas, si las hay).
 
 ## Reglas
 
