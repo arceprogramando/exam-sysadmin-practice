@@ -332,6 +332,11 @@ export interface Copy {
   statsNote: string;
   history: string;
   historyEmpty: string;
+  historyChipDone: (n: number) => string;
+  historyChipRevisit: (n: number) => string;
+  historyChipRedo: (n: number) => string;
+  historyChipSkipped: (n: number) => string;
+  historyChipHelp: (n: number) => string;
   delete: string;
   confirmDeleteNamed: (which: string) => string;
   thisRunning: string;
@@ -653,6 +658,11 @@ const es: Copy = {
     "El promedio usa los labs que marcaste hecho o No lo entiendo. Dificultad es la del último Done: alto y muy alto son los que conviene rehacer. Si el último fue No lo entiendo, aparecen los videos: podés marcar uno o Revisé los videos para todos. Ayuda es cuántas de esas veces pediste el panel. Vs anterior compara el último cierre con el anterior de ese mismo lab.",
   history: "Historial",
   historyEmpty: "Cuando empieces una, va a aparecer acá.",
+  historyChipDone: (n) => `${n} done`,
+  historyChipRevisit: (n) => `${n} revisit`,
+  historyChipRedo: (n) => `${n} para rehacer`,
+  historyChipSkipped: (n) => `${n} sin entender`,
+  historyChipHelp: (n) => `${n} con ayuda`,
   delete: "Eliminar",
   confirmDeleteNamed: (which) => `¿Eliminar ${which}? Se borran sus tiempos de este navegador.`,
   thisRunning: "la práctica en curso",
@@ -961,6 +971,11 @@ const en: Copy = {
     "The average uses labs you marked done or I don't get it. Difficulty is the last Done: high and very high are the ones to redo. If the last mark was I don't get it, the videos show up: mark one, or I reviewed the videos for all. Help is how many of those times you opened the panel. Vs previous compares the latest close with the one before for that same lab.",
   history: "History",
   historyEmpty: "When you start one, it shows up here.",
+  historyChipDone: (n) => `${n} done`,
+  historyChipRevisit: (n) => `${n} revisit`,
+  historyChipRedo: (n) => `${n} to redo`,
+  historyChipSkipped: (n) => `${n} not understood`,
+  historyChipHelp: (n) => `${n} with help`,
   delete: "Delete",
   confirmDeleteNamed: (which) => `Delete ${which}? Its times are removed from this browser.`,
   thisRunning: "the practice in progress",

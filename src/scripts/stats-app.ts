@@ -677,7 +677,7 @@ function history(runs: Run[]): HTMLElement {
     section.append(el("p", "mt-2 text-sm text-muted", copy().historyEmpty));
     return section;
   }
-  const list = el("ul", "mt-3 divide-y divide-line");
+  const list = el("ul", "history-list mt-3");
   for (const run of runs) {
     const scored = countedLabs(run.labs, run.edition);
     const done = scored.filter((lab) => lab.status === "done").length;
@@ -685,23 +685,23 @@ function history(runs: Run[]): HTMLElement {
     const redo = scored.filter((lab) => lab.status === "done" && isHard(lab.difficulty)).length;
     const skipped = scored.filter((lab) => lab.status === "skipped").length;
     const help = scored.filter((lab) => lab.usedHelp).length;
-    const li = el("li", "flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between");
-    const text = el("div");
-    text.append(
-      el(
-        "p",
-        "font-medium",
-        `${formatWhen(run.startedAt, pageLocale())} · ${
-          runKind(run) === "leftover" ? copy().leftoverBadge : statusLabel(run.status)
-        }`,
-      ),
-      el(
-        "p",
-        "stat-value text-sm text-muted",
-        `${formatClock(wallSec(run))} · ${copy().tally({ done, revisit, redo, skipped, help })}`,
-      ),
+    const leftover = runKind(run) === "leftover";
+    const li = el("li", "history-row");
+    const main = el("div", "history-main");
+    const head = el("div", "history-head");
+    head.append(el("p", "history-when", formatWhen(run.startedAt, pageLocale())));
+    const status = el(
+      "span",
+      `history-status history-status--${leftover ? "leftover" : run.status}`,
+      leftover ? copy().leftoverBadge : statusLabel(run.status),
     );
-    const actions = el("div", "flex flex-wrap gap-2");
+    head.append(status);
+    const meta = el("div", "history-meta");
+    meta.append(el("span", "stat-value history-clock", formatClock(wallSec(run))));
+    meta.append(historyChips({ done, revisit, redo, skipped, help }));
+    main.append(head, meta);
+
+    const actions = el("div", "history-actions");
     if (run.status === "abandoned") {
       const resume = button(copy().resumeAbandoned, "btn btn-primary");
       resume.addEventListener("click", async () => {
@@ -764,11 +764,34 @@ function history(runs: Run[]): HTMLElement {
       if (host) mountStats(host);
     });
     actions.append(remove);
-    li.append(text, actions);
+    li.append(main, actions);
     list.append(li);
   }
   section.append(list);
   return section;
+}
+
+function historyChips(parts: {
+  done: number;
+  revisit: number;
+  redo: number;
+  skipped: number;
+  help: number;
+}): HTMLElement {
+  const ui = copy();
+  const wrap = el("div", "history-chips");
+  const chips: { n: number; label: string; kind: string }[] = [
+    { n: parts.done, label: ui.historyChipDone(parts.done), kind: "done" },
+    { n: parts.revisit, label: ui.historyChipRevisit(parts.revisit), kind: "revisit" },
+    { n: parts.redo, label: ui.historyChipRedo(parts.redo), kind: "redo" },
+    { n: parts.skipped, label: ui.historyChipSkipped(parts.skipped), kind: "skipped" },
+    { n: parts.help, label: ui.historyChipHelp(parts.help), kind: "help" },
+  ];
+  for (const chip of chips) {
+    if (chip.n === 0 && chip.kind !== "done") continue;
+    wrap.append(el("span", `history-chip history-chip--${chip.kind}`, chip.label));
+  }
+  return wrap;
 }
 
 /** Download name: how many exam runs are in the file, plus local date/time. */
