@@ -1,4 +1,4 @@
-import { LABS, isOffEdition, type Edition } from "./labs";
+import { LABS, isOffEdition, isUnscored, type Edition } from "./labs";
 import { EXAM_LIMIT_SEC } from "./time";
 
 export const STORAGE_KEY = "arceprog:rhcsa-exam:v1";
@@ -78,7 +78,12 @@ export function saveStore(store: Store): void {
 const SETUP_IDS = new Set(LABS.filter((lab) => lab.track === "setup").map((lab) => lab.id));
 
 export function countedLabs(labs: LabRecord[], edition?: Edition): LabRecord[] {
-  return labs.filter((lab) => !SETUP_IDS.has(lab.labId) && !(edition && isOffEdition(lab.labId, edition)));
+  return labs.filter(
+    (lab) =>
+      !SETUP_IDS.has(lab.labId) &&
+      !isUnscored(lab.labId) &&
+      !(edition && isOffEdition(lab.labId, edition)),
+  );
 }
 
 export function activeRun(store: Store = loadStore()): Run | undefined {
@@ -261,7 +266,11 @@ export function startLeftoverRun(sourceId: string): Run | null {
   });
 
   const first = labs.findIndex(
-    (lab) => isLeftoverStatus(lab.status) && !SETUP_IDS.has(lab.labId) && !isOffEdition(lab.labId, source.edition ?? "v10"),
+    (lab) =>
+      isLeftoverStatus(lab.status) &&
+      !SETUP_IDS.has(lab.labId) &&
+      !isUnscored(lab.labId) &&
+      !isOffEdition(lab.labId, source.edition ?? "v10"),
   );
 
   const run: Run = {
@@ -396,7 +405,7 @@ function terminalSamples(store: Store, labId: string): LabRecord[] {
 
 export function aggregates(store: Store, mode?: ExamMode): LabAggregate[] {
   const scoped = filterRuns(store, mode);
-  return LABS.filter((lab) => lab.track !== "setup").map((lab) => {
+  return LABS.filter((lab) => lab.track !== "setup" && !isUnscored(lab.id)).map((lab) => {
     const samples = finishedSamples(scoped, lab.id);
     const terminals = terminalSamples(scoped, lab.id);
     const lastTerminal = terminals.at(-1);

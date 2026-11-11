@@ -159,7 +159,7 @@ const es: GlossaryEntry[] = [
   {
     term: "usermod",
     definition:
-      "Modifica un usuario que ya existe. -aG suma un grupo secundario sin borrar los otros (sin -a, -G reemplaza toda la lista). -s cambia el shell. -l renombra el login. -g cambia el grupo primario. -d -m mueve el home.",
+      "Modifica un usuario que ya existe. -aG suma un grupo secundario sin borrar los otros (sin -a, -G reemplaza toda la lista). -s cambia el shell. -l renombra el login. -g cambia el grupo primario. -d -m mueve el home.\n\nPara sacar a alguien de un solo grupo secundario no uses usermod: usá gpasswd -d.",
     example: "usermod -s /sbin/nologin diego · usermod -aG sysadm felipe",
     tldr: { page: "usermod", platform: "linux" },
   },
@@ -474,6 +474,38 @@ const es: GlossaryEntry[] = [
     tldr: { page: "touch" },
   },
   {
+    term: "ln",
+    aliases: ["link", "enlace"],
+    definition:
+      "Crea un enlace: otro nombre (o atajo) hacia un archivo.\n\nOrden (importante — no al revés)\nln [-s] PRIMERO SEGUNDO\n1º PRIMERO = el archivo que YA existe (a dónde apunta / el contenido real).\n2º SEGUNDO = dónde se CREA el enlace (el nombre nuevo, soft o hard).\n\nTruco: “de qué → hacia el atajo nuevo”. Primero el real, después el link.\nMal: poner primero la carpeta del atajo y después el archivo.\n\nDos modos\n• Soft: ln -s ARCHIVO_REAL RUTA_DEL_SOFT → atajo; ls -l muestra ->.\n• Hard: ln ARCHIVO_REAL RUTA_DEL_HARD (sin -s) → mismo inodo; ls -li mismo número.\n\nLab: ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft\n→ 1º notas.txt (existe) · 2º notas-soft (se crea en atajos).",
+    example:
+      "ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft · ln /root/roman/notas.txt /root/roman/atajos/notas-hard · ls -li /root/roman/notas.txt /root/roman/atajos/notas-hard /root/roman/atajos/notas-soft",
+    tldr: { page: "ln" },
+  },
+  {
+    term: "soft link",
+    aliases: [
+      "enlace simbólico",
+      "enlace simbolico",
+      "symlink",
+      "symbolic link",
+      "ln -s",
+      "notas-soft",
+    ],
+    definition:
+      "Atajo a un archivo: guarda la ruta del original, no el contenido.\n\nOrden: ln -s ARCHIVO_REAL DONDE_CREAR_EL_SOFT\n1º el archivo que ya existe.\n2º la ruta del soft nuevo (dónde “va a vivir” el enlace).\n\nLab: ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft\n→ primero notas.txt, después el soft en atajos. No al revés.\n\n• ls -l lo muestra con -> hacia la ruta.\n• Tiene su propio inodo (número distinto al original).\n• Si borrás el original, el soft queda colgado (broken).\n• Puede apuntar a otro disco o a una carpeta.\n\nNo es el hard: el duro es el mismo archivo; el soft solo recuerda el camino.",
+    example: "ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft · ls -l /root/roman/atajos/notas-soft",
+    tldr: { page: "ln" },
+  },
+  {
+    term: "hard link",
+    aliases: ["enlace duro", "hardlink", "ln sin -s", "notas-hard", "inodo"],
+    definition:
+      "Otro nombre del mismo archivo: comparte el mismo inodo y el mismo contenido en disco.\n\nOrden: ln ARCHIVO_REAL DONDE_CREAR_EL_HARD (sin -s)\n1º el archivo que ya existe.\n2º el nombre nuevo del hard.\n\nLab: ln /root/roman/notas.txt /root/roman/atajos/notas-hard\n→ primero notas.txt, después el hard en atajos. No al revés.\n\n• ls -li: mismo inodo que el original; el link count sube (ej. 2).\n• Si borrás el nombre original, el hard sigue con el texto.\n• No a directorios ni entre discos distintos.\n\nNo es el soft: el soft lleva -> ; el hard es el mismo archivo con otro nombre.",
+    example: "ln /root/roman/notas.txt /root/roman/atajos/notas-hard · ls -li /root/roman/notas.txt /root/roman/atajos/notas-hard",
+    tldr: { page: "ln" },
+  },
+  {
     term: "id",
     definition: "Muestra UID, grupo primario y grupos secundarios de un usuario. Sin argumento, los de quien está en el prompt. Sirve para comprobar un useradd o un usermod -aG.",
     example: "id thiago",
@@ -491,6 +523,14 @@ const es: GlossaryEntry[] = [
     definition: "Crea un grupo. El usuario se suma después con useradd -G o con usermod -aG. groupadd no mete a nadie adentro.",
     example: "groupadd developer",
     tldr: { page: "groupadd", platform: "linux" },
+  },
+  {
+    term: "gpasswd",
+    aliases: ["gpasswd -a", "gpasswd -d", "gpasswd -M"],
+    definition:
+      "Administra un grupo que ya existe: quiénes están adentro. No crea el grupo (eso es groupadd).\n\n• gpasswd -a USUARIO GRUPO → suma al grupo (igual idea que usermod -aG, pero pensando en el grupo).\n• gpasswd -d USUARIO GRUPO → saca a alguien de ese grupo. Es la forma limpia de quitar un secundario sin tocar los otros grupos del usuario.\n• gpasswd -M u1,u2 GRUPO → deja exactamente esos miembros (reemplaza la lista del grupo).\n\nCuándo uno u otro\n• Foco en la cuenta (sumar un secundario, shell, home): usermod -aG.\n• Foco en el grupo, o hay que sacar a alguien de uno solo: gpasswd -a / -d.\n\nCuidado: usermod -G sin -a reemplaza todos los secundarios. No es un «quitar este». Para quitar: gpasswd -d felipe sysadm. Después id felipe o getent group sysadm.",
+    example: "gpasswd -a felipe sysadm · gpasswd -d felipe sysadm · getent group sysadm",
+    tldr: { page: "gpasswd", platform: "linux" },
   },
   {
     term: "passwd",
@@ -540,9 +580,11 @@ const es: GlossaryEntry[] = [
   },
   {
     term: "systemctl",
+    aliases: ["systemd", "unidad", "unit", "enable --now"],
     definition:
-      "Maneja unidades de systemd. status no cambia nada: muestra si el demonio está arriba (active/running). is-active responde active o inactive. is-enabled dice si arranca al boot (enabled/disabled). start y stop son de ahora. enable lo deja para el próximo boot y disable lo saca. enable --now arranca ya y lo deja para el boot. restart vuelve a leer la configuración.",
-    example: "systemctl enable --now tuned · systemctl status tuned · systemctl is-active tuned · systemctl is-enabled tuned",
+      "system control: el comando para controlar systemd, el init del sistema (arranca servicios, los mantiene y decide qué vuelve al boot).\n\nUna unidad suele ser un servicio (.service): NetworkManager, crond, atd, httpd, chronyd, etc.\n\n• status → mira: active/running (arriba ahora), enabled/disabled (¿arranca al boot?). No cambia nada.\n• start / stop → ahora.\n• enable / disable → próximo boot.\n• enable --now → arranca ya y lo deja para el boot (lo más usado en los labs).\n• restart → vuelve a leer la config y reinicia el servicio.\n\nPrimero status; el enable --now solo si no está active y enabled.\n\nEjemplos de labs\n• Red: systemctl status NetworkManager → si falta, systemctl enable --now NetworkManager\n• Cron: systemctl status crond → si falta, systemctl enable --now crond\n• at: systemctl status atd → si falta, systemctl enable --now atd\n• Hora: systemctl enable --now chronyd\n• Apache: systemctl restart httpd (después de cambiar Listen o SELinux)\n• Perfil: systemctl enable --now tuned",
+    example:
+      "systemctl status NetworkManager · systemctl enable --now NetworkManager · systemctl status crond · systemctl enable --now crond · systemctl status atd · systemctl enable --now atd · systemctl enable --now chronyd · systemctl restart httpd · systemctl enable --now tuned · systemctl is-active crond · systemctl is-enabled crond",
     tldr: { page: "systemctl", platform: "linux" },
   },
   {
@@ -586,8 +628,8 @@ const es: GlossaryEntry[] = [
   {
     term: "nmcli",
     definition:
-      "Configura NetworkManager desde la terminal. connection show lista perfiles: NAME es el nombre que va en modify, DEVICE es la placa. connection modify guarda IP, gateway y DNS. connection up aplica ahora. -f muestra un solo campo. ip a no muestra el DNS.",
-    example: "nmcli connection show · nmcli -f ipv4.dns connection show hostonly · nmcli connection up hostonly",
+      "Configura NetworkManager desde la terminal. connection show lista perfiles: NAME es el nombre que va en modify, DEVICE es la placa. connection modify guarda IP, gateway, DNS y search domain (ipv4.dns-search). connection up aplica ahora. -f muestra un solo campo. ip a no muestra el DNS ni el search.",
+    example: "nmcli connection show · nmcli -f ipv4.dns,ipv4.dns-search connection show hostonly · nmcli connection up hostonly",
     tldr: { page: "nmcli", platform: "linux" },
   },
   {
@@ -789,8 +831,17 @@ const es: GlossaryEntry[] = [
   },
   {
     term: "crontab",
-    definition: "Edita o lista la tabla de tareas de un usuario. -l lista, -e edita, -r borra. -u USUARIO, como root, es la tabla de esa cuenta. No es el timer de systemd.",
-    example: "crontab -l -u erik",
+    definition:
+      "Edita o lista la tabla de tareas de un usuario. -l lista, -e edita, -r borra. -u USUARIO, como root, es la tabla de esa cuenta. No es el timer de systemd.\n\nNo es crond: crontab escribe la tabla; crond es el demonio que la ejecuta. Sin crond active/enabled, la línea puede estar bien y no corre.\n\nOrden de campos (minuto, hora, día del mes, mes, día de la semana): cat /etc/crontab lo dibuja. Ese archivo del sistema tiene además user-name; en crontab -e de un usuario ese sexto campo no va.",
+    example: "cat /etc/crontab · crontab -u erik -e · crontab -l -u erik",
+    tldr: { page: "crontab" },
+  },
+  {
+    term: "crond",
+    aliases: ["cron", "crond.service"],
+    definition:
+      "Demonio que ejecuta las tablas de crontab. No es el comando crontab.\n\nPrimero: systemctl status crond. Si no está active y enabled → systemctl enable --now crond (enable = próximo boot; --now = ahora).\n\nEl de at es otro servicio: atd.",
+    example: "systemctl status crond · systemctl enable --now crond",
     tldr: { page: "crontab" },
   },
   {
@@ -808,6 +859,35 @@ const es: GlossaryEntry[] = [
     definition:
       "Dice qué parte de la IP es la red y qué parte es la máquina.\n\nDos formas de lo mismo (las más comunes en el lab/examen):\n• CIDR: /24 → los primeros 24 bits son red; el último número (.0–.255) es el host.\n• Decimal: 255.255.255.0 → misma máscara que /24.\n\nEjemplo: 172.16.1.0/24 = toda la red 172.16.1.x (client .12 y server .13). En la hoja del examen a veces escribe 172.24.14.0/255.255.255.0: es la red + esa máscara, no otra cosa.\n\nEn comandos casi siempre va CIDR: 172.16.1.12/24 en nmcli, allow 172.16.1.0/24 en chrony. No hace falta escribir …/255.255.255.0 ahí.\n\nNo siempre es /24: el enunciado puede pedir /16, /25, etc. Leé la hoja.",
     example: "nmcli … ipv4.addresses 172.16.1.12/24 · allow 172.16.1.0/24",
+  },
+  {
+    term: "search domain",
+    aliases: [
+      "dns-search",
+      "ipv4.dns-search",
+      "Search domains",
+      "dominio de búsqueda",
+      "search",
+    ],
+    definition:
+      "Dominio que el sistema agrega detrás de un nombre corto cuando resolvés DNS.\n\nSi el search domain es linux.lab y escribís server, el resolutor prueba server.linux.lab. No cambia la IP de la máquina. No es el DNS (eso es la IP del servidor que responde consultas, p. ej. 172.16.1.1) ni el hostname (client.linux.lab / server.linux.lab).\n\nEn nmtui: Edit → IPv4 → Search domains → Add linux.lab.\nEn nmcli: ipv4.dns-search linux.lab en el mismo modify del perfil.\nEn /etc/resolv.conf queda la línea search linux.lab (la escribe NetworkManager al hacer up).\n\nPara verificar: nmcli -f ipv4.dns,ipv4.dns-search connection show NOMBRE. ip a no lo muestra.\n\nSi el DNS del lab no tiene registros reales, ping server puede fallar igual: el search domain igual tiene que quedar guardado en el perfil si el enunciado lo pide.",
+    example:
+      "nmcli connection modify hostonly ipv4.dns-search linux.lab · nmcli -f ipv4.dns,ipv4.dns-search connection show hostonly · cat /etc/resolv.conf",
+  },
+  {
+    term: "pwquality",
+    aliases: ["pwquality.conf", "/etc/security/pwquality.conf", "minlen", "pam_pwquality"],
+    definition:
+      "Política de calidad de la contraseña al correr passwd: largo mínimo, clases de caracteres, etc.\n\nArchivo: /etc/security/pwquality.conf. Lo típico del lab es minlen = 8.\n\nNo es la edad máxima: eso es PASS_MAX_DAYS en /etc/login.defs (cuentas nuevas) y chage -M (cuenta que ya existe).\n\nSi no recordás la ruta: man -k password, man pwquality.conf o man pam_pwquality. También grep -r minlen /etc/security.",
+    example: "vim /etc/security/pwquality.conf · grep ^minlen /etc/security/pwquality.conf",
+  },
+  {
+    term: "PASS_MAX_DAYS",
+    aliases: ["login.defs", "/etc/login.defs", "chage", "edad máxima", "password aging"],
+    definition:
+      "Cuántos días puede durar una contraseña antes de que haya que cambiarla.\n\nPara cuentas nuevas: línea PASS_MAX_DAYS en /etc/login.defs (ej. 30). useradd la lee al crear.\nPara una cuenta que ya existe (roman): no hereda el cambio de login.defs → chage -M 30 roman. chage -l roman verifica.\n\nNo es el largo mínimo: eso es minlen en /etc/security/pwquality.conf.\n\nSi no recordás dónde: man -k aging, man passwd (FILES → login.defs), man login.defs, man chage. O grep -r PASS_MAX /etc.",
+    example: "grep ^PASS_MAX_DAYS /etc/login.defs · chage -M 30 roman · chage -l roman",
+    tldr: { page: "chage", platform: "linux" },
   },
   {
     term: "NTP",
@@ -1045,7 +1125,7 @@ const en: GlossaryEntry[] = [
   {
     term: "usermod",
     definition:
-      "Changes an existing user. -aG adds a secondary group without dropping the others (without -a, -G replaces the whole list). -s changes the shell. -l renames the login. -g changes the primary group. -d -m moves the home.",
+      "Changes an existing user. -aG adds a secondary group without dropping the others (without -a, -G replaces the whole list). -s changes the shell. -l renames the login. -g changes the primary group. -d -m moves the home.\n\nTo drop someone from one secondary group, do not use usermod: use gpasswd -d.",
     example: "usermod -s /sbin/nologin diego · usermod -aG sysadm felipe",
     tldr: { page: "usermod", platform: "linux" },
   },
@@ -1360,6 +1440,31 @@ const en: GlossaryEntry[] = [
     tldr: { page: "touch" },
   },
   {
+    term: "ln",
+    aliases: ["link"],
+    definition:
+      "Creates a link: another name (or shortcut) to a file.\n\nOrder (important — not the other way around)\nln [-s] FIRST SECOND\n1st FIRST = the file that ALREADY exists (what it points at / the real content).\n2nd SECOND = where the link is CREATED (the new soft or hard name).\n\nMnemonic: “from the real file → to the new shortcut”. Real first, then the link.\nWrong: putting the shortcut folder first and the file second.\n\nTwo modes\n• Soft: ln -s REAL_FILE PATH_OF_SOFT → shortcut; ls -l shows ->.\n• Hard: ln REAL_FILE PATH_OF_HARD (no -s) → same inode; ls -li same number.\n\nLab: ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft\n→ 1st notas.txt (exists) · 2nd notas-soft (created under atajos).",
+    example:
+      "ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft · ln /root/roman/notas.txt /root/roman/atajos/notas-hard · ls -li /root/roman/notas.txt /root/roman/atajos/notas-hard /root/roman/atajos/notas-soft",
+    tldr: { page: "ln" },
+  },
+  {
+    term: "soft link",
+    aliases: ["symbolic link", "symlink", "ln -s", "notas-soft"],
+    definition:
+      "Shortcut to a file: it stores the path to the original, not the contents.\n\nOrder: ln -s REAL_FILE WHERE_TO_CREATE_THE_SOFT\n1st the file that already exists.\n2nd the path of the new soft link (where the link will live).\n\nLab: ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft\n→ first notas.txt, then the soft under atajos. Not the other way around.\n\n• ls -l shows it with -> and the path.\n• Its own inode (different number from the original).\n• If you delete the original, the soft link dangles (broken).\n• It can point across disks or at a directory.\n\nNot the hard link: the hard is the same file; the soft only remembers the path.",
+    example: "ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft · ls -l /root/roman/atajos/notas-soft",
+    tldr: { page: "ln" },
+  },
+  {
+    term: "hard link",
+    aliases: ["hardlink", "ln without -s", "notas-hard", "inode"],
+    definition:
+      "Another name for the same file: it shares the same inode and the same on-disk contents.\n\nOrder: ln REAL_FILE WHERE_TO_CREATE_THE_HARD (no -s)\n1st the file that already exists.\n2nd the new hard-link name.\n\nLab: ln /root/roman/notas.txt /root/roman/atajos/notas-hard\n→ first notas.txt, then the hard under atajos. Not the other way around.\n\n• ls -li: same inode as the original; link count goes up (e.g. 2).\n• If you delete the original name, the hard link still holds the text.\n• Not for directories, and not across different disks.\n\nNot the soft link: the soft has -> ; the hard is the same file under another name.",
+    example: "ln /root/roman/notas.txt /root/roman/atajos/notas-hard · ls -li /root/roman/notas.txt /root/roman/atajos/notas-hard",
+    tldr: { page: "ln" },
+  },
+  {
     term: "id",
     definition: "Shows the UID, primary group, and secondary groups of a user. With no argument, those of whoever is at the prompt. Use it to check a useradd or a usermod -aG.",
     example: "id thiago",
@@ -1377,6 +1482,14 @@ const en: GlossaryEntry[] = [
     definition: "Creates a group. The user is added later with useradd -G or usermod -aG. groupadd does not put anyone in the group.",
     example: "groupadd developer",
     tldr: { page: "groupadd", platform: "linux" },
+  },
+  {
+    term: "gpasswd",
+    aliases: ["gpasswd -a", "gpasswd -d", "gpasswd -M"],
+    definition:
+      "Manages an existing group: who is in it. It does not create the group (that is groupadd).\n\n• gpasswd -a USER GROUP → add to the group (same idea as usermod -aG, but thinking about the group).\n• gpasswd -d USER GROUP → remove someone from that group. Clean way to drop one secondary without touching the user's other groups.\n• gpasswd -M u1,u2 GROUP → leave exactly those members (replaces the group's member list).\n\nWhen to use which\n• Focus on the account (add a secondary, shell, home): usermod -aG.\n• Focus on the group, or you need to remove someone from just one: gpasswd -a / -d.\n\nWatch out: usermod -G without -a replaces every secondary. It is not \"remove this one\". To remove: gpasswd -d felipe sysadm. Then id felipe or getent group sysadm.",
+    example: "gpasswd -a felipe sysadm · gpasswd -d felipe sysadm · getent group sysadm",
+    tldr: { page: "gpasswd", platform: "linux" },
   },
   {
     term: "passwd",
@@ -1426,9 +1539,11 @@ const en: GlossaryEntry[] = [
   },
   {
     term: "systemctl",
+    aliases: ["systemd", "unit", "enable --now"],
     definition:
-      "Manages systemd units. status changes nothing: it shows whether the daemon is up (active/running). is-active answers active or inactive. is-enabled says if it starts at boot (enabled/disabled). start and stop are for now. enable leaves it for the next boot and disable removes that. enable --now starts it now and leaves it for boot. restart makes it read the configuration again.",
-    example: "systemctl enable --now tuned · systemctl status tuned · systemctl is-active tuned · systemctl is-enabled tuned",
+      "system control: the command that controls systemd, the system init (starts services, keeps them running, and decides what comes back at boot).\n\nA unit is usually a service (.service): NetworkManager, crond, atd, httpd, chronyd, etc.\n\n• status → look: active/running (up now), enabled/disabled (starts at boot?). Changes nothing.\n• start / stop → now.\n• enable / disable → next boot.\n• enable --now → start now and leave it for boot (most used in the labs).\n• restart → reread config and restart the service.\n\nCheck status first; use enable --now only if it is not already active and enabled.\n\nLab examples\n• Network: systemctl status NetworkManager → if needed, systemctl enable --now NetworkManager\n• Cron: systemctl status crond → if needed, systemctl enable --now crond\n• at: systemctl status atd → if needed, systemctl enable --now atd\n• Time: systemctl enable --now chronyd\n• Apache: systemctl restart httpd (after Listen or SELinux changes)\n• Profile: systemctl enable --now tuned",
+    example:
+      "systemctl status NetworkManager · systemctl enable --now NetworkManager · systemctl status crond · systemctl enable --now crond · systemctl status atd · systemctl enable --now atd · systemctl enable --now chronyd · systemctl restart httpd · systemctl enable --now tuned · systemctl is-active crond · systemctl is-enabled crond",
     tldr: { page: "systemctl", platform: "linux" },
   },
   {
@@ -1472,8 +1587,8 @@ const en: GlossaryEntry[] = [
   {
     term: "nmcli",
     definition:
-      "Configures NetworkManager from the terminal. connection show lists profiles: NAME is what you pass to modify, DEVICE is the NIC. connection modify saves the address, gateway, and DNS. connection up applies it now. -f prints one field. ip a does not show DNS.",
-    example: "nmcli connection show · nmcli -f ipv4.dns connection show hostonly · nmcli connection up hostonly",
+      "Configures NetworkManager from the terminal. connection show lists profiles: NAME is what you pass to modify, DEVICE is the NIC. connection modify saves the address, gateway, DNS, and search domain (ipv4.dns-search). connection up applies it now. -f prints one field. ip a does not show DNS or the search domain.",
+    example: "nmcli connection show · nmcli -f ipv4.dns,ipv4.dns-search connection show hostonly · nmcli connection up hostonly",
     tldr: { page: "nmcli", platform: "linux" },
   },
   {
@@ -1675,8 +1790,17 @@ const en: GlossaryEntry[] = [
   },
   {
     term: "crontab",
-    definition: "Edits or lists one user's job table. -l lists, -e edits, -r deletes. -u USER, as root, is that account's table. It is not a systemd timer.",
-    example: "crontab -l -u erik",
+    definition:
+      "Edits or lists one user's job table. -l lists, -e edits, -r deletes. -u USER, as root, is that account's table. It is not a systemd timer.\n\nIt is not crond: crontab writes the table; crond is the daemon that runs it. Without crond active/enabled, the line can be right and still never fire.\n\nField order (minute, hour, day of month, month, day of week): cat /etc/crontab draws it. That system file also has user-name; in a user's crontab -e that sixth field is omitted.",
+    example: "cat /etc/crontab · crontab -u erik -e · crontab -l -u erik",
+    tldr: { page: "crontab" },
+  },
+  {
+    term: "crond",
+    aliases: ["cron", "crond.service"],
+    definition:
+      "Daemon that runs crontab tables. It is not the crontab command.\n\nFirst: systemctl status crond. If it is not active and enabled → systemctl enable --now crond (enable = next boot; --now = now).\n\nFor at, the service is atd.",
+    example: "systemctl status crond · systemctl enable --now crond",
     tldr: { page: "crontab" },
   },
   {
@@ -1692,6 +1816,34 @@ const en: GlossaryEntry[] = [
     definition:
       "Says which part of the IP is the network and which part is the host.\n\nTwo ways to write the same common lab/exam mask:\n• CIDR: /24 → the first 24 bits are the network; the last number (.0–.255) is the host.\n• Dotted decimal: 255.255.255.0 → same mask as /24.\n\nExample: 172.16.1.0/24 = the whole 172.16.1.x network (client .12 and server .13). The exam sheet may write 172.24.14.0/255.255.255.0: that is the network plus that mask, not something else.\n\nIn commands you almost always use CIDR: 172.16.1.12/24 in nmcli, allow 172.16.1.0/24 in chrony. You do not need …/255.255.255.0 there.\n\nIt is not always /24: the ticket may ask for /16, /25, etc. Read the sheet.",
     example: "nmcli … ipv4.addresses 172.16.1.12/24 · allow 172.16.1.0/24",
+  },
+  {
+    term: "search domain",
+    aliases: [
+      "dns-search",
+      "ipv4.dns-search",
+      "Search domains",
+      "search",
+    ],
+    definition:
+      "Domain the system appends after a short name when resolving DNS.\n\nIf the search domain is linux.lab and you type server, the resolver tries server.linux.lab. It does not change the machine's IP. It is not the DNS server (that is the resolver IP, e.g. 172.16.1.1) and not the hostname (client.linux.lab / server.linux.lab).\n\nIn nmtui: Edit → IPv4 → Search domains → Add linux.lab.\nIn nmcli: ipv4.dns-search linux.lab on the same profile modify.\nIn /etc/resolv.conf it shows as search linux.lab (NetworkManager writes it on up).\n\nTo check: nmcli -f ipv4.dns,ipv4.dns-search connection show NAME. ip a does not show it.\n\nIf the lab DNS has no real records, ping server may still fail: the search domain still has to be saved on the profile when the ticket asks for it.",
+    example:
+      "nmcli connection modify hostonly ipv4.dns-search linux.lab · nmcli -f ipv4.dns,ipv4.dns-search connection show hostonly · cat /etc/resolv.conf",
+  },
+  {
+    term: "pwquality",
+    aliases: ["pwquality.conf", "/etc/security/pwquality.conf", "minlen", "pam_pwquality"],
+    definition:
+      "Password quality policy when someone runs passwd: minimum length, character classes, etc.\n\nFile: /etc/security/pwquality.conf. The lab usually wants minlen = 8.\n\nNot the maximum age: that is PASS_MAX_DAYS in /etc/login.defs (new accounts) and chage -M (account that already exists).\n\nIf you forget the path: man -k password, man pwquality.conf, or man pam_pwquality. Also grep -r minlen /etc/security.",
+    example: "vim /etc/security/pwquality.conf · grep ^minlen /etc/security/pwquality.conf",
+  },
+  {
+    term: "PASS_MAX_DAYS",
+    aliases: ["login.defs", "/etc/login.defs", "chage", "maximum age", "password aging"],
+    definition:
+      "How many days a password may last before it must be changed.\n\nFor new accounts: PASS_MAX_DAYS line in /etc/login.defs (e.g. 30). useradd reads it at create time.\nFor an account that already exists (roman): it does not inherit the login.defs change → chage -M 30 roman. chage -l roman verifies.\n\nNot the minimum length: that is minlen in /etc/security/pwquality.conf.\n\nIf you forget where: man -k aging, man passwd (FILES → login.defs), man login.defs, man chage. Or grep -r PASS_MAX /etc.",
+    example: "grep ^PASS_MAX_DAYS /etc/login.defs · chage -M 30 roman · chage -l roman",
+    tldr: { page: "chage", platform: "linux" },
   },
   {
     term: "NTP",

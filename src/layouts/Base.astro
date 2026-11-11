@@ -35,12 +35,53 @@ const home = routePath(locale, "home");
 const stats = routePath(locale, "stats");
 const glossary = routePath(locale, "glossary");
 const otherHref = swapLocalePath(path, other);
+/** Absolute PNG, no ?v= — WhatsApp/Meta parsers break on query strings. Same size as arceprog.dev. */
+const ogImage = new URL("/og-wa.png", SITE).href;
+const ogImageAlt =
+  locale === "en"
+    ? "arceprog · Linux sysadmin practice · labs, glossary, timers"
+    : "arceprog · Práctica sysadmin Linux · labs, glosario, tiempos";
+const siteName = "exam-sysadmin-practice.arceprog.dev";
 ---
 
 <!doctype html>
 <html lang={config.htmlLang} data-locale={locale} data-theme="dark">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <!-- OG primero: WhatsApp/Meta leen el head temprano; imagen PNG 1200×630 sin ?v=. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} itemprop="image" />
+    <meta property="og:image:secure_url" content={ogImage} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
+    <link rel="image_src" href={ogImage} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:locale" content={config.ogLocale} />
+    <meta property="og:locale:alternate" content={getLocaleConfig(other).ogLocale} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
+    <meta property="twitter:domain" content="exam-sysadmin-practice.arceprog.dev" />
+    <meta property="twitter:url" content={canonical} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="es-AR" href={alternateEs} />
+    <link rel="alternate" hreflang="en-US" href={alternateEn} />
+    <link rel="alternate" hreflang="x-default" href={alternateEs} />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="author" content="Felipe Arce" />
+    <meta name="theme-color" content="#11151c" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta http-equiv="content-language" content={locale} />
     <script is:inline>
       (function () {
         var theme = "dark";
@@ -51,21 +92,6 @@ const otherHref = swapLocalePath(path, other);
         document.documentElement.setAttribute("data-theme", theme);
       })();
     </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{fullTitle}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="es-AR" href={alternateEs} />
-    <link rel="alternate" hreflang="en-US" href={alternateEn} />
-    <link rel="alternate" hreflang="x-default" href={alternateEs} />
-    <meta name="robots" content="noindex, nofollow" />
-    <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={canonical} />
-    <meta property="og:locale" content={config.ogLocale} />
-    <meta property="og:locale:alternate" content={getLocaleConfig(other).ogLocale} />
-    <meta http-equiv="content-language" content={locale} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

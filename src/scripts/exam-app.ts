@@ -1,5 +1,14 @@
 import { difficultyLabel, getUI, pageLocale, routePath, type RouteId } from "../lib/i18n";
-import { labsFor, loadEdition, labCode, trackFor, REDHAT_EXAM_VIDEO, type Lab, type LabCommand } from "../lib/labs";
+import {
+  labsFor,
+  loadEdition,
+  labCode,
+  trackFor,
+  isUnscored,
+  REDHAT_EXAM_VIDEO,
+  type Lab,
+  type LabCommand,
+} from "../lib/labs";
 import { lvmLabFlowHtml } from "../lib/lvm-diagram";
 import {
   countedLabs,
@@ -373,7 +382,9 @@ function machineOf(lab: Lab): "client" | "server" | "both" {
 }
 
 function ratedDone(record: LabRecord | undefined): boolean {
-  return record?.status === "done" && record.difficulty != null;
+  if (record?.status !== "done") return false;
+  if (isUnscored(record.labId)) return true;
+  return record.difficulty != null;
 }
 
 function taskGroup(run: Run, title: string, groupKey: string, items: { lab: Lab; index: number }[], intro?: HTMLElement): HTMLElement {
@@ -430,6 +441,9 @@ function taskRow(run: Run, lab: Lab, index: number): HTMLElement {
   const text = el("div", "min-w-0 text-left");
   const title = el("span", "font-medium", `${labCode(lab.id)} · ${lab.title}`);
   text.append(title);
+  if (isUnscored(lab.id)) {
+    text.append(el("span", "lab-unscored mt-1 inline-flex", copy().unscoredBadge));
+  }
   if (lab.story) text.append(el("p", "lab-story mt-1 block text-sm leading-relaxed", storyPreview(lab.story)));
   const meta = el("span", "lab-meta mt-0.5 block text-sm text-muted", rowMeta(record, lab));
   text.append(meta);
@@ -437,7 +451,7 @@ function taskRow(run: Run, lab: Lab, index: number): HTMLElement {
   enter.addEventListener("click", () => openLab(index));
   row.append(marks, text, enter);
   if (stuck) row.append(stuckFlag());
-  if (done) row.append(difficultyLine(index, record?.difficulty ?? null, lab));
+  if (done && !isUnscored(lab.id)) row.append(difficultyLine(index, record?.difficulty ?? null, lab));
   return row;
 }
 
@@ -751,15 +765,35 @@ function labCard(lab: Lab, record: LabRecord): HTMLElement {
     el("p", "text-xs font-semibold tracking-[0.16em] text-muted uppercase", `${labCode(lab.id)} · ${lab.where}`),
     el("h1", "mt-2 text-3xl font-semibold tracking-tight", lab.title),
   );
+  if (isUnscored(lab.id)) {
+    card.append(el("p", "lab-unscored-note mt-3", copy().unscoredNote));
+  }
   if (lab.story) card.append(storyText(lab.story, "mt-3 text-base leading-relaxed text-ink/80"));
   card.append(
     objectiveList(lab.objective, "mt-4 list-disc space-y-2 pl-5 text-base leading-relaxed text-ink/90 sm:text-lg"),
   );
+  if (isUnscored(lab.id) && lab.help.videos.length) {
+    card.append(labVideoBlock(lab));
+  }
   if (record.attempts > 1) {
     card.append(el("p", "mt-4 text-sm text-warn", copy().attempt(record.attempts)));
   }
   if (helpVisible) card.append(helpPanel(lab));
   return card;
+}
+
+function labVideoBlock(lab: Lab): HTMLElement {
+  const block = el("section", "lab-video-block mt-5");
+  block.append(el("h2", "text-sm font-semibold tracking-wide uppercase", copy().videosTitle));
+  const list = el("ul", "mt-2 space-y-2 text-base");
+  for (const video of lab.help.videos) {
+    const li = el("li");
+    li.append(anchor(video.url, video.title));
+    list.append(li);
+  }
+  block.append(list);
+  if (lab.help.videoHint) block.append(el("p", "mt-2 text-sm text-muted", lab.help.videoHint));
+  return block;
 }
 
 function helpPanel(lab: Lab): HTMLElement {
@@ -828,7 +862,7 @@ function actions(run: Run): HTMLElement {
     flag.classList.add("mt-3");
     wrap.append(flag);
   }
-  if (record.status === "done") {
+  if (record.status === "done" && !isUnscored(labs()[run.currentIndex]?.id ?? "")) {
     const line = difficultyLine(run.currentIndex, record.difficulty ?? null, labs()[run.currentIndex]);
     line.classList.add("mt-3");
     wrap.append(line);

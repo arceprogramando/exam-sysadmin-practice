@@ -77,6 +77,8 @@ export type Edition = "v10" | "v9";
 
 const PODMAN_IDS = new Set(["lab-20", "lab-21", "lab-22"]);
 const FLATPAK_IDS = new Set(["extra-04", "extra-05"]);
+/** Visible on the board, but left out of coverage, tallies, and leftovers. */
+const UNSCORED_IDS = new Set(["lab-grub", "lab-pwquality", "lab-at", "lab-links"]);
 const EDITION_KEY = "arceprog:rhcsa-edition";
 
 export function loadEdition(): Edition {
@@ -98,6 +100,11 @@ export function trackFor(lab: Lab, edition: Edition): Lab["track"] {
 /** The container topic that is not the one you are practicing. It stays visible as an extra and does not count as missing. */
 export function isOffEdition(labId: string, edition: Edition): boolean {
   return edition === "v10" ? PODMAN_IDS.has(labId) : FLATPAK_IDS.has(labId);
+}
+
+/** Extra that stays on the list but does not enter the final practice score or stats. */
+export function isUnscored(labId: string): boolean {
+  return UNSCORED_IDS.has(labId);
 }
 
 function machineRank(where: string): number {
@@ -221,35 +228,33 @@ export const LABS: Lab[] = [
   },
   {
     id: "lab-grub",
-    track: "pdf",
-    title: "El menú de arranque se queda demasiado tiempo",
+    track: "extra",
+    title: "Cómo se cambia el menú de arranque (video)",
     story:
-      "Operaciones pide que el client vuelva a estar usable rápido después de un reinicio. Hoy el menú de GRUB se queda a la vista varios segundos: en un lab o en un despliegue con varias VMs eso suma demora, y además cualquiera frente a la consola puede elegir otro kernel o entrar a editar la línea de arranque.\n\nHay que dejar el timeout en 10 segundos, ocultar el menú (hidden) y sumar quiet al kernel para que la consola no llene la pantalla de mensajes al boot. El cambio tiene que vivir en disco: si solo tocás el menú una vez en GRUB (como en el rescate de root), al próximo reboot vuelve lo de antes.",
+      "En la lista oficial entra modificar el bootloader, pero sin un ticket fijo de números. Este extra no se hace en la VM: mirás el video para ver /etc/default/grub, timeout, hidden, quiet y grub2-mkconfig.\n\nNo cuenta para la estadística final ni para Continuar pendientes. Cuando lo terminás de ver, marcá Done. No hace falta dejar el client con esos valores.",
     objective: [
-      "GRUB_TIMEOUT=10.",
-      "GRUB_TIMEOUT_STYLE=hidden.",
-      "quiet en la línea del kernel.",
-      "Aplicado al grub.cfg.",
+      "Mirar el video de GRUB en esta tarjeta.",
+      "Entender /etc/default/grub y regenerar grub.cfg.",
+      "Marcar Done cuando lo viste (no suma a la nota final).",
     ],
     where: "client",
     steps: [
-      "En el client, editá /etc/default/grub.",
-      "Timeout 10 y estilo hidden.",
-      "La línea del kernel tiene que incluir quiet.",
-      "Regenerá grub.cfg. No alcanza con guardar el archivo.",
+      "Abrí el video de este lab (está en la tarjeta, no hace falta pedir ayuda).",
+      "Prestá atención a /etc/default/grub y a grub2-mkconfig (BIOS vs UEFI).",
+      "No configures la máquina para cumplir este extra: el objetivo es el video.",
+      "Volvé a la lista y marcá Done.",
     ],
-    note: "Va después del rescate de root: los dos tocan el arranque. El rescate edita GRUB una sola vez. Este cambio queda en disco.",
+    note: "Extra. No es un lab de la lista principal. El rescate de root sigue aparte: ahí sí tocás GRUB una vez en la consola.",
     help: {
-      tip: "Se edita /etc/default/grub y después se regenera el menú real con grub2-mkconfig. No edites grub.cfg a mano.\n\n¿BIOS o UEFI? Primero: ls /sys/firmware/efi. Si ese path no existe (caso típico de este lab con Vagrant/VirtualBox, igual que en el video), usá la salida BIOS: grub2-mkconfig -o /boot/grub2/grub.cfg. Si efi existe y lista cosas, ahí sí UEFI: /boot/efi/EFI/rocky/grub.cfg. No elijas UEFI “por las dudas”: si la carpeta no está, el comando no aplica lo que pedís.\n\nPor defecto, en Rocky/RHEL GRUB_TIMEOUT suele venir en 5 (cinco segundos) y el menú a la vista (estilo menu o sin GRUB_TIMEOUT_STYLE=hidden). El lab pide 10 y hidden: no es “bajar el default”, es dejarlo en lo que marca el enunciado.",
-      videoHint: "Parte 6 de la playlist (deploy). El link salta al minuto 19:49, donde hacen GRUB: timeout 10, hidden, quiet y grub2-mkconfig a /boot/grub2/grub.cfg (BIOS).",
+      tip: "Solo mirá el video. El enunciado del video usa timeout 10, hidden y quiet como ejemplo: en el examen el pedido puede ser otro, o no aparecer con esos números.\n\nIdea que sí conviene llevar: se edita /etc/default/grub y después grub2-mkconfig escribe el menú real. No edites grub.cfg a mano. BIOS → /boot/grub2/grub.cfg. UEFI en Rocky → /boot/efi/EFI/rocky/grub.cfg (si existe /sys/firmware/efi).",
+      videoHint: "Parte 6 de la playlist (deploy). El link salta al minuto 19:49, el tramo de GRUB.",
       videos: [{ title: "Parte 6: GRUB (19:49)", url: `${YT.harunaDeploy}&t=1189s` }],
       commands: [
-        { cmd: "ls /sys/firmware/efi", why: "Decide el -o de grub2-mkconfig. Si dice que no existe → BIOS (este lab / el video). Si lista archivos → UEFI.", as: "root" },
-        { cmd: "grep -E '^GRUB_TIMEOUT|^GRUB_TIMEOUT_STYLE|^GRUB_CMDLINE_LINUX=' /etc/default/grub", why: "Ver el timeout, el estilo y la línea del kernel antes de cambiarlos.", as: "root" },
-        { cmd: "vim /etc/default/grub", why: "Dejá GRUB_TIMEOUT=10 y GRUB_TIMEOUT_STYLE=hidden.\nEn GRUB_CMDLINE_LINUX= tiene que aparecer quiet, junto a lo que ya estaba (rhgb se puede dejar). No borres el resto de la línea. Es lo mismo que muestra el video.", as: "root" },
-        { cmd: "grub2-mkconfig -o /boot/grub2/grub.cfg", why: "Método del video y de este lab (BIOS / Vagrant). Escribe el menú real. Sin este comando, /etc/default/grub cambió y el próximo boot sigue igual.", as: "root", orGroup: "grub-out", orName: "BIOS (lab / video)" },
-        { cmd: "grub2-mkconfig -o /boot/efi/EFI/rocky/grub.cfg", why: "Solo si ls /sys/firmware/efi existió. Misma idea, otro archivo. En las VMs de este repo casi nunca hace falta.", as: "root", orGroup: "grub-out", orName: "UEFI (si hay efi)" },
-        { cmd: "grep -E 'timeout|quiet' /boot/grub2/grub.cfg | head", why: "Comprobar que el cfg regenerado menciona el timeout y quiet. Si usaste UEFI, mirá el cfg bajo /boot/efi/EFI/rocky/.", as: "root" },
+        {
+          cmd: "Abrí el video de arriba (Parte 6, 19:49).",
+          why: "Este extra se cumple mirando el video. Los comandos del video son de ejemplo; no hace falta aplicarlos en la VM para marcar Done.",
+          as: "info",
+        },
       ],
     },
   },
@@ -257,35 +262,40 @@ export const LABS: Lab[] = [
     id: "lab-01",
     track: "pdf",
     title: "Hay que nombrar al cliente y sacarlo de la red principal",
-    story: "Necesitamos conectar dos computadoras fuera de la red principal. Esta es la máquina cliente: hay que ponerle nombre y configurarle la dirección, la puerta de enlace y el DNS.",
+    story: "Necesitamos conectar dos computadoras fuera de la red principal. Esta es la máquina cliente: hay que ponerle nombre y configurarle la dirección, la puerta de enlace, el DNS y el search domain linux.lab.",
     objective: [
       "IP 172.16.1.12/24 en la interfaz del lab.",
       "Gateway 172.16.1.1 y DNS 172.16.1.1.",
+      "Search domain linux.lab.",
       "Hostname client.linux.lab.",
       "Persistente tras reboot.",
     ],
     where: "client",
     steps: [
+      "Primero: NetworkManager activo y enabled (systemctl status NetworkManager).",
       "IP 172.16.1.12/24 en la interfaz del lab (enp0s8).",
       "Gateway 172.16.1.1 y DNS 172.16.1.1.",
+      "Search domains: linux.lab (completa nombres cortos a *.linux.lab).",
       "Hostname client.linux.lab.",
       "Todo persistente. Después de reboot, nmcli y hostnamectl tienen que mostrar lo mismo.",
     ],
-    note: "Vagrant arranca el client como node-a.lab y deja enp0s8 sin IP. El lab pide client.linux.lab y 172.16.1.12/24.",
+    note: "Vagrant arranca el client como node-a.lab y deja enp0s8 sin IP. El lab pide client.linux.lab y 172.16.1.12/24. El search domain no cambia la IP: solo cómo se completa un nombre corto.",
     help: {
-      tip: "En el examen se edita el perfil que ya existe, no se crea otro encima. El nombre para el comando es la columna NAME, no la placa. En una salida donde DEVICE enp0s8 está en la fila hostonly, el modify usa hostonly. enp0s3 es la NAT de Vagrant (suele tener 10.0.2.15): no la pases a manual. lo es la máquina hablándose a sí misma: no se toca.",
+      tip: "Antes de nmcli o nmtui, mirá NetworkManager: systemctl status NetworkManager. Si no está enabled o active, systemctl enable --now NetworkManager. Sin ese servicio, nmcli no sirve.\n\nEn el examen se edita el perfil que ya existe, no se crea otro encima. El nombre para el comando es la columna NAME, no la placa. En una salida donde DEVICE enp0s8 está en la fila hostonly, el modify usa hostonly. enp0s3 es la NAT de Vagrant (suele tener 10.0.2.15): no la pases a manual. lo es la máquina hablándose a sí misma: no se toca.\n\nSearch domain (dns-search): dominio que el sistema agrega detrás de un nombre corto. Si escribís server, prueba server.linux.lab. No es el DNS (eso es la IP del resolutor: 172.16.1.1) ni el hostname. En nmtui es Search domains; en nmcli es ipv4.dns-search. En /etc/resolv.conf aparece como search linux.lab. En este lab el DNS 172.16.1.1 a veces no resuelve nombres: igual el search domain tiene que quedar guardado en el perfil.",
       videoHint: "Q01a es nmtui. Q01b es nmcli y hostnamectl. Los dos hacen la misma red.",
       videos: [
         { title: "Q01a: Red con nmtui", url: YT.nmtui },
         { title: "Q01b: Red con nmcli y hostnamectl", url: YT.nmcli },
       ],
       commands: [
+        { cmd: "systemctl status NetworkManager", why: "Primero. Si está active y enabled, seguí. Si está inactive o disabled, el enable --now de abajo. Sin NetworkManager, nmcli y nmtui no configuran nada.", as: "root" },
+        { cmd: "systemctl enable --now NetworkManager", why: "Solo si el status de arriba no quedó enabled/active. enable lo deja para el próximo boot; --now lo arranca ya.", as: "root" },
         { cmd: "nmcli connection show", why: "No cambia nada. Lista los perfiles guardados, una fila por perfil. NAME es el nombre que vas a escribir en el modify: puede no coincidir con la placa. DEVICE es la placa que ese perfil está usando ahora. Si ves enp0s3 y enp0s8, no se elige el primero: se elige la fila cuyo DEVICE es la placa del lab. En el ejemplo, DEVICE enp0s8 está en la fila cuyo NAME es hostonly, así que el comando usa hostonly. lo es el loopback, la máquina consigo misma. Esa fila no se edita. Tab no hace falta para esto. Si al apretarlo salen archivos de la carpeta, el shell no tiene cargadas las palabras de nmcli. En el examen no se instala nada para arreglarlo: el nombre se copia de la columna NAME.", as: "root" },
         { cmd: "ip -br a", why: "Para saber cuál placa es la del lab, antes de cambiar nada. El nombre enp0s3 o enp0s8 no dice el rol: es el orden en que VirtualBox enchufó las placas. La que ya tiene 10.0.2.15 es la entrada, la NAT. No se pasa a manual. La otra ethernet es la del lab: en este Vagrant suele ser enp0s8 y arranca sin dirección. Esa palabra se busca en la columna DEVICE de connection show. La NAME de esa misma fila es la que se modifica. lo es la máquina consigo misma: no se toca.", as: "root" },
-        { cmd: "nmtui", why: "En la conexión de enp0s8: IPv4 en Manual, Address 172.16.1.12/24, Gateway 172.16.1.1 y, en DNS servers, Add 172.16.1.1. Si dice <Add...>, el DNS no está puesto.", as: "root", orGroup: "net-set", orName: "nmtui" },
-        { cmd: "nmcli connection modify NOMBRE ipv4.method manual ipv4.addresses 172.16.1.12/24 ipv4.gateway 172.16.1.1 ipv4.dns 172.16.1.1", why: "NOMBRE es la columna NAME de la fila del lab, no la placa. Si esa fila dice hostonly y DEVICE enp0s8, el comando es modify hostonly. Guarda la IP, el gateway y el DNS en ese perfil. ipv4.dns es el pedazo que anota el DNS. Sin eso, el DNS no queda. sudo hace falta si el prompt es vagrant@. Si ya es root@, sudo no suma nada.", as: "root", orGroup: "net-set", orName: "nmcli" },
+        { cmd: "nmtui", why: "Search domain = dominio que se pega detrás de un nombre corto (server → server.linux.lab). En la conexión de enp0s8: IPv4 en Manual, Address 172.16.1.12/24, Gateway 172.16.1.1, DNS servers Add 172.16.1.1, y Search domains Add linux.lab. Si Search domains dice <Add...>, todavía no quedó.", as: "root", orGroup: "net-set", orName: "nmtui" },
+        { cmd: "nmcli connection modify NOMBRE ipv4.method manual ipv4.addresses 172.16.1.12/24 ipv4.gateway 172.16.1.1 ipv4.dns 172.16.1.1 ipv4.dns-search linux.lab", why: "NOMBRE es la columna NAME de la fila del lab, no la placa. Si esa fila dice hostonly y DEVICE enp0s8, el comando es modify hostonly. Guarda la IP, el gateway, el DNS y el search domain. ipv4.dns es el resolutor (172.16.1.1). ipv4.dns-search linux.lab es el Search domains: completa nombres cortos a *.linux.lab; no es el DNS ni el hostname. Sin eso, el search no queda. sudo hace falta si el prompt es vagrant@. Si ya es root@, sudo no suma nada.", as: "root", orGroup: "net-set", orName: "nmcli" },
         { cmd: "restorecon -v /etc/NetworkManager/system-connections/NOMBRE.nmconnection", why: "No es un paso de siempre. Solo si el modify anterior dice Permission denied al renombrar el .nmconnection, aunque el prompt ya sea root@. El archivo se llama como la columna NAME: si el perfil es hostonly, el archivo es hostonly.nmconnection. SELinux no deja que NetworkManager lo reemplace. Este comando no guarda el DNS. Corrige la etiqueta y, si hacía falta, avisa Relabeled. Después se vuelve a correr el modify.", as: "root" },
-        { cmd: "nmcli -f ipv4.dns connection show NOMBRE", why: "No cambia nada. NOMBRE es otra vez la columna NAME, por ejemplo hostonly. Muestra solo el DNS guardado en ese perfil. Si quedó, la línea dice ipv4.dns: 172.16.1.1. Si sale vacío, no quedó. ip a no muestra el DNS.", as: "root" },
+        { cmd: "nmcli -f ipv4.dns,ipv4.dns-search connection show NOMBRE", why: "No cambia nada. NOMBRE es otra vez la columna NAME, por ejemplo hostonly. Tiene que verse ipv4.dns: 172.16.1.1 e ipv4.dns-search: linux.lab. dns = resolutor; dns-search = dominio que completa nombres cortos. Si dns-search sale vacío, no quedó. ip a no muestra esto.", as: "root" },
         { cmd: "nmcli connection up NOMBRE", why: "Aplica ahora lo que el modify ya guardó en ese perfil. No es lo que lo hace persistente: el modify ya lo escribió en disco. up sirve para no esperar al reboot. NOMBRE sigue siendo la columna NAME.", slip: "Me pasó: el perfil quedó bien y activé enp0s3 en vez de enp0s8. Por eso la IP seguía igual.", as: "root" },
         { cmd: "hostnamectl set-hostname client.linux.lab", why: "Cambia el hostname ya, y lo guarda. No hace falta nmcli connection up ni ningún otro up: el hostname no es parte del perfil de red. Después de un reboot, hostnamectl tiene que seguir diciendo client.linux.lab.", as: "root" },
         { cmd: "man nmcli", why: "En el examen esto es legal. Buscá connection modify.", as: "root" },
@@ -337,35 +347,40 @@ export const LABS: Lab[] = [
     id: "lab-02",
     track: "pdf",
     title: "Hay que nombrar al servidor y sacarlo de la red principal",
-    story: "La otra computadora del par. Es el servidor: hay que ponerle nombre y la dirección de esta red, para que el cliente pueda llegar.",
+    story: "La otra computadora del par. Es el servidor: hay que ponerle nombre, la dirección de esta red y el search domain linux.lab, para que el cliente pueda llegar.",
     objective: [
       "IP 172.16.1.13/24 en la interfaz del lab.",
       "Gateway 172.16.1.1 y DNS 172.16.1.1.",
+      "Search domain linux.lab.",
       "Hostname server.linux.lab.",
       "Persistente tras reboot.",
     ],
     where: "server",
     steps: [
+      "Primero: NetworkManager activo y enabled (systemctl status NetworkManager).",
       "IP 172.16.1.13/24 en la interfaz del lab (enp0s8).",
       "Gateway 172.16.1.1 y DNS 172.16.1.1.",
+      "Search domains: linux.lab (completa nombres cortos a *.linux.lab).",
       "Hostname server.linux.lab.",
       "Todo persistente. Después de reboot, nmcli y hostnamectl tienen que mostrar lo mismo.",
     ],
-    note: "Vagrant arranca el server como node-b.lab y deja enp0s8 sin IP. El lab pide server.linux.lab y 172.16.1.13/24. El rescate de root está en el lab anterior, con password student.",
+    note: "Vagrant arranca el server como node-b.lab y deja enp0s8 sin IP. El lab pide server.linux.lab y 172.16.1.13/24. El rescate de root está en el lab anterior, con password student. El search domain no cambia la IP: solo cómo se completa un nombre corto.",
     help: {
-      tip: "En el examen se edita el perfil que ya existe, no se crea otro encima. El nombre para el comando es la columna NAME, no la placa. En una salida donde DEVICE enp0s8 está en la fila hostonly, el modify usa hostonly. enp0s3 es la NAT de Vagrant (suele tener 10.0.2.15): no la pases a manual. lo es la máquina hablándose a sí misma: no se toca.",
+      tip: "Antes de nmcli o nmtui, mirá NetworkManager: systemctl status NetworkManager. Si no está enabled o active, systemctl enable --now NetworkManager. Sin ese servicio, nmcli no sirve.\n\nEn el examen se edita el perfil que ya existe, no se crea otro encima. El nombre para el comando es la columna NAME, no la placa. En una salida donde DEVICE enp0s8 está en la fila hostonly, el modify usa hostonly. enp0s3 es la NAT de Vagrant (suele tener 10.0.2.15): no la pases a manual. lo es la máquina hablándose a sí misma: no se toca.\n\nSearch domain (dns-search): dominio que el sistema agrega detrás de un nombre corto. Si escribís client, prueba client.linux.lab. No es el DNS (eso es la IP del resolutor: 172.16.1.1) ni el hostname. En nmtui es Search domains; en nmcli es ipv4.dns-search. En /etc/resolv.conf aparece como search linux.lab. En este lab el DNS 172.16.1.1 a veces no resuelve nombres: igual el search domain tiene que quedar guardado en el perfil.",
       videoHint: "Q01a es nmtui. Q01b es nmcli y hostnamectl. Los dos hacen la misma red. Es la misma tarea que en el client, con la IP y el hostname del server.",
       videos: [
         { title: "Q01a: Red con nmtui", url: YT.nmtui },
         { title: "Q01b: Red con nmcli y hostnamectl", url: YT.nmcli },
       ],
       commands: [
+        { cmd: "systemctl status NetworkManager", why: "Primero. Si está active y enabled, seguí. Si está inactive o disabled, el enable --now de abajo. Sin NetworkManager, nmcli y nmtui no configuran nada.", as: "root" },
+        { cmd: "systemctl enable --now NetworkManager", why: "Solo si el status de arriba no quedó enabled/active. enable lo deja para el próximo boot; --now lo arranca ya.", as: "root" },
         { cmd: "nmcli connection show", why: "No cambia nada. Lista los perfiles guardados, una fila por perfil. NAME es el nombre que vas a escribir en el modify: puede no coincidir con la placa. DEVICE es la placa que ese perfil está usando ahora. Si ves enp0s3 y enp0s8, no se elige el primero: se elige la fila cuyo DEVICE es la placa del lab. En el ejemplo, DEVICE enp0s8 está en la fila cuyo NAME es hostonly, así que el comando usa hostonly. lo es el loopback, la máquina consigo misma. Esa fila no se edita. Tab no hace falta para esto. Si al apretarlo salen archivos de la carpeta, el shell no tiene cargadas las palabras de nmcli. En el examen no se instala nada para arreglarlo: el nombre se copia de la columna NAME.", as: "root" },
         { cmd: "ip -br a", why: "Para saber cuál placa es la del lab, antes de cambiar nada. El nombre enp0s3 o enp0s8 no dice el rol: es el orden en que VirtualBox enchufó las placas. La que ya tiene 10.0.2.15 es la entrada, la NAT. No se pasa a manual. La otra ethernet es la del lab: en este Vagrant suele ser enp0s8 y arranca sin dirección. Esa palabra se busca en la columna DEVICE de connection show. La NAME de esa misma fila es la que se modifica. lo es la máquina consigo misma: no se toca.", as: "root" },
-        { cmd: "nmtui", why: "En la conexión de enp0s8: IPv4 en Manual, Address 172.16.1.13/24, Gateway 172.16.1.1 y, en DNS servers, Add 172.16.1.1. Si dice <Add...>, el DNS no está puesto.", as: "root", orGroup: "net-set", orName: "nmtui" },
-        { cmd: "nmcli connection modify NOMBRE ipv4.method manual ipv4.addresses 172.16.1.13/24 ipv4.gateway 172.16.1.1 ipv4.dns 172.16.1.1", why: "NOMBRE es la columna NAME de la fila del lab, no la placa. Si esa fila dice hostonly y DEVICE enp0s8, el comando es modify hostonly. Guarda la IP, el gateway y el DNS en ese perfil. ipv4.dns es el pedazo que anota el DNS. Sin eso, el DNS no queda. sudo hace falta si el prompt es vagrant@. Si ya es root@, sudo no suma nada.", as: "root", orGroup: "net-set", orName: "nmcli" },
+        { cmd: "nmtui", why: "Search domain = dominio que se pega detrás de un nombre corto (client → client.linux.lab). En la conexión de enp0s8: IPv4 en Manual, Address 172.16.1.13/24, Gateway 172.16.1.1, DNS servers Add 172.16.1.1, y Search domains Add linux.lab. Si Search domains dice <Add...>, todavía no quedó.", as: "root", orGroup: "net-set", orName: "nmtui" },
+        { cmd: "nmcli connection modify NOMBRE ipv4.method manual ipv4.addresses 172.16.1.13/24 ipv4.gateway 172.16.1.1 ipv4.dns 172.16.1.1 ipv4.dns-search linux.lab", why: "NOMBRE es la columna NAME de la fila del lab, no la placa. Si esa fila dice hostonly y DEVICE enp0s8, el comando es modify hostonly. Guarda la IP, el gateway, el DNS y el search domain. ipv4.dns es el resolutor (172.16.1.1). ipv4.dns-search linux.lab es el Search domains: completa nombres cortos a *.linux.lab; no es el DNS ni el hostname. Sin eso, el search no queda. sudo hace falta si el prompt es vagrant@. Si ya es root@, sudo no suma nada.", as: "root", orGroup: "net-set", orName: "nmcli" },
         { cmd: "restorecon -v /etc/NetworkManager/system-connections/NOMBRE.nmconnection", why: "No es un paso de siempre. Solo si el modify anterior dice Permission denied al renombrar el .nmconnection, aunque el prompt ya sea root@. El archivo se llama como la columna NAME: si el perfil es hostonly, el archivo es hostonly.nmconnection. SELinux no deja que NetworkManager lo reemplace. Este comando no guarda el DNS. Corrige la etiqueta y, si hacía falta, avisa Relabeled. Después se vuelve a correr el modify.", as: "root" },
-        { cmd: "nmcli -f ipv4.dns connection show NOMBRE", why: "No cambia nada. NOMBRE es otra vez la columna NAME, por ejemplo hostonly. Muestra solo el DNS guardado en ese perfil. Si quedó, la línea dice ipv4.dns: 172.16.1.1. Si sale vacío, no quedó. ip a no muestra el DNS.", as: "root" },
+        { cmd: "nmcli -f ipv4.dns,ipv4.dns-search connection show NOMBRE", why: "No cambia nada. NOMBRE es otra vez la columna NAME, por ejemplo hostonly. Tiene que verse ipv4.dns: 172.16.1.1 e ipv4.dns-search: linux.lab. dns = resolutor; dns-search = dominio que completa nombres cortos. Si dns-search sale vacío, no quedó. ip a no muestra esto.", as: "root" },
         { cmd: "nmcli connection up NOMBRE", why: "Aplica ahora lo que el modify ya guardó en ese perfil. No es lo que lo hace persistente: el modify ya lo escribió en disco. up sirve para no esperar al reboot. NOMBRE sigue siendo la columna NAME.", slip: "Me pasó: el perfil quedó bien y activé enp0s3 en vez de enp0s8. Por eso la IP seguía igual.", as: "root" },
         { cmd: "hostnamectl set-hostname server.linux.lab", why: "Cambia el hostname ya, y lo guarda. No hace falta nmcli connection up ni ningún otro up: el hostname no es parte del perfil de red. Después de un reboot, hostnamectl tiene que seguir diciendo server.linux.lab.", as: "root" },
         { cmd: "man nmcli", why: "En el examen esto es legal. Buscá connection modify.", as: "root" },
@@ -605,7 +620,7 @@ export const LABS: Lab[] = [
     id: "lab-pwquality",
     track: "pdf",
     title: "La contraseña de Roman no puede ser corta ni eterna",
-    story: "Seguridad le mandó a Roman las reglas de las cuentas del client.\n\nNecesitamos que una clave nueva tenga al menos 8 caracteres y que no dure más de 30 días. La de Roman, que ya existe o hay que crearla, tiene que quedar con ese máximo.",
+    story: "Seguridad le mandó a Roman las reglas de las cuentas del client.\n\nNecesitamos que una clave nueva tenga al menos 8 caracteres y que no dure más de 30 días. La de Roman, que ya existe o hay que crearla, tiene que quedar con ese máximo.\n\nNo cuenta para la estadística final ni para Continuar pendientes. Podés hacerlo y marcar Done igual.",
     objective: [
       "Largo mínimo 8.",
       "Edad máxima 30 días para las cuentas nuevas.",
@@ -614,20 +629,23 @@ export const LABS: Lab[] = [
     where: "client",
     steps: [
       "Después de las cuentas (lab de usuarios), en el client.",
-      "minlen 8 en pwquality.",
-      "PASS_MAX_DAYS 30 en login.defs.",
+      "minlen 8 en /etc/security/pwquality.conf.",
+      "PASS_MAX_DAYS 30 en /etc/login.defs.",
       "Usuario roman, y chage -M 30 roman.",
     ],
     help: {
-      tip: "Son dos archivos distintos. pwquality.conf decide el largo cuando alguien corre passwd. login.defs PASS_MAX_DAYS se aplica a las cuentas que nacen después. roman ya creado no lo hereda: hace falta chage -M.",
-      videoHint: "Está en la playlist del otro repo, parte 8. Ahí pone largo mínimo 8 y edad máxima 30.",
-      videos: [{ title: "Parte 8: política de contraseñas", url: YT.harunaUsers }],
+      tip: "Son dos archivos distintos. El largo mínimo se edita en /etc/security/pwquality.conf (minlen = 8): es el que abre el video con vim. /etc/login.defs con PASS_MAX_DAYS 30 vale para las cuentas que nacen después. roman ya creado no lo hereda: hace falta chage -M.\n\nSi no recordás la ruta: man -k password o man -k aging; man passwd (sección FILES) apunta a login.defs; man login.defs describe PASS_MAX_DAYS; man pwquality.conf (o man pam_pwquality) es el del largo. También sirve grep -r PASS_MAX /etc y grep -r minlen /etc/security.",
+      videoHint: "Parte 8 del otro repo: 7:18 es pwquality.conf (minlen); 8:26 es login.defs / 30 días.",
+      videos: [
+        { title: "Parte 8: pwquality / minlen (7:18)", url: `${YT.harunaUsers}&t=438s` },
+        { title: "Parte 8: PASS_MAX_DAYS 30 (8:26)", url: `${YT.harunaUsers}&t=506s` },
+      ],
       commands: [
         { cmd: "id roman || useradd roman && echo 'Roman.pass.1' | passwd --stdin roman", why: "Si no existe, crealo. La clave de práctica tiene más de 8 caracteres.", as: "root" },
-        { cmd: "grep -E '^minlen' /etc/security/pwquality.conf || echo 'minlen = 8' >> /etc/security/pwquality.conf", why: "Largo mínimo. Si la línea ya está comentada con #, descomentala en vim en vez de duplicarla.", as: "root" },
-        { cmd: "grep ^PASS_MAX_DAYS /etc/login.defs", why: "Edad máxima de las cuentas nuevas. Tiene que quedar 30. Si ves 99999, cambiala.", as: "root" },
-        { cmd: "sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS\\t30/' /etc/login.defs", why: "Deja 30 en la línea activa. No toca la que empieza con #.", as: "root" },
-        { cmd: "chage -M 30 roman && chage -l roman", why: "Aplica el máximo a Roman. Maximum number of days between password change tiene que decir 30.", as: "root" },
+        { cmd: "man -k password ; man -k aging", why: "Si no sabés dónde está. Busca páginas por palabra. Después abrís man passwd, man login.defs o man pwquality.conf.", as: "root" },
+        { cmd: "vim /etc/security/pwquality.conf", why: "Largo mínimo. /minlen y Enter salta a esa palabra (n la próxima si hay varias).\nSuele venir # minlen = 8 comentada: borrá el # (o la línea activa sin #) y dejá minlen = 8. i inserta, Esc, :wq Enter guarda.\nNo agregues otra minlen abajo si ya hay una: descomentá o editá la que existe. :q! sale sin guardar si te equivocaste.", as: "root" },
+        { cmd: "vim /etc/login.defs", why: "Edad máxima de cuentas nuevas. /PASS_MAX_DAYS y Enter.\nLa línea que cuenta es la que NO empieza con # (suele decir 99999). Cambiala a 30: PASS_MAX_DAYS seguido de tab o espacios y 30.\nNo toques la línea comentada con #. i → editá → Esc → :wq Enter.", as: "root" },
+        { cmd: "chage -M 30 roman && chage -l roman", why: "Aplica el máximo a Roman (login.defs no alcanza si ya existía). Maximum number of days between password change tiene que decir 30.", as: "root" },
       ],
     },
   },
@@ -669,25 +687,29 @@ export const LABS: Lab[] = [
     title: "Erik quiere un aviso que se anote solo",
     story: "Erik no va a estar mirando la máquina. Quiere que, cada minuto, quede anotado el texto que le pidieron, sin que él lo escriba.",
     objective: [
+      "crond activo y enabled.",
       "Usuario erik.",
       "Cada 1 minuto.",
       "logger con el texto \"Ex200 Testing\".",
     ],
     where: "client",
     steps: [
+      "Primero: crond active y enabled (systemctl status crond).",
       "Usuario: erik.",
       "Cada 1 minuto.",
       "Acción: logger con el texto Ex200 Testing.",
       "Persistente.",
     ],
     help: {
-      tip: "crontab -e abre el crontab de root si estás como root. Para Erik hace falta -u erik. El servicio crond tiene que estar activo.\nCuidado con el texto: tiene que ser exactamente Ex200 Testing (sin espacio entre Ex y 200). Ex 200 Testing deja el cron corriendo pero no cumple el enunciado.",
+      tip: "crontab no es crond. crontab -e / -l edita o lista la tabla; crond es el demonio que la ejecuta. Sin crond active (y enabled para el próximo boot), la línea puede estar bien y no corre nada.\n\nSi no recordás el orden de los campos: cat /etc/crontab muestra el dibujo (minuto, hora, día del mes, mes, día de la semana). En /etc/crontab hay un sexto campo user-name; en crontab -e de un usuario ese campo no va: el dueño ya es erik.\n\ncrontab -e abre la tabla de root si estás como root. Para Erik hace falta -u erik.\nCuidado con el texto: tiene que ser exactamente Ex200 Testing (sin espacio entre Ex y 200). Ex 200 Testing deja el cron corriendo pero no cumple el enunciado.",
       videoHint: "Video de este lab: Q07.",
       videos: [{ title: "Q07: Cron con logger", url: YT.cron }],
       commands: [
-        { cmd: "systemctl enable --now crond", why: "Sin el servicio, el crontab no corre.", as: "root" },
-        { cmd: "crontab -u erik -e", why: "Editar la tabla de Erik, no la de root.", as: "root" },
-        { cmd: "* * * * * logger \"Ex200 Testing\"", why: "Los cinco asteriscos son cada minuto.", as: "root" },
+        { cmd: "systemctl status crond", why: "Primero. Si está active y enabled, seguí. Si está inactive o disabled, el enable --now de abajo. Sin crond, el crontab no corre.", as: "root" },
+        { cmd: "systemctl enable --now crond", why: "Solo si el status de arriba no quedó enabled/active. enable lo deja para el próximo boot; --now lo arranca ya.", as: "root" },
+        { cmd: "cat /etc/crontab", why: "No edites este archivo para el lab. Solo mirá el ejemplo: minuto, hora, día del mes, mes, día de la semana, y después el comando.\nEn /etc/crontab aparece también user-name (sexto campo). En crontab -u erik -e ese campo no se escribe: la tabla ya es de erik.\n* * * * * = cada minuto.", as: "root" },
+        { cmd: "crontab -u erik -e", why: "Editar la tabla de Erik, no la de root. No es vim /etc/crontab.", as: "root" },
+        { cmd: "* * * * * logger \"Ex200 Testing\"", why: "Los cinco asteriscos son cada minuto (como en el dibujo de /etc/crontab). Sin user-name acá.", as: "root" },
         { cmd: "crontab -u erik -l", why: "Ver que quedó guardada.", as: "root" },
         { cmd: "journalctl -t erik --since '2 min ago'", why: "logger usa el usuario como identificador. Esperá un minuto.", as: "root" },
       ],
@@ -697,7 +719,7 @@ export const LABS: Lab[] = [
     id: "lab-at",
     track: "pdf",
     title: "Roman necesita un aviso de una sola vez",
-    story: "El cron de Erik se repite cada minuto. Esto es otra cosa.\n\nA Roman le pidieron que, dentro de dos minutos, quede escrito un texto en un archivo. Una sola vez. Si la máquina sigue prendida, no tiene que volver a correr.",
+    story: "El cron de Erik se repite cada minuto. Esto es otra cosa.\n\nA Roman le pidieron que, dentro de dos minutos, quede escrito un texto en un archivo. Una sola vez. Si la máquina sigue prendida, no tiene que volver a correr.\n\nNo cuenta para la estadística final ni para Continuar pendientes. Podés hacerlo y marcar Done igual.",
     objective: [
       "Servicio atd activo.",
       "Dentro de 2 minutos escribe el texto.",
@@ -706,16 +728,18 @@ export const LABS: Lab[] = [
     where: "client",
     steps: [
       "Después del cron, en el client. No uses crontab para esto.",
-      "atd tiene que estar enabled.",
+      "Instalar at si falta; después status de atd y, si hace falta, enable --now.",
       "Un at a now + 2 minutes.",
       "El archivo aparece solo. No lo crees a mano para cumplir.",
     ],
     help: {
-      tip: "cron es repetible. at es una vez. El comando que programás es el que escribe el archivo; si hacés el echo ahora, no estás probando at.",
-      videoHint: "Está en la playlist del otro repo, parte 6, junto con el cron. Esta tarea es el at de una sola vez.",
-      videos: [{ title: "Parte 6: at", url: YT.harunaDeploy }],
+      tip: "cron es repetible. at es una vez. El demonio de at es atd (no crond). El comando que programás es el que escribe el archivo; si hacés el echo ahora, no estás probando at.",
+      videoHint: "Parte 6 del otro repo, desde 7:52: ahí empieza atd / at de una sola vez.",
+      videos: [{ title: "Parte 6: at / atd (7:52)", url: `${YT.harunaDeploy}&t=472s` }],
       commands: [
-        { cmd: "dnf repolist && dnf install -y at && systemctl enable --now atd", why: "at no siempre está. Sin atd el trabajo queda en la cola y no corre.", as: "root" },
+        { cmd: "dnf repolist && dnf install -y at", why: "at no siempre está instalado. Sin el paquete no hay comando at ni servicio atd.", as: "root" },
+        { cmd: "systemctl status atd", why: "Primero. Si está active y enabled, seguí. Si está inactive o disabled, el enable --now de abajo. Sin atd el trabajo queda en la cola y no corre.", as: "root" },
+        { cmd: "systemctl enable --now atd", why: "Solo si el status de arriba no quedó enabled/active. enable lo deja para el próximo boot; --now lo arranca ya.", as: "root" },
         { cmd: "echo 'echo \"This task was easy!\" > /root/roman-at.txt' | at now + 2 minutes", why: "Programa el echo para dentro de 2 minutos. at imprime el número de job.", as: "root" },
         { cmd: "atq", why: "Tiene que listar el job hasta que se cumpla. Después la cola queda vacía.", as: "root" },
         { cmd: "cat /root/roman-at.txt", why: "Esperá los 2 minutos. El archivo tiene que decir This task was easy!", as: "root" },
@@ -753,28 +777,28 @@ export const LABS: Lab[] = [
     id: "lab-links",
     track: "pdf",
     title: "Roman necesita dos atajos al mismo archivo",
-    story: "Roman tiene las notas en /root/roman/notas.txt y las quiere abrir desde /root/roman/atajos.\n\nNecesitamos dos caminos: uno simbólico, que apunte al nombre, y uno duro, que sea el mismo archivo. Si alguien borra el nombre original, el duro tiene que seguir teniendo el texto.",
+    story: "Roman tiene las notas en /root/roman/notas.txt y las quiere abrir desde /root/roman/atajos.\n\nNecesitamos dos caminos: un soft link (enlace simbólico), que apunte al nombre, y un hard link (enlace duro), que sea el mismo archivo. Si alguien borra el nombre original, el hard link tiene que seguir teniendo el texto.\n\nNo cuenta para la estadística final ni para Continuar pendientes. Podés hacerlo y marcar Done igual.",
     objective: [
       "Archivo /root/roman/notas.txt.",
-      "Enlace simbólico notas-soft.",
-      "Enlace duro notas-hard, mismo inodo.",
+      "Soft link (enlace simbólico) notas-soft.",
+      "Hard link (enlace duro) notas-hard, mismo inodo.",
     ],
     where: "client",
     steps: [
       "Después del backup de /etc: mismo tema, archivos.",
       "Crear notas.txt.",
-      "notas-soft con ln -s.",
-      "notas-hard con ln, sin -s. ls -li tiene que mostrar el mismo inodo que notas.txt.",
+      "Soft link notas-soft con ln -s.",
+      "Hard link notas-hard con ln, sin -s. ls -li tiene que mostrar el mismo inodo que notas.txt.",
     ],
     help: {
-      tip: "ln -s crea un acceso directo: si el original desaparece, el soft queda colgado. ln sin -s suma otro nombre al mismo inodo. No se puede hacer un hard link a un directorio ni de un disco a otro.",
-      videoHint: "Está en la playlist del otro repo, parte 1. Ahí hace el enlace simbólico y el duro.",
-      videos: [{ title: "Parte 1: enlaces", url: YT.harunaTools }],
+      tip: "Orden de ln: primero el archivo que YA existe, después dónde CREÁS el enlace. ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft → 1º notas.txt, 2º el soft link en atajos. No al revés.\n\nln -s = soft link (atajo; si el original desaparece, queda colgado). ln sin -s = hard link (mismo inodo). No se puede hard link a un directorio ni de un disco a otro.",
+      videoHint: "Está en la playlist del otro repo, parte 1. Ahí hace el soft link y el hard link.",
+      videos: [{ title: "Parte 1: soft link y hard link", url: YT.harunaTools }],
       commands: [
         { cmd: "mkdir -p /root/roman/atajos && echo 'notas de roman' > /root/roman/notas.txt", why: "El archivo real. El texto es para reconocer después cuál sobrevive.", as: "root" },
-        { cmd: "ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft", why: "Simbólico. ls -l lo muestra con -> hacia la ruta.", as: "root" },
-        { cmd: "ln /root/roman/notas.txt /root/roman/atajos/notas-hard", why: "Duro. Sin -s. Tiene que ser el mismo filesystem que el original.", as: "root" },
-        { cmd: "ls -li /root/roman/notas.txt /root/roman/atajos/notas-hard /root/roman/atajos/notas-soft", why: "notas.txt y notas-hard comparten el número de inodo (primera columna) y el link count sube a 2. El soft tiene otro inodo y una flecha.", as: "root" },
+        { cmd: "ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft", why: "Soft link. Orden: 1º el archivo real (notas.txt), 2º dónde se crea el soft (atajos/notas-soft). ls -l lo muestra con -> hacia la ruta.", as: "root" },
+        { cmd: "ln /root/roman/notas.txt /root/roman/atajos/notas-hard", why: "Hard link. Sin -s. Mismo orden: 1º el real, 2º el hard nuevo. Tiene que ser el mismo filesystem que el original.", as: "root" },
+        { cmd: "ls -li /root/roman/notas.txt /root/roman/atajos/notas-hard /root/roman/atajos/notas-soft", why: "notas.txt y notas-hard (hard link) comparten el número de inodo (primera columna) y el link count sube a 2. El soft link tiene otro inodo y una flecha.", as: "root" },
       ],
     },
   },

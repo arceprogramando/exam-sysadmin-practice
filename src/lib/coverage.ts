@@ -1,4 +1,4 @@
-import { LABS, isOffEdition, type Edition } from "./labs";
+import { LABS, isOffEdition, isUnscored, type Edition } from "./labs";
 import type { LabRecord, Run } from "./storage";
 
 /** Practice topics. A lab can sit in two groups when the task is both. */
@@ -18,21 +18,21 @@ export const DOMAIN_ORDER = [
 export type DomainId = (typeof DOMAIN_ORDER)[number];
 
 const DOMAIN_LABS: Record<DomainId, string[]> = {
-  tools: ["lab-09", "lab-links", "lab-12", "lab-find-size", "lab-13"],
+  tools: ["lab-09", "lab-12", "lab-find-size", "lab-13"],
   software: ["lab-03", "extra-04", "extra-05", "lab-20", "lab-21", "lab-22"],
   scripts: ["extra-01"],
-  systems: ["lab-01-root-client", "lab-grub", "lab-02-root-server", "lab-18", "lab-journal"],
+  systems: ["lab-01-root-client", "lab-02-root-server", "lab-18", "lab-journal"],
   storage: ["lab-15", "lab-16"],
   filesystems: ["lab-06", "lab-08", "lab-10", "lab-17"],
-  deploy: ["lab-07", "lab-at", "lab-11", "lab-19", "extra-02"],
+  deploy: ["lab-07", "lab-11", "lab-19", "extra-02"],
   network: ["lab-01", "lab-02", "lab-ssh-key"],
-  users: ["lab-05", "lab-pwquality", "lab-14"],
+  users: ["lab-05", "lab-14"],
   security: ["lab-04", "lab-fcontext", "extra-03"],
 };
 
 const assigned = new Set(Object.values(DOMAIN_LABS).flat());
 for (const lab of LABS) {
-  if (lab.track === "setup") continue;
+  if (lab.track === "setup" || isUnscored(lab.id)) continue;
   if (!assigned.has(lab.id)) throw new Error(`sin objetivo de examen: ${lab.id}`);
 }
 for (const id of assigned) {
@@ -73,7 +73,7 @@ function bestLab(runs: Run[], labId: string): CoverageLab {
 export function domainCoverage(runs: Run[], edition: Edition): DomainScore[] {
   return DOMAIN_ORDER.map((id) => {
     const labs = DOMAIN_LABS[id]
-      .filter((labId) => !isOffEdition(labId, edition))
+      .filter((labId) => !isOffEdition(labId, edition) && !isUnscored(labId))
       .map((labId) => bestLab(runs, labId));
     const percent =
       labs.length === 0 ? 0 : Math.round((labs.reduce((sum, lab) => sum + lab.credit, 0) / labs.length) * 100);

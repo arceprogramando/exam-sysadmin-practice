@@ -227,6 +227,8 @@ export interface Copy {
   groupServer: string;
   groupBoth: string;
   groupExtras: string;
+  unscoredBadge: string;
+  unscoredNote: string;
   marksLegend: string;
   foldDone: string;
   unfoldDone: (count: number) => string;
@@ -525,6 +527,9 @@ const es: Copy = {
   groupServer: "En el server",
   groupBoth: "En las dos",
   groupExtras: "Extras, si te queda tiempo",
+  unscoredBadge: "No cuenta para la estadística final",
+  unscoredNote:
+    "Este extra no entra en la cobertura, ni en el promedio, ni en Continuar pendientes. Podés mirarlo y marcar Done igual.",
   marksLegend: "Revisit (volver después) · Done (ya está)",
   foldDone: "Ocultar hechas",
   unfoldDone: (count) => `Mostrar ${count} hechas`,
@@ -838,6 +843,9 @@ const en: Copy = {
   groupServer: "On the server",
   groupBoth: "On both",
   groupExtras: "Extras, if you have time",
+  unscoredBadge: "Does not count toward final stats",
+  unscoredNote:
+    "This extra is left out of coverage, averages, and Continue leftovers. You can still watch it and mark Done.",
   marksLegend: "Revisit (come back later) · Done (finished)",
   foldDone: "Hide finished",
   unfoldDone: (count) => `Show ${count} finished`,
