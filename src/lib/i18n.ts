@@ -383,7 +383,8 @@ const es: Copy = {
   statsNav: "Estadísticas",
   glossaryNav: "Glosario",
   glossaryTitle: "Glosario sysadmin Linux",
-  glossaryDescription: "Palabras y comandos de práctica para administrar Linux.",
+  glossaryDescription:
+    "Buscá palabras y comandos de administración Linux: usuarios, red, almacenamiento, SELinux y más, con ejemplos para practicar.",
   glossaryHeading: "Glosario",
   glossaryIntro: "Términos que se me traban. Buscá por palabra o por la descripción. Donde hay tldr, el enlace abre ejemplos de uso en el repo de la comunidad.",
   glossarySearch: "Buscar por palabra o descripción…",
@@ -401,9 +402,9 @@ const es: Copy = {
   themeToDark: "Cambiar a modo oscuro",
   bannerLead: "Práctica personal para un examen de sysadmin Linux en noviembre (fecha tentativa: 13; todavía no confirmada).",
   bannerTail: "No es un examen oficial.",
-  homeTitle: "Práctica sysadmin Linux",
+  homeTitle: "Práctica personal de sysadmin Linux",
   homeDescription:
-    "Labs guiados, glosario, reloj de 3 horas y estadísticas en el navegador. Práctica personal de administración Linux.",
+    "Vas a encontrar labs guiados, glosario buscable, reloj de 3 horas, estadísticas en el navegador y ayuda solo si la pedís. Práctica personal de administración Linux.",
   hello: "Hola, me estoy preparando para un examen de sysadmin Linux en noviembre (fecha tentativa: 13; todavía no confirmada), y estoy usando esto como práctica personal.",
   kicker: "Práctica personal · examen sysadmin",
   headlineLead: "Primero lo que",
@@ -503,7 +504,8 @@ const es: Copy = {
   tally: ({ done, revisit, redo, skipped, help }) =>
     `${done} done · ${revisit} revisit · ${redo} para rehacer · ${skipped} sin entender · ${help} con ayuda`,
   examTitle: "Práctica en curso",
-  examDescription: "Lab actual con reloj de 3 horas. La ayuda se abre solo si la pedís.",
+  examDescription:
+    "Lab en curso con reloj de 3 horas, objetivos, pasos y ayuda opcional. Seguís en la misma práctica personal de administración Linux.",
   emptyTitle: "No hay una práctica en curso",
   emptyBody: "El reloj de 3 horas arranca al empezar, y la lista muestra lo que falta.",
   emptyHome: "Empezá desde el inicio",
@@ -596,7 +598,8 @@ const es: Copy = {
   closeStay: "Seguir marcando",
   closeAnyway: "Terminar igual",
   statsTitle: "Estadísticas de la práctica",
-  statsDescription: "Tiempos, promedio y ayuda pedida. Guardado en este navegador.",
+  statsDescription:
+    "Tiempos por lab, promedio, ayuda pedida y cobertura de temas. Todo queda guardado en este navegador.",
   statsHeading: "Estadísticas",
   statsIntro:
     "Separadas por modo. Sin pausas es la que importa para medir tiempos. Con pausas es práctica libre. Promedio, mejor y delta solo cuentan labs marcados Done (terminados): revisit, skipped o sin terminar no entran. Verde = menos tiempo (mejor); rojo = más tiempo (peor).",
@@ -700,7 +703,8 @@ const en: Copy = {
   statsNav: "Stats",
   glossaryNav: "Glossary",
   glossaryTitle: "Linux sysadmin glossary",
-  glossaryDescription: "Practice words and commands for Linux administration.",
+  glossaryDescription:
+    "Look up Linux administration words and commands: users, networking, storage, SELinux, and more, with practice examples.",
   glossaryHeading: "Glossary",
   glossaryIntro: "Terms that stall me. Search by word or by the description. Where there is a tldr link, it opens usage examples in the community repo.",
   glossarySearch: "Search by word or description…",
@@ -718,9 +722,9 @@ const en: Copy = {
   themeToDark: "Switch to dark mode",
   bannerLead: "Personal practice for a Linux sysadmin exam in November (tentative date: the 13th; not confirmed yet).",
   bannerTail: "This is not an official exam.",
-  homeTitle: "Linux sysadmin practice",
+  homeTitle: "Personal Linux sysadmin practice",
   homeDescription:
-    "Guided labs, glossary, a 3-hour timer, and in-browser stats. Personal Linux administration practice.",
+    "You will find guided labs, a searchable glossary, a 3-hour timer, in-browser stats, and help only if you ask. Personal Linux administration practice.",
   hello: "I am preparing for a Linux sysadmin exam in November (tentative date: the 13th; not confirmed yet), and I am using this as personal practice.",
   kicker: "Personal practice · sysadmin exam",
   headlineLead: "Do what you",
@@ -820,7 +824,8 @@ const en: Copy = {
   tally: ({ done, revisit, redo, skipped, help }) =>
     `${done} done · ${revisit} revisit · ${redo} to redo · ${skipped} not understood · ${help} with help`,
   examTitle: "Practice in progress",
-  examDescription: "Current lab with a 3-hour clock. Help opens only if you ask.",
+  examDescription:
+    "Current lab with a 3-hour clock, objectives, steps, and optional help. Continues the same personal Linux administration practice.",
   emptyTitle: "No practice in progress",
   emptyBody: "The 3-hour clock starts when you begin, and the list shows what is left.",
   emptyHome: "Start from the home page",
@@ -913,7 +918,8 @@ const en: Copy = {
   closeStay: "Keep marking",
   closeAnyway: "Finish anyway",
   statsTitle: "Practice stats",
-  statsDescription: "Times, averages, and help used. Stored in this browser.",
+  statsDescription:
+    "Time per lab, averages, help used, and topic coverage. Everything stays stored in this browser.",
   statsHeading: "Stats",
   statsIntro:
     "Split by mode. Without pauses is what matters for measuring times. With pauses is free practice. Average, best and delta only count labs marked Done: revisit, skipped or unfinished do not count. Green = less time (better); red = more time (worse).",
