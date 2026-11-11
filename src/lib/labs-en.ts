@@ -945,7 +945,8 @@ export const LAB_EN: Record<string, LabEn> = {
   },
   "lab-grub": {
     title: "The boot menu stays up too long",
-    story: "Roman rebooted the client and the boot menu stayed on screen longer than Ops allows.\n\nWe need it to wait 10 seconds, keep the menu hidden, and boot the kernel with quiet. It has to stay that way after another reboot.",
+    story:
+      "Ops wants the client usable again quickly after a reboot. Right now the GRUB menu sits on screen for several seconds: in a lab or a multi-VM rollout that adds delay, and anyone at the console can pick another kernel or edit the boot line.\n\nSet the timeout to 10 seconds, hide the menu (hidden), and add quiet on the kernel line so the console is not flooded at boot. The change has to live on disk: if you only edit the menu once in GRUB (like the root rescue), the next reboot brings the old settings back.",
     objective: ["GRUB_TIMEOUT=10.", "GRUB_TIMEOUT_STYLE=hidden.", "quiet on the kernel line.", "Applied to grub.cfg."],
     where: "client",
     steps: [
@@ -955,16 +956,16 @@ export const LAB_EN: Record<string, LabEn> = {
       "Regenerate grub.cfg. Saving the file is not enough.",
     ],
     note: "It sits after the root reset: both touch boot. The reset edits GRUB once. This change stays on disk.",
-    tip: "Edit /etc/default/grub. Do not hand-edit grub.cfg: regenerate it with grub2-mkconfig.\nIf /sys/firmware/efi does not exist, the output is /boot/grub2/grub.cfg. If it does, on Rocky it is usually /boot/efi/EFI/rocky/grub.cfg.",
-    videoHint: "It is in the other repo's playlist, part 6. That video walks several deploy tasks; this one is GRUB (timeout, hidden, and quiet).",
-    videos: ["Part 6: GRUB"],
+    tip: "Edit /etc/default/grub, then regenerate the real menu with grub2-mkconfig. Do not hand-edit grub.cfg.\n\nBIOS or UEFI? First: ls /sys/firmware/efi. If that path is missing (typical for this Vagrant/VirtualBox lab, same as the video), use the BIOS output: grub2-mkconfig -o /boot/grub2/grub.cfg. If efi exists and lists entries, then UEFI: /boot/efi/EFI/rocky/grub.cfg. Do not pick UEFI “just in case”: if the directory is not there, the command will not apply what you need.\n\nBy default, on Rocky/RHEL GRUB_TIMEOUT is usually 5 (five seconds) and the menu is visible (style menu, or without GRUB_TIMEOUT_STYLE=hidden). The lab asks for 10 and hidden: you are not “lowering the default”, you are setting what the ticket says.",
+    videoHint: "Part 6 of the playlist (deploy). The link jumps to 19:49, where they do GRUB: timeout 10, hidden, quiet, and grub2-mkconfig to /boot/grub2/grub.cfg (BIOS).",
+    videos: ["Part 6: GRUB (19:49)"],
     why: [
-      "If it says the path does not exist, the machine is BIOS: the cfg is /boot/grub2/grub.cfg. If it lists files, it is UEFI.",
+      "Picks the grub2-mkconfig -o path. If it says the path does not exist → BIOS (this lab / the video). If it lists files → UEFI.",
       "See the timeout, the style, and the kernel line before changing them.",
-      "Set GRUB_TIMEOUT=10 and GRUB_TIMEOUT_STYLE=hidden.\nGRUB_CMDLINE_LINUX= has to include quiet, next to what was already there (rhgb can stay). Do not wipe the rest of the line.",
-      "BIOS. Writes the real menu. Without this command, /etc/default/grub changed and the next boot stays the same.",
-      "UEFI on Rocky. Same idea, other output file. If the directory does not exist, this is not the case.",
-      "Check that the regenerated cfg mentions the timeout and quiet. On UEFI, look at the EFI cfg.",
+      "Set GRUB_TIMEOUT=10 and GRUB_TIMEOUT_STYLE=hidden.\nGRUB_CMDLINE_LINUX= has to include quiet, next to what was already there (rhgb can stay). Do not wipe the rest of the line. Same as the video.",
+      "Video method and this lab (BIOS / Vagrant). Writes the real menu. Without this command, /etc/default/grub changed and the next boot stays the same.",
+      "Only if ls /sys/firmware/efi existed. Same idea, other file. On the VMs in this repo you almost never need it.",
+      "Check that the regenerated cfg mentions the timeout and quiet. If you used UEFI, look under /boot/efi/EFI/rocky/.",
     ],
   },
   "lab-ssh-key": {
