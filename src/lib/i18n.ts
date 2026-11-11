@@ -404,7 +404,7 @@ const es: Copy = {
   bannerTail: "No es un examen oficial.",
   homeTitle: "Práctica personal de sysadmin Linux",
   homeDescription:
-    "Vas a encontrar labs guiados, glosario buscable, reloj de 3 horas, estadísticas en el navegador y ayuda solo si la pedís. Práctica personal de administración Linux.",
+    "Vas a encontrar labs guiados, glosario buscable, reloj de 3 horas y estadísticas en el navegador. Práctica personal de administración Linux.",
   hello: "Hola, me estoy preparando para un examen de sysadmin Linux en noviembre (fecha tentativa: 13; todavía no confirmada), y estoy usando esto como práctica personal.",
   kicker: "Práctica personal · examen sysadmin",
   headlineLead: "Primero lo que",
@@ -724,7 +724,7 @@ const en: Copy = {
   bannerTail: "This is not an official exam.",
   homeTitle: "Personal Linux sysadmin practice",
   homeDescription:
-    "You will find guided labs, a searchable glossary, a 3-hour timer, in-browser stats, and help only if you ask. Personal Linux administration practice.",
+    "You will find guided labs, a searchable glossary, a 3-hour timer, and in-browser stats. Personal Linux administration practice.",
   hello: "I am preparing for a Linux sysadmin exam in November (tentative date: the 13th; not confirmed yet), and I am using this as personal practice.",
   kicker: "Personal practice · sysadmin exam",
   headlineLead: "Do what you",
