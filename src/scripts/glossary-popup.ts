@@ -1,6 +1,7 @@
 import { exampleCommands, glossaryFor, tldrUrl, type GlossaryEntry } from "../lib/glossary";
 import { getUI, pageLocale, routePath } from "../lib/i18n";
 import { lvmDiagramHtml } from "../lib/lvm-diagram";
+import { netmaskDiagramHtml } from "../lib/netmask-diagram";
 import { createCopyButton } from "./copy-btn";
 
 const SKIP = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "INPUT", "CODE", "PRE", "KBD", "A", "BUTTON"]);
@@ -275,9 +276,15 @@ function showDetail(entry: GlossaryEntry | undefined): void {
   def.innerHTML = highlightHtml(linkifyHtml(entry.definition, entry.term), query);
   detail.append(def);
 
-  if (entry.term === "LVM") {
+  const diagram =
+    entry.term === "LVM"
+      ? lvmDiagramHtml(pageLocale())
+      : entry.term === "máscara de red" || entry.term === "subnet mask"
+        ? netmaskDiagramHtml(pageLocale())
+        : "";
+  if (diagram) {
     const holder = document.createElement("div");
-    holder.innerHTML = lvmDiagramHtml(pageLocale());
+    holder.innerHTML = diagram;
     const fig = holder.firstElementChild;
     if (fig) detail.append(fig);
   }

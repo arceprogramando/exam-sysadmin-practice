@@ -1097,7 +1097,7 @@ export const LAB_EN: Record<string, LabEn> = {
   },
   "lab-find-size": {
     title: "Roman wants the big files, not yesterday's",
-    story: "Erik's find collects what he touched in the last day.\n\nRoman was asked for something else: from /usr, the files bigger than 3 MB and smaller than 10 MB, copied to /root/roman-big with the directory they came from.",
+    story: "Erik's find collects what he touched in the last day.\n\nRoman was asked for something else: from /usr, the files bigger than 3 MB and smaller than 10 MB, copied to /root/roman-big with the directory they came from.\n\nIt does not count toward final stats or Continue leftovers. You can still do it and mark Done.",
     objective: ["Only files under /usr.", "Bigger than 3 MB and smaller than 10 MB.", "Copied to /root/roman-big keeping the path."],
     where: "client",
     steps: [
@@ -1106,8 +1106,8 @@ export const LAB_EN: Record<string, LabEn> = {
       "Copy with --parents to /root/roman-big.",
     ],
     tip: "In find, +3M is larger than 3 MiB and -10M is smaller than 10 MiB. The two -size tests combine. -type f leaves directories out.",
-    videoHint: "Same playlist, part 1. The size find is in that video. Erik's (owner and date) is still Q12 on the other list.",
-    videos: ["Part 1: find by size"],
+    videoHint: "Part 1 of the other repo, from 9:34: that is the size find (+3M / -10M). Erik's (owner and date) is still Q12 on the other list.",
+    videos: ["Part 1: find by size (9:34)"],
     why: [
       "Lists them. If nothing prints, nothing is in that range: do not invent a size.",
       "Destination before the copy.",

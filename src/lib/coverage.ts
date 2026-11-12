@@ -18,7 +18,7 @@ export const DOMAIN_ORDER = [
 export type DomainId = (typeof DOMAIN_ORDER)[number];
 
 const DOMAIN_LABS: Record<DomainId, string[]> = {
-  tools: ["lab-09", "lab-12", "lab-find-size", "lab-13"],
+  tools: ["lab-09", "lab-12", "lab-13"],
   software: ["lab-03", "extra-04", "extra-05", "lab-20", "lab-21", "lab-22"],
   scripts: ["extra-01"],
   systems: ["lab-01-root-client", "lab-02-root-server", "lab-18", "lab-journal"],

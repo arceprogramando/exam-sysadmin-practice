@@ -78,7 +78,14 @@ export type Edition = "v10" | "v9";
 const PODMAN_IDS = new Set(["lab-20", "lab-21", "lab-22"]);
 const FLATPAK_IDS = new Set(["extra-04", "extra-05"]);
 /** Visible on the board, but left out of coverage, tallies, and leftovers. */
-const UNSCORED_IDS = new Set(["lab-grub", "lab-pwquality", "lab-at", "lab-links"]);
+const UNSCORED_IDS = new Set([
+  "lab-grub",
+  "lab-pwquality",
+  "lab-at",
+  "lab-links",
+  "lab-find-size",
+  "lab-journal",
+]);
 const EDITION_KEY = "arceprog:rhcsa-edition";
 
 export function loadEdition(): Edition {
@@ -891,7 +898,7 @@ export const LABS: Lab[] = [
     id: "lab-find-size",
     track: "pdf",
     title: "Roman quiere los archivos grandes, no los de ayer",
-    story: "El find de Erik junta lo que él tocó en el último día.\n\nA Roman le pidieron otra cosa: de /usr, los archivos que pesen más de 3 MB y menos de 10 MB, copiados a /root/roman-big con la carpeta de donde salieron.",
+    story: "El find de Erik junta lo que él tocó en el último día.\n\nA Roman le pidieron otra cosa: de /usr, los archivos que pesen más de 3 MB y menos de 10 MB, copiados a /root/roman-big con la carpeta de donde salieron.\n\nNo cuenta para la estadística final ni para Continuar pendientes. Podés hacerlo y marcar Done igual.",
     objective: [
       "Solo archivos de /usr.",
       "Más de 3 MB y menos de 10 MB.",
@@ -905,8 +912,8 @@ export const LABS: Lab[] = [
     ],
     help: {
       tip: "En find, +3M es más grande que 3 MiB y -10M es más chico que 10 MiB. Los dos -size se combinan. -type f deja afuera los directorios.",
-      videoHint: "Misma playlist, parte 1. El find por tamaño está en ese video. El de Erik (dueño y fecha) sigue siendo el Q12 de la otra lista.",
-      videos: [{ title: "Parte 1: find por tamaño", url: YT.harunaTools }],
+      videoHint: "Parte 1 del otro repo, desde 9:34: ahí explica el find por tamaño (+3M / -10M). El de Erik (dueño y fecha) sigue siendo el Q12 de la otra lista.",
+      videos: [{ title: "Parte 1: find por tamaño (9:34)", url: `${YT.harunaTools}&t=574s` }],
       commands: [
         { cmd: "find /usr -type f -size +3M -size -10M", why: "Lista. Si no sale nada, no hay archivos en ese rango: no inventes el tamaño.", as: "root" },
         { cmd: "mkdir -p /root/roman-big", why: "Destino antes de copiar.", as: "root" },

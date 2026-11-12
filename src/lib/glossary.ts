@@ -36,15 +36,17 @@ export function exampleCommands(example: string | undefined): string[] {
 const es: GlossaryEntry[] = [
   {
     term: "which",
-    definition: "Dice la ruta del ejecutable que el shell va a correr. No busca archivos sueltos: busca comandos en el PATH.",
-    example: "which logger → /usr/bin/logger",
+    definition:
+      "Dice la ruta del ejecutable que el shell va a correr. Mira el PATH.\n\nwhich logger imprime /usr/bin/logger. Como root, which chronyd imprime /usr/sbin/chronyd.\n\nwhich chrony no imprime ruta: el paquete se llama chrony y el comando es chronyd. which words tampoco imprime ruta: words no es un comando. Esos archivos los lista rpm -ql, que lee la rpmdb de los paquetes instalados.",
+    example: "which logger · which chronyd · rpm -ql chrony · rpm -ql words",
     tldr: { page: "which" },
   },
   {
-    term: "rpm",
+    term: "rpmdb",
+    aliases: ["rpm", "/var/lib/rpm", "rpmdb.sqlite", "base rpm"],
     definition:
-      "Consulta paquetes ya instalados. rpm -ql PAQUETE lista los archivos que dejó en el disco. Sirve cuando el paquete no trae un comando: which no lo va a encontrar. rpm -q PAQUETE solo dice si está instalado y qué versión.",
-    example: "rpm -ql words → el diccionario queda en /usr/share/dict/words. which words no sirve: words no es un comando",
+      "La base de la búsqueda por paquete. which lee el PATH. find recorre el disco. rpm lee la rpmdb: la lista de paquetes instalados y los archivos que cada uno dejó.\n\nVive en /var/lib/rpm. En Rocky 9 y 10 el archivo es rpmdb.sqlite. No se abre a mano. El comando que la consulta es rpm.\n\n• rpm -q PAQUETE dice si está instalado y qué versión.\n• rpm -ql PAQUETE lista cada archivo que ese paquete dejó. Sirve cuando el nombre del paquete no es un comando: which no lo va a encontrar.\n• rpm -qf RUTA hace el camino inverso. Tenés un archivo y querés el paquete que lo trajo.\n\nwhich chrony no imprime ruta. rpm -ql chrony muestra /usr/sbin/chronyd, /usr/bin/chronyc y /etc/chrony.conf. which words no imprime ruta. rpm -ql words muestra /usr/share/dict/words. rpm -qf /usr/share/dict/words responde words.\n\nfind recorre el disco cuando no sabés el paquete. También cuando filtrás por nombre, dueño, tipo y fecha. dnf provides RUTA dice qué paquete trae un archivo que todavía no está instalado. grep busca texto adentro de los archivos. man -k busca en el índice del manual.",
+    example: "rpm -ql chrony · rpm -ql words · rpm -qf /usr/share/dict/words · rpm -q chrony · ls /var/lib/rpm",
     tldr: { page: "rpm", platform: "linux" },
   },
   {
@@ -567,8 +569,8 @@ const es: GlossaryEntry[] = [
   {
     term: "find",
     definition:
-      "Busca en el árbol. Si el enunciado no limita la ruta, empezás en /. -user es el dueño (no «quién lo creó»). -type f = archivo, no directorio. -mtime -1 = modificado en el último día; el 1 solo no alcanza.\n2>/dev/null esconde Permission denied.\n-xdev no baja a otros filesystems (así evitás basura de /proc). Tiene que ir con guión. En videos a veces escriben find / xdev …: eso no es la opción — find busca una carpeta llamada xdev; si no existe, 2>/dev/null se come el error y igual puede entrar /proc.\n-exec COMANDO {} \\; corre el comando una vez por resultado. {} es la ruta. El \\; cierra el -exec. Con \\+ junta varios paths en un solo comando: con cp --parents suele fallar si los padres son distintos (en el video a veces usan \\+; acá conviene \\;).\nPara conservar carpetas al copiar: cp --parents (ver cp).",
-    example: "find / -xdev -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles/ \\; 2>/dev/null",
+      "Recorre carpetas. which mira un comando en el PATH. rpm -ql lista lo que dejó un paquete cuyo nombre ya sabés. find entra cuando eso no alcanza: el enunciado pide dueño, tipo y fecha, y no hay un nombre de paquete. find /etc -name chrony.conf camina /etc hasta ese archivo. which chrony no lo ve.\n\nSi el enunciado no limita la ruta, empezás en /. -user es el dueño (no «quién lo creó»). -type f = archivo, no directorio. -mtime -1 = modificado en el último día; el 1 solo no alcanza.\n2>/dev/null esconde Permission denied.\n-xdev no baja a otros filesystems (así evitás basura de /proc). Tiene que ir con guión. En videos a veces escriben find / xdev …: eso no es la opción — find busca una carpeta llamada xdev; si no existe, 2>/dev/null se come el error y igual puede entrar /proc.\n-exec COMANDO {} \\; corre el comando una vez por resultado. {} es la ruta. El \\; cierra el -exec. Con \\+ junta varios paths en un solo comando: con cp --parents suele fallar si los padres son distintos (en el video a veces usan \\+; acá conviene \\;).\nPara conservar carpetas al copiar: cp --parents (ver cp).",
+    example: "find /etc -name chrony.conf · find / -xdev -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles/ \\; 2>/dev/null",
     tldr: { page: "find" },
   },
   {
@@ -579,8 +581,15 @@ const es: GlossaryEntry[] = [
     tldr: { page: "tar" },
   },
   {
+    term: "systemd",
+    aliases: ["init", "unidad", "unit"],
+    definition:
+      "El init del sistema: el primer proceso que arranca después del kernel (PID 1). Levanta el resto: red, cron, sshd, httpd, etc. También guarda el diario (journal) y decide qué servicios vuelven al próximo boot.\n\nNo es un comando que tipeás para «hacer systemd». Para controlarlo usás systemctl. Para leer sus logs, journalctl. hostnamectl, localectl y timedatectl también hablan con systemd, cada uno de un tema.\n\nLo que systemd administra se llama unidad (unit). La más común en los labs es .service (NetworkManager, crond, atd, httpd, chronyd, tuned). También hay .timer, .mount, .target, etc.\n\nNo confundir con crontab ni con at: esos son programadores de tareas; systemd es el que mantiene el sistema vivo.",
+    example: "systemctl status · journalctl -b · ps -p 1 -o comm=",
+  },
+  {
     term: "systemctl",
-    aliases: ["systemd", "unidad", "unit", "enable --now"],
+    aliases: ["enable --now"],
     definition:
       "system control: el comando para controlar systemd, el init del sistema (arranca servicios, los mantiene y decide qué vuelve al boot).\n\nUna unidad suele ser un servicio (.service): NetworkManager, crond, atd, httpd, chronyd, etc.\n\n• status → mira: active/running (arriba ahora), enabled/disabled (¿arranca al boot?). No cambia nada.\n• start / stop → ahora.\n• enable / disable → próximo boot.\n• enable --now → arranca ya y lo deja para el boot (lo más usado en los labs).\n• restart → vuelve a leer la config y reinicia el servicio.\n\nPrimero status; el enable --now solo si no está active y enabled.\n\nEjemplos de labs\n• Red: systemctl status NetworkManager → si falta, systemctl enable --now NetworkManager\n• Cron: systemctl status crond → si falta, systemctl enable --now crond\n• at: systemctl status atd → si falta, systemctl enable --now atd\n• Hora: systemctl enable --now chronyd\n• Apache: systemctl restart httpd (después de cambiar Listen o SELinux)\n• Perfil: systemctl enable --now tuned",
     example:
@@ -656,6 +665,14 @@ const es: GlossaryEntry[] = [
     definition: "Dice el modo de SELinux ahora: Enforcing, Permissive o Disabled. No lo cambia. Enforcing bloquea. Permissive avisa y deja pasar.",
     example: "getenforce",
     tldr: { page: "getenforce", platform: "linux" },
+  },
+  {
+    term: "setenforce",
+    aliases: ["setenforce 0", "setenforce 1", "Permissive", "Enforcing"],
+    definition:
+      "Cambia el modo de SELinux ahora, hasta el próximo reboot (o hasta que lo vuelvas a cambiar).\n\n• setenforce 0 → Permissive: avisa en el log y deja pasar.\n• setenforce 1 → Enforcing: vuelve a bloquear.\n\nNo es permanente: al reiniciar manda /etc/selinux/config (SELINUX=…). getenforce solo mira; setenforce cambia.\n\nEn estos labs de Apache/contexto el objetivo es quedarte en Enforcing: no uses setenforce 0 para “hacer que ande”.",
+    example: "setenforce 0 · setenforce 1 · getenforce",
+    tldr: { page: "setenforce", platform: "linux" },
   },
   {
     term: "semanage",
@@ -857,8 +874,16 @@ const es: GlossaryEntry[] = [
       "prefijo",
     ],
     definition:
-      "Dice qué parte de la IP es la red y qué parte es la máquina.\n\nDos formas de lo mismo (las más comunes en el lab/examen):\n• CIDR: /24 → los primeros 24 bits son red; el último número (.0–.255) es el host.\n• Decimal: 255.255.255.0 → misma máscara que /24.\n\nEjemplo: 172.16.1.0/24 = toda la red 172.16.1.x (client .12 y server .13). En la hoja del examen a veces escribe 172.24.14.0/255.255.255.0: es la red + esa máscara, no otra cosa.\n\nEn comandos casi siempre va CIDR: 172.16.1.12/24 en nmcli, allow 172.16.1.0/24 en chrony. No hace falta escribir …/255.255.255.0 ahí.\n\nNo siempre es /24: el enunciado puede pedir /16, /25, etc. Leé la hoja.",
+      "Dice qué parte de la dirección es la red y qué parte es el equipo. Con eso la máquina sabe si el destino está en su misma red o si tiene que salir por el gateway para seguir.\n\nEn 172.16.1.13/24, el /24 deja fijos los primeros 24 bits. En decimal es 255.255.255.0.\n• Red: 172.16.1.0\n• Equipos: 172.16.1.1 hasta 172.16.1.254\n• Este servidor: 172.16.1.13\n• El cliente del lab: 172.16.1.12\n\nSi el otro equipo también está en 172.16.1.x con /24, se hablan directo. Si está en otra red, el paquete sale por el gateway y sigue de ahí.\n\nLa máscara se configura en la interfaz (nmcli, ip a). No se escribe al conectarse: ssh root@172.16.1.13. Si pegás el /24, SSH lo toma como un hostname y dice que no lo puede resolver.\n\nEn la hoja del examen a veces aparece 172.24.14.0/255.255.255.0: es la red más esa máscara. En comandos casi siempre va el CIDR: 172.16.1.12/24, allow 172.16.1.0/24. No siempre es /24: el enunciado puede pedir /16 o /25.",
     example: "nmcli … ipv4.addresses 172.16.1.12/24 · allow 172.16.1.0/24",
+  },
+  {
+    term: "gateway",
+    aliases: ["puerta de enlace", "default gateway", "ipv4.gateway"],
+    definition:
+      "La puerta de salida de tu red. Cuando el destino no está en la misma red que marca la máscara de red, el paquete no se entrega directo: se lo mandás al gateway, y ese equipo lo reenvía hacia afuera.\n\nEn el lab es 172.16.1.1. El client (.12) y el server (.13) están en 172.16.1.0/24, así que entre ellos el camino es directo. Para una red distinta, el camino pasa por el gateway.\n\nSe guarda en el perfil de la interfaz, junto con la dirección:\nnmcli connection modify NOMBRE ipv4.gateway 172.16.1.1\n\nEn este lab el DNS también es 172.16.1.1. El gateway reenvía paquetes. El DNS resuelve nombres.",
+    example: "nmcli connection modify NOMBRE ipv4.gateway 172.16.1.1 · ip route",
+    tldr: { page: "nmcli", platform: "linux" },
   },
   {
     term: "search domain",
@@ -893,7 +918,7 @@ const es: GlossaryEntry[] = [
     term: "NTP",
     aliases: ["ntp", "chrony", "chronyd", "chronyc", "chrony.conf"],
     definition:
-      "Network Time Protocol: sincronizar el reloj de las máquinas por red para que marquen la misma hora.\n\nEn RHEL/Rocky el cliente/servidor NTP es chrony (servicio chronyd, config /etc/chrony.conf). No hace falta un paquete aparte llamado ntp.\n\nLab (Q11): el server (172.16.1.13) ofrece la hora (allow + firewall servicio ntp = UDP 123). El client apunta a ese server (línea server … iburst) y chronyc sources tiene que mostrar esa IP, no solo localhost.\n\nPersistente = chronyd enabled en las dos.",
+      "Network Time Protocol: sincronizar el reloj de las máquinas por red para que marquen la misma hora.\n\nEn RHEL/Rocky el cliente/servidor NTP es chrony (servicio chronyd, config /etc/chrony.conf). No hace falta un paquete aparte llamado ntp.\n\nwhich chrony no imprime ruta. rpm -ql chrony lista /usr/sbin/chronyd, /usr/bin/chronyc y /etc/chrony.conf.\n\nLab (Q11): el server (172.16.1.13) ofrece la hora (allow + firewall servicio ntp = UDP 123). El client apunta a ese server (línea server … iburst) y chronyc sources tiene que mostrar esa IP, no solo localhost.\n\nPersistente = chronyd enabled en las dos.",
     example: "dnf install -y chrony · allow 172.16.1.0/24 · server 172.16.1.13 iburst · firewall-cmd --add-service=ntp --permanent && firewall-cmd --reload · systemctl enable --now chronyd · chronyc sources -v",
     tldr: { page: "chronyc", platform: "linux" },
   },
@@ -1002,15 +1027,17 @@ const es: GlossaryEntry[] = [
 const en: GlossaryEntry[] = [
   {
     term: "which",
-    definition: "Prints the path of the executable the shell will run. It does not search random files: it looks up commands on PATH.",
-    example: "which logger → /usr/bin/logger",
+    definition:
+      "Prints the path of the executable the shell will run. It looks on PATH.\n\nwhich logger prints /usr/bin/logger. As root, which chronyd prints /usr/sbin/chronyd.\n\nwhich chrony prints no path: the package is named chrony and the command is chronyd. which words prints no path either: words is not a command. rpm -ql lists those files by reading the rpmdb of installed packages.",
+    example: "which logger · which chronyd · rpm -ql chrony · rpm -ql words",
     tldr: { page: "which" },
   },
   {
-    term: "rpm",
+    term: "rpmdb",
+    aliases: ["rpm", "/var/lib/rpm", "rpmdb.sqlite", "rpm database"],
     definition:
-      "Looks up packages that are already installed. rpm -ql PACKAGE lists the files it put on disk. Use it when the package does not ship a command: which will not find it. rpm -q PACKAGE only says whether it is installed and which version.",
-    example: "rpm -ql words → the dictionary is /usr/share/dict/words. which words fails: words is not a command",
+      "The base of a package search. which reads PATH. find walks the disk. rpm reads the rpmdb: the list of installed packages and the files each one left behind.\n\nIt lives in /var/lib/rpm. On Rocky 9 and 10 the file is rpmdb.sqlite. You do not open it by hand. The command that queries it is rpm.\n\n• rpm -q PACKAGE says whether it is installed and which version.\n• rpm -ql PACKAGE lists every file that package left on disk. Use it when the package name is not a command: which will not find it.\n• rpm -qf PATH goes the other way. You have a file and you want the installed package that brought it.\n\nwhich chrony prints no path. rpm -ql chrony shows /usr/sbin/chronyd, /usr/bin/chronyc, and /etc/chrony.conf. which words prints no path. rpm -ql words shows /usr/share/dict/words. rpm -qf /usr/share/dict/words answers words.\n\nfind walks the disk when you do not know the package, or when you filter by name, owner, type, or date. dnf provides PATH says which package ships a file that is not installed yet. grep searches text inside files. man -k searches the manual index.",
+    example: "rpm -ql chrony · rpm -ql words · rpm -qf /usr/share/dict/words · rpm -q chrony · ls /var/lib/rpm",
     tldr: { page: "rpm", platform: "linux" },
   },
   {
@@ -1526,8 +1553,8 @@ const en: GlossaryEntry[] = [
   {
     term: "find",
     definition:
-      "Searches the tree. If the question does not limit the path, start at /. -user is the owner (not «who created it»). -type f = file, not directory. -mtime -1 = modified in the last day; bare 1 is not enough.\n2>/dev/null hides Permission denied.\n-xdev does not descend other filesystems (avoids /proc junk). It needs the dash. Videos sometimes type find / xdev …: that is not the option — find looks for a folder named xdev; if missing, 2>/dev/null eats the error and /proc can still sneak in.\n-exec COMMAND {} \\; runs the command once per hit. {} is the path. \\; closes -exec. \\+ packs many paths into one command: with cp --parents that often fails when parents differ (videos sometimes use \\+; here prefer \\;).\nTo keep folders when copying: cp --parents (see cp).",
-    example: "find / -xdev -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles/ \\; 2>/dev/null",
+      "Walks directories. which looks up a command on PATH. rpm -ql lists what a package left, when you already know the package name. find is for the rest: there is no package, or the question asks for owner, type, or date. find /etc -name chrony.conf walks /etc until it finds that file. which chrony does not see it.\n\nIf the question does not limit the path, start at /. -user is the owner (not «who created it»). -type f = file, not directory. -mtime -1 = modified in the last day; bare 1 is not enough.\n2>/dev/null hides Permission denied.\n-xdev does not descend other filesystems (avoids /proc junk). It needs the dash. Videos sometimes type find / xdev …: that is not the option — find looks for a folder named xdev; if missing, 2>/dev/null eats the error and /proc can still sneak in.\n-exec COMMAND {} \\; runs the command once per hit. {} is the path. \\; closes -exec. \\+ packs many paths into one command: with cp --parents that often fails when parents differ (videos sometimes use \\+; here prefer \\;).\nTo keep folders when copying: cp --parents (see cp).",
+    example: "find /etc -name chrony.conf · find / -xdev -user erik -type f -mtime -1 2>/dev/null · find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles/ \\; 2>/dev/null",
     tldr: { page: "find" },
   },
   {
@@ -1538,8 +1565,15 @@ const en: GlossaryEntry[] = [
     tldr: { page: "tar" },
   },
   {
+    term: "systemd",
+    aliases: ["init", "unit"],
+    definition:
+      "The system init: the first process that starts after the kernel (PID 1). It brings up the rest: network, cron, sshd, httpd, and so on. It also keeps the journal and decides which services come back at the next boot.\n\nIt is not a command you type to «run systemd». To control it you use systemctl. To read its logs, journalctl. hostnamectl, localectl, and timedatectl also talk to systemd, each on one topic.\n\nWhat systemd manages is called a unit. The one you see most in the labs is .service (NetworkManager, crond, atd, httpd, chronyd, tuned). There are also .timer, .mount, .target, and others.\n\nDo not confuse it with crontab or at: those schedule jobs; systemd is what keeps the system running.",
+    example: "systemctl status · journalctl -b · ps -p 1 -o comm=",
+  },
+  {
     term: "systemctl",
-    aliases: ["systemd", "unit", "enable --now"],
+    aliases: ["enable --now"],
     definition:
       "system control: the command that controls systemd, the system init (starts services, keeps them running, and decides what comes back at boot).\n\nA unit is usually a service (.service): NetworkManager, crond, atd, httpd, chronyd, etc.\n\n• status → look: active/running (up now), enabled/disabled (starts at boot?). Changes nothing.\n• start / stop → now.\n• enable / disable → next boot.\n• enable --now → start now and leave it for boot (most used in the labs).\n• restart → reread config and restart the service.\n\nCheck status first; use enable --now only if it is not already active and enabled.\n\nLab examples\n• Network: systemctl status NetworkManager → if needed, systemctl enable --now NetworkManager\n• Cron: systemctl status crond → if needed, systemctl enable --now crond\n• at: systemctl status atd → if needed, systemctl enable --now atd\n• Time: systemctl enable --now chronyd\n• Apache: systemctl restart httpd (after Listen or SELinux changes)\n• Profile: systemctl enable --now tuned",
     example:
@@ -1615,6 +1649,14 @@ const en: GlossaryEntry[] = [
     definition: "Prints the SELinux mode right now: Enforcing, Permissive, or Disabled. It does not change it. Enforcing blocks. Permissive warns and allows.",
     example: "getenforce",
     tldr: { page: "getenforce", platform: "linux" },
+  },
+  {
+    term: "setenforce",
+    aliases: ["setenforce 0", "setenforce 1", "Permissive", "Enforcing"],
+    definition:
+      "Changes the SELinux mode right now, until the next reboot (or until you change it again).\n\n• setenforce 0 → Permissive: logs a warning and allows.\n• setenforce 1 → Enforcing: blocks again.\n\nNot permanent: after a reboot, /etc/selinux/config (SELINUX=…) wins. getenforce only looks; setenforce changes.\n\nIn these Apache/context labs the goal is to stay Enforcing: do not use setenforce 0 just to make it work.",
+    example: "setenforce 0 · setenforce 1 · getenforce",
+    tldr: { page: "setenforce", platform: "linux" },
   },
   {
     term: "semanage",
@@ -1814,8 +1856,16 @@ const en: GlossaryEntry[] = [
       "prefix length",
     ],
     definition:
-      "Says which part of the IP is the network and which part is the host.\n\nTwo ways to write the same common lab/exam mask:\n• CIDR: /24 → the first 24 bits are the network; the last number (.0–.255) is the host.\n• Dotted decimal: 255.255.255.0 → same mask as /24.\n\nExample: 172.16.1.0/24 = the whole 172.16.1.x network (client .12 and server .13). The exam sheet may write 172.24.14.0/255.255.255.0: that is the network plus that mask, not something else.\n\nIn commands you almost always use CIDR: 172.16.1.12/24 in nmcli, allow 172.16.1.0/24 in chrony. You do not need …/255.255.255.0 there.\n\nIt is not always /24: the ticket may ask for /16, /25, etc. Read the sheet.",
+      "Says which part of the address is the network and which part is the host. That is how the machine decides whether the destination is on its own network or has to go out through the gateway to continue.\n\nIn 172.16.1.13/24, /24 keeps the first 24 bits fixed. In dotted decimal that is 255.255.255.0.\n• Network: 172.16.1.0\n• Hosts: 172.16.1.1 through 172.16.1.254\n• This server: 172.16.1.13\n• The lab client: 172.16.1.12\n\nIf the other machine is also on 172.16.1.x with /24, they talk directly. If it is on another network, the packet goes to the gateway and continues from there.\n\nThe mask is set on the interface (nmcli, ip a). It is not part of the name you connect to: ssh root@172.16.1.13. If you paste the /24, SSH treats it as a hostname and says it cannot resolve it.\n\nThe exam sheet may show 172.24.14.0/255.255.255.0: that is the network plus that mask. Commands almost always use CIDR: 172.16.1.12/24, allow 172.16.1.0/24. It is not always /24: the ticket may ask for /16 or /25.",
     example: "nmcli … ipv4.addresses 172.16.1.12/24 · allow 172.16.1.0/24",
+  },
+  {
+    term: "gateway",
+    aliases: ["default gateway", "ipv4.gateway"],
+    definition:
+      "The way out of your network. When the destination is outside the network marked by the subnet mask, the packet is not delivered directly: you send it to the gateway, and that machine forwards it onward.\n\nIn the lab it is 172.16.1.1. The client (.12) and the server (.13) are on 172.16.1.0/24, so traffic between them stays direct. Traffic for a different network goes through the gateway.\n\nIt is stored on the interface profile, next to the address:\nnmcli connection modify NAME ipv4.gateway 172.16.1.1\n\nIn this lab the DNS is also 172.16.1.1. The gateway forwards packets. The DNS resolves names.",
+    example: "nmcli connection modify NAME ipv4.gateway 172.16.1.1 · ip route",
+    tldr: { page: "nmcli", platform: "linux" },
   },
   {
     term: "search domain",
@@ -1849,7 +1899,7 @@ const en: GlossaryEntry[] = [
     term: "NTP",
     aliases: ["ntp", "chrony", "chronyd", "chronyc", "chrony.conf"],
     definition:
-      "Network Time Protocol: keep machine clocks aligned over the network so they show the same time.\n\nOn RHEL/Rocky the NTP client/server is chrony (chronyd service, config /etc/chrony.conf). You do not need a separate package named ntp.\n\nLab (Q11): the server (172.16.1.13) serves time (allow + firewall ntp service = UDP 123). The client points at that server (server … iburst) and chronyc sources must show that IP, not only localhost.\n\nPersistent = chronyd enabled on both.",
+      "Network Time Protocol: keep machine clocks aligned over the network so they show the same time.\n\nOn RHEL/Rocky the NTP client/server is chrony (chronyd service, config /etc/chrony.conf). You do not need a separate package named ntp.\n\nwhich chrony prints no path. rpm -ql chrony lists /usr/sbin/chronyd, /usr/bin/chronyc, and /etc/chrony.conf.\n\nLab (Q11): the server (172.16.1.13) serves time (allow + firewall ntp service = UDP 123). The client points at that server (server … iburst) and chronyc sources must show that IP, not only localhost.\n\nPersistent = chronyd enabled on both.",
     example: "dnf install -y chrony · allow 172.16.1.0/24 · server 172.16.1.13 iburst · firewall-cmd --add-service=ntp --permanent && firewall-cmd --reload · systemctl enable --now chronyd · chronyc sources -v",
     tldr: { page: "chronyc", platform: "linux" },
   },

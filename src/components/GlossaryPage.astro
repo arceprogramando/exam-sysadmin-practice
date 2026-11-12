@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import { exampleCommands, glossaryFor, TLDR_REPO, tldrUrl } from "../lib/glossary";
 import { getUI, type Locale } from "../lib/i18n";
 import LvmFlowDiagram from "./LvmFlowDiagram.astro";
+import NetmaskFlowDiagram from "./NetmaskFlowDiagram.astro";
 
 interface Props {
   locale: Locale;
@@ -76,6 +77,11 @@ const clientEntries = entries.map((entry) => ({
             {entry.term === "LVM" ? (
               <dd class="mt-4">
                 <LvmFlowDiagram locale={locale} />
+              </dd>
+            ) : null}
+            {entry.term === "máscara de red" || entry.term === "subnet mask" ? (
+              <dd class="mt-4">
+                <NetmaskFlowDiagram locale={locale} />
               </dd>
             ) : null}
             <div class="glossary-commands" data-example={entry.example ?? ""}>
