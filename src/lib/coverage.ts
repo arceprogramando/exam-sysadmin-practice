@@ -27,7 +27,7 @@ const DOMAIN_LABS: Record<DomainId, string[]> = {
   deploy: ["lab-07", "lab-11", "lab-19", "extra-02"],
   network: ["lab-01", "lab-02", "lab-ssh-key"],
   users: ["lab-05", "lab-14"],
-  security: ["lab-04", "lab-fcontext", "extra-03"],
+  security: ["lab-04", "extra-03"],
 };
 
 const assigned = new Set(Object.values(DOMAIN_LABS).flat());
