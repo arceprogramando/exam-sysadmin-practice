@@ -358,7 +358,7 @@ export const LABS: Lab[] = [
     objective: [
       "IP 172.16.1.13/24 en la interfaz del lab.",
       "Gateway 172.16.1.1 y DNS 172.16.1.1.",
-      "Search domain linux.lab.",
+      "Search domain linux.lab en el server: completa nombres cortos escritos acá (client → client.linux.lab). No hace que el client encuentre al server.",
       "Hostname server.linux.lab.",
       "Persistente tras reboot.",
     ],
@@ -367,7 +367,7 @@ export const LABS: Lab[] = [
       "Primero: NetworkManager activo y enabled (systemctl status NetworkManager).",
       "IP 172.16.1.13/24 en la interfaz del lab (enp0s8).",
       "Gateway 172.16.1.1 y DNS 172.16.1.1.",
-      "Search domains: linux.lab (completa nombres cortos a *.linux.lab).",
+      "Search domains en el server: linux.lab. Completa un nombre corto escrito en esta máquina (client → client.linux.lab). No es la vía por la que el client llega.",
       "Hostname server.linux.lab.",
       "Todo persistente. Después de reboot, nmcli y hostnamectl tienen que mostrar lo mismo.",
     ],

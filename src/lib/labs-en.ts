@@ -164,7 +164,7 @@ export const LAB_EN: Record<string, LabEn> = {
     objective: [
       "IP 172.16.1.13/24 on the lab interface.",
       "Gateway 172.16.1.1 and DNS 172.16.1.1.",
-      "Search domain linux.lab.",
+      "Search domain linux.lab on the server: it completes short names typed here (client → client.linux.lab). It does not make the client find the server.",
       "Hostname server.linux.lab.",
       "Persistent after reboot.",
     ],
@@ -173,7 +173,7 @@ export const LAB_EN: Record<string, LabEn> = {
       "First: NetworkManager active and enabled (systemctl status NetworkManager).",
       "IP 172.16.1.13/24 on the lab interface (enp0s8).",
       "Gateway 172.16.1.1 and DNS 172.16.1.1.",
-      "Search domains: linux.lab (turns short names into *.linux.lab).",
+      "Search domains on the server: linux.lab. It completes a short name typed on this machine (client → client.linux.lab). It is not how the client gets here.",
       "Hostname server.linux.lab.",
       "All of it persistent. After reboot, nmcli and hostnamectl must show the same thing.",
     ],
