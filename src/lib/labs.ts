@@ -657,7 +657,7 @@ export const LABS: Lab[] = [
       "Persistente: es un permiso del directorio, no hace falta fstab.",
     ],
     help: {
-      tip: "En una carpeta, r es ver los nombres, w es crear o borrar adentro, y x es entrar. El 7 junta las tres. El 6 es solo r y w: 2660 no deja entrar ni crear. El primer dígito es el bit especial: 4 setuid, 2 setgid, 1 sticky. Este lab necesita el 2. Se ve como s en el grupo: drwxrws---. Probalo creando un archivo con uno de los usuarios, no con root.",
+      tip: "En una carpeta, r es ver los nombres, w es crear o borrar adentro, y x es entrar. El 7 junta las tres. El 6 es solo r y w: 2660 no deja entrar ni crear. El primer dígito es el bit especial: 4 setuid, 2 setgid, 1 sticky. Este lab necesita el 2. Se ve como s en el grupo: drwxrws---. Probalo creando un archivo con uno de los usuarios, no con root.\n\nAl crear ese archivo mirá dos cosas distintas: el setgid fija el grupo (sysadm); el umask de la sesión fija los permisos ugo con los que nace (p. ej. 644 o 664). umask no es ACL ni chmod del directorio: solo recorta el modo por defecto al crear.",
       videoHint: "Video de este lab: Q06.",
       videos: [{ title: "Q06: Directorio compartido con setgid", url: YT.setgid }],
       commands: [
@@ -667,6 +667,7 @@ export const LABS: Lab[] = [
         { cmd: "Bits especiales (el primer dígito): 4 setuid, 2 setgid, 1 sticky", why: "setuid (4): en un ejecutable, el proceso corre con el dueño del archivo. El ejemplo clásico es passwd, que corre como root. En un directorio casi no se usa.\n\nsetgid (2): en un directorio, hereda el grupo. Es este lab. En un ejecutable, el proceso corre con el grupo del archivo.\n\nsticky (1): en un directorio escribible por varios, como /tmp, solo el dueño del archivo o root puede borrarlo. Se ve como t al final: drwxrwxrwt.\n\nAcá no hace falta sticky. El lab pide heredar el grupo.", as: "info" },
         { cmd: "ls -ld /shared/sysadm", why: "Tiene que verse drwxrws---. La s en el lugar de la x del grupo es el setgid. Si ves una S mayúscula, el bit está pero falta el permiso de ejecución del grupo: algo mal en el 770.", as: "root" },
         { cmd: "su - felipe -c 'touch /shared/sysadm/prueba && ls -l /shared/sysadm'", why: "Prueba real: el archivo nuevo tiene que quedar grupo sysadm, aunque el grupo primario de Felipe sea otro.", as: "felipe" },
+        { cmd: "su - felipe -c 'umask; touch /shared/sysadm/umask-demo && ls -l /shared/sysadm/umask-demo'", why: "umask muestra la máscara de la sesión de Felipe. El archivo nuevo nace con permisos ugo recortados por esa máscara (suele ser 022 → -rw-r--r--). El grupo sigue siendo sysadm por el setgid de la carpeta.\n\nNo confundir: setgid = qué grupo hereda; umask = qué rwx quedan al crear; ACL (setfacl) = excepciones sobre algo que ya existe. Este lab no pide cambiar el umask: solo entender por qué el modo del touch no es 777.", as: "felipe" },
       ],
     },
   },

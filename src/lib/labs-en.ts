@@ -350,7 +350,7 @@ export const LAB_EN: Record<string, LabEn> = {
       "New files inherit the sysadm group (setgid).",
       "Persistent: it is a directory permission, fstab is not needed.",
     ],
-    tip: "On a directory, r lists names, w creates or deletes inside, and x enters. 7 is all three. 6 is only r and w: 2660 cannot enter or create. The first digit is the special bit: 4 setuid, 2 setgid, 1 sticky. This lab needs the 2. It shows as s on the group: drwxrws---. Test it by creating a file as one of the users, not as root.",
+    tip: "On a directory, r lists names, w creates or deletes inside, and x enters. 7 is all three. 6 is only r and w: 2660 cannot enter or create. The first digit is the special bit: 4 setuid, 2 setgid, 1 sticky. This lab needs the 2. It shows as s on the group: drwxrws---. Test it by creating a file as one of the users, not as root.\n\nWhen you create that file, look at two different things: setgid sets the group (sysadm); the session umask sets the ugo permissions the file is born with (e.g. 644 or 664). umask is not ACL and not the directory's chmod: it only trims the default mode at create time.",
     videoHint: 'Video for this lab: Q06.',
     videos: ['Q06: Shared directory with setgid'],
     why: [
@@ -360,6 +360,7 @@ export const LAB_EN: Record<string, LabEn> = {
       "setuid (4): on an executable, the process runs as the file's owner. The classic example is passwd, which runs as root. Almost unused on directories.\n\nsetgid (2): on a directory, inherit the group. That is this lab. On an executable, the process runs as the file's group.\n\nsticky (1): on a directory writable by many, like /tmp, only the file's owner or root can delete it. Shows as t at the end: drwxrwxrwt.\n\nSticky is not needed here. The lab asks to inherit the group.",
       "It has to look like drwxrws---. The s in place of the group's x is setgid. A capital S means the bit is on but group execute is missing: something wrong with the 770.",
       "Real test: the new file has to end up in group sysadm, even if Felipe's primary group is something else.",
+      "umask prints Felipe's session mask. The new file is born with ugo permissions trimmed by that mask (often 022 → -rw-r--r--). The group is still sysadm because of the directory's setgid.\n\nDo not mix them up: setgid = which group is inherited; umask = which rwx remain at create time; ACL (setfacl) = exceptions on something that already exists. This lab does not ask you to change umask: only to see why the touch mode is not 777.",
     ],
   },
   "lab-07": {

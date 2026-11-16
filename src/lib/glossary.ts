@@ -122,8 +122,9 @@ const es: GlossaryEntry[] = [
   },
   {
     term: "umask",
-    definition: "Máscara de permisos al crear archivos o directorios. Resta bits del permiso por defecto. Un umask alto deja menos permisos abiertos.",
-    example: "umask 022 → archivos nuevos suelen quedar 644; umask → muestra la máscara actual",
+    definition:
+      "Máscara de permisos al crear archivos o directorios. Resta bits del modo por defecto (archivos 666, carpetas 777). Un umask alto deja menos permisos abiertos.\n\nNo es chmod (eso cambia algo que ya existe). No es ACL/setfacl (excepciones por usuario). No es setgid (quién hereda el grupo en una carpeta compartida).\n\nEn el lab de /shared/sysadm: el setgid hace que el archivo nuevo sea grupo sysadm; el umask de la sesión decide si nace 644, 664, etc.",
+    example: "umask → muestra la máscara actual · umask 022 → archivos nuevos suelen quedar 644 · su - felipe -c 'umask; touch /shared/sysadm/x && ls -l /shared/sysadm/x'",
     tldr: { page: "umask" },
   },
   {
@@ -676,8 +677,9 @@ const es: GlossaryEntry[] = [
   },
   {
     term: "semanage",
+    aliases: ["semanage-port", "semanage port"],
     definition:
-      "Cambia la política de SELinux y lo guarda. port -l lista puertos etiquetados. port -a -t TIPO -p tcp PUERTO agrega uno. fcontext anota el contexto de una ruta para después de restorecon. No viene en una mínima: el paquete es policycoreutils-python-utils.\n\nLa sintaxis del puerto está en man semanage-port, no en man semanage. En el shell: man semanage- y Tab Tab lista esas páginas.",
+      "Cambia la política de SELinux y lo guarda. port -l lista puertos etiquetados. port -a -t TIPO -p tcp PUERTO agrega uno. fcontext anota el contexto de una ruta para después de restorecon. No viene en una mínima: el paquete es policycoreutils-python-utils.\n\nman semanage es la página general: no trae el ejemplo del puerto. La sintaxis del puerto está en man semanage-port. En el shell: man semanage- y Tab Tab lista semanage-port, semanage-fcontext, etc.\n\nAdentro el visor es less. Para ir a los ejemplos: /EXAMPLES o /Example y Enter. n / N (Shift+n) saltan entre coincidencias. Espacio baja, b sube, q sale. En EXAMPLES hay un SSH con -a -t … -p tcp: adaptarlo a http_port_t y al puerto del lab (82).",
     example: "man semanage-port · semanage port -l | grep http · semanage port -a -t http_port_t -p tcp 82",
     tldr: { page: "semanage", platform: "linux" },
   },
@@ -1113,8 +1115,9 @@ const en: GlossaryEntry[] = [
   },
   {
     term: "umask",
-    definition: "Permission mask when creating files or directories. It clears bits from the default mode. A higher umask leaves fewer open permissions.",
-    example: "umask 022 → new files often end up 644; umask → shows the current mask",
+    definition:
+      "Permission mask when creating files or directories. It clears bits from the default mode (files 666, directories 777). A higher umask leaves fewer open permissions.\n\nIt is not chmod (that changes something that already exists). It is not ACL/setfacl (per-user exceptions). It is not setgid (which group a shared directory inherits).\n\nIn the /shared/sysadm lab: setgid makes the new file group sysadm; the session umask decides whether it is born 644, 664, and so on.",
+    example: "umask → shows the current mask · umask 022 → new files often end up 644 · su - felipe -c 'umask; touch /shared/sysadm/x && ls -l /shared/sysadm/x'",
     tldr: { page: "umask" },
   },
   {
@@ -1660,8 +1663,9 @@ const en: GlossaryEntry[] = [
   },
   {
     term: "semanage",
+    aliases: ["semanage-port", "semanage port"],
     definition:
-      "Changes SELinux policy and saves it. port -l lists labeled ports. port -a -t TYPE -p tcp PORT adds one. fcontext records the context of a path for a later restorecon. It is not in a minimal install: the package is policycoreutils-python-utils.\n\nPort syntax is in man semanage-port, not man semanage. At the shell: man semanage- then Tab Tab lists those pages.",
+      "Changes SELinux policy and saves it. port -l lists labeled ports. port -a -t TYPE -p tcp PORT adds one. fcontext records the context of a path for a later restorecon. It is not in a minimal install: the package is policycoreutils-python-utils.\n\nman semanage is the general page: it does not have the port example. Port syntax is in man semanage-port. At the shell: man semanage- then Tab Tab lists semanage-port, semanage-fcontext, and so on.\n\nInside, the viewer is less. To jump to the examples: /EXAMPLES or /Example then Enter. n / N (Shift+n) jump between matches. Space pages down, b up, q quits. EXAMPLES shows an SSH line with -a -t … -p tcp: adapt it to http_port_t and the lab port (82).",
     example: "man semanage-port · semanage port -l | grep http · semanage port -a -t http_port_t -p tcp 82",
     tldr: { page: "semanage", platform: "linux" },
   },

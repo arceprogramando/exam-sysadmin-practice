@@ -955,7 +955,7 @@ function summaryView(run: Run): HTMLElement {
   for (const [index, lab] of summaryRows) {
     const record = run.labs[index];
     if (!record) continue;
-    const counts = !isUnscored(lab.id) && !isOffEdition(lab.id, run.edition);
+    const counts = !isUnscored(lab.id) && !isOffEdition(lab.id, run.edition ?? loadEdition());
     const pending = isLeftoverStatus(record.status);
     if (!counts && pending) continue;
     const stuck = record.status === "skipped";

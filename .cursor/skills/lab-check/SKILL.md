@@ -4,9 +4,10 @@ description: >-
   Revisa si un lab del repo de práctica quedó hecho bien en la VM: compara evidencia
   (salida de comandos, captura o SSH) contra el objetivo del lab. Detecta errores
   típicos como useradd -g vs -G, sudoers, find que copia /proc, Flatpak
-  system/user. Usar cuando el usuario diga revisar lab, chequear lab, ¿está
-  bien?, grader, verificar objetivo, porcentaje del examen, o pegue
-  getfacl/id/systemctl/lvs/visudo/flatpak y pregunte si cumple.
+  system/user, chrony/NTP (allow, firewall, sources). Usar cuando el usuario diga
+  revisar lab, chequear lab, ¿está bien?, grader, verificar objetivo, porcentaje
+  del examen, o pegue getfacl/id/systemctl/lvs/visudo/flatpak/chronyc y pregunte
+  si cumple.
 ---
 
 # Lab check
@@ -124,8 +125,13 @@ Probe multi-lab de ejemplo (root@client): ver [probes.md](probes.md) § “Pasad
 - **find → /root/erikfiles (lab-12):** si `find /root/erikfiles` solo muestra `proc/…` y `sin_proc=0`, FALTA. Camino del video: `find / -xdev -user erik -type f -mtime -1 -exec cp --parents {} /root/erikfiles \\;`. Vacío total también es FALTA si no hay evidencia de archivos de erik. Ver [examples/lab-12.md](examples/lab-12.md).
 - **Flatpak (extra-04):** system vs user; no `sudo -u`+`--user`; id `org.mozilla.firefox` en minúsculas. Ver [examples/extra-04.md](examples/extra-04.md).
 - **cron logger (lab-07):** el texto tiene que coincidir (`Ex200 Testing` sin espacio raro).
+- **chrony / NTP (lab-11, “misma hora”):** hay que mirar **server y client**.
+  - Server (172.16.1.13): `allow` (o equivalente) en `/etc/chrony.conf` para la red del lab; `firewall-cmd` con servicio `ntp` (UDP 123) permanente + reload; `chronyd` active y enabled.
+  - Client (172.16.1.12): línea `server 172.16.1.13` (iburst OK) en chrony.conf; `chronyc sources` tiene que mostrar esa IP como fuente usable (no solo `^?` / unreachable eterno); `chronyd` active y enabled.
+  - Persistente = `systemctl is-enabled chronyd` en **las dos**, no solo `is-active`.
+  - FALTAs típicas: solo client configurado; `allow` sin firewall (o al revés); pool público tapa al server del lab; chronyd running pero disabled; `chronyc sources` solo `127.0.0.1` / `CHRO`. Ver [examples/lab-11.md](examples/lab-11.md).
 
 ## Probes
 
 Comandos típicos: [probes.md](probes.md).  
-Ejemplos: [examples/lab-05.md](examples/lab-05.md), [examples/lab-10.md](examples/lab-10.md), [examples/lab-12.md](examples/lab-12.md), [examples/extra-04.md](examples/extra-04.md).
+Ejemplos: [examples/lab-05.md](examples/lab-05.md), [examples/lab-10.md](examples/lab-10.md), [examples/lab-11.md](examples/lab-11.md), [examples/lab-12.md](examples/lab-12.md), [examples/extra-04.md](examples/extra-04.md).

@@ -132,6 +132,42 @@ id arce   # uid=1111
 grep Welcome /home/joaquin/.bashrc; cat /etc/profile.d/welcome.sh
 ```
 
+## chrony / NTP (lab-11) — server y client
+
+Server (`where: server`, IP 172.16.1.13):
+
+```bash
+rpm -q chrony
+systemctl is-enabled chronyd; systemctl is-active chronyd
+grep -E '^\s*(allow|bindaddress|port|local|server|pool)' /etc/chrony.conf
+firewall-cmd --list-services
+firewall-cmd --list-ports
+# permanente (si list-services no alcanza):
+firewall-cmd --permanent --list-services
+```
+
+Client (172.16.1.12):
+
+```bash
+rpm -q chrony
+systemctl is-enabled chronyd; systemctl is-active chronyd
+grep -E '^\s*(server|pool|peer)' /etc/chrony.conf
+chronyc sources -v
+chronyc tracking
+```
+
+Cómo leer `chronyc sources` (client):
+
+```text
+MS Name/IP address         Stratum Poll Reach LastRx Last sample
+===============================================================================
+^* 172.16.1.13                   3   6   377    12   +123us[ +150us] +/-  ...
+```
+
+- `^*` o `^\+` con `172.16.1.13` y Reach ≠ 0 → OK (sincron contra el server).
+- Solo `^?` / Reach `0` / no aparece `.13` → FALTA (no llega o no está en conf).
+- Solo `127.127…` / `CHRO` / pools públicos y **no** el `.13` → FALTA para este lab.
+
 ## Pasada multi-lab (client, root)
 
 Preferí **varias** conexiones cortas, no un solo script enorme.
@@ -150,6 +186,16 @@ echo sin_proc=$(find /root/erikfiles -type f ! -path '*/proc/*' 2>/dev/null | wc
 # 13
 wc -l /root/lines; test -f /usr/share/dict/words && echo words_ok
 # 14 / 18 / 19 / flatpak: ver secciones arriba
+# 11 (client half)
+systemctl is-enabled chronyd; systemctl is-active chronyd; chronyc sources -v | head -20
 ```
 
-SSH tip: `root@127.0.0.1 -p 2222`, password lab `student`. Si dice `Not allowed at this time`, esperá y reintentá.
+Server (puerto **2200**), lab-11:
+
+```bash
+systemctl is-enabled chronyd; systemctl is-active chronyd
+grep -E '^\s*allow' /etc/chrony.conf
+firewall-cmd --list-services; firewall-cmd --permanent --list-services
+```
+
+SSH tip: `root@127.0.0.1 -p 2222`, password lab `student`. Server: puerto **2200**. Si dice `Not allowed at this time`, esperá y reintentá.
