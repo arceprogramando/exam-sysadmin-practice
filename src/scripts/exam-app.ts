@@ -5,6 +5,7 @@ import {
   labCode,
   trackFor,
   isUnscored,
+  isOffEdition,
   REDHAT_EXAM_VIDEO,
   type Lab,
   type LabCommand,
@@ -954,10 +955,13 @@ function summaryView(run: Run): HTMLElement {
   for (const [index, lab] of summaryRows) {
     const record = run.labs[index];
     if (!record) continue;
+    const counts = !isUnscored(lab.id) && !isOffEdition(lab.id, run.edition);
+    const pending = isLeftoverStatus(record.status);
+    if (!counts && pending) continue;
     const stuck = record.status === "skipped";
     const line = el(
       "div",
-      `grid grid-cols-[1fr_auto] gap-3 border-b border-line px-4 py-3 last:border-b-0 sm:px-5 ${stuck ? "lab-stuck" : ""}`,
+      `grid grid-cols-[1fr_auto] gap-3 border-b border-line px-4 py-3 last:border-b-0 sm:px-5 ${stuck ? "lab-stuck" : pending ? "lab-pending" : ""}`,
     );
     const left = el("div");
     const title = el("p", "font-medium", `${labCode(lab.id)} · ${lab.title}`);

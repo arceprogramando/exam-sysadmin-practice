@@ -1744,6 +1744,11 @@ html[data-theme="dark"] .glossary-hit {
   box-shadow: inset 5px 0 0 var(--color-bad);
 }
 
+.lab-pending {
+  background: color-mix(in srgb, var(--color-warn) 22%, var(--color-card));
+  box-shadow: inset 5px 0 0 var(--color-warn);
+}
+
 .stuck-flag {
   display: flex;
   flex-wrap: wrap;
