@@ -354,7 +354,7 @@ export const LABS: Lab[] = [
     id: "lab-02",
     track: "pdf",
     title: "Hay que nombrar al servidor y sacarlo de la red principal",
-    story: "La otra computadora del par. Es el servidor: hay que ponerle nombre, la dirección de esta red y el search domain linux.lab, para que el cliente pueda llegar.",
+    story: "La otra computadora del par. Es el servidor: hay que ponerle nombre y la dirección de esta red, para que el cliente pueda llegar. El search domain linux.lab es de esta máquina: si acá escribís client, prueba client.linux.lab. No es lo que usa el cliente para encontrar al server.",
     objective: [
       "IP 172.16.1.13/24 en la interfaz del lab.",
       "Gateway 172.16.1.1 y DNS 172.16.1.1.",

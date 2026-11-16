@@ -160,7 +160,7 @@ export const LAB_EN: Record<string, LabEn> = {
   },
   "lab-02": {
     title: "Name the server and take it off the main network",
-    story: "The other computer of the pair. This is the server: it needs a name, the address on this network, and the search domain linux.lab, so the client can reach it.",
+    story: "The other computer of the pair. This is the server: it needs a name and the address on this network, so the client can reach it. The search domain linux.lab belongs to this machine: if you type client here, it tries client.linux.lab. It is not what the client uses to find the server.",
     objective: [
       "IP 172.16.1.13/24 on the lab interface.",
       "Gateway 172.16.1.1 and DNS 172.16.1.1.",
