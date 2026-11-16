@@ -46,6 +46,7 @@ export const ROUTES = {
   practice: { es: "practica", en: "personal-practice" },
   stats: { es: "estadisticas", en: "stats" },
   glossary: { es: "glosario", en: "glossary" },
+  basics: { es: "fundamentos", en: "basics" },
 } as const;
 
 export type RouteId = keyof typeof ROUTES;
@@ -92,6 +93,7 @@ export interface Copy {
   brand: string;
   nav: string;
   statsNav: string;
+  basicsNav: string;
   glossaryNav: string;
   glossaryTitle: string;
   glossaryDescription: string;
@@ -381,6 +383,7 @@ const es: Copy = {
   brand: "Práctica personal",
   nav: "Secciones",
   statsNav: "Estadísticas",
+  basicsNav: "Fundamentos",
   glossaryNav: "Glosario",
   glossaryTitle: "Glosario sysadmin Linux",
   glossaryDescription:
@@ -445,8 +448,8 @@ const es: Copy = {
   penguinSpeed: "Lento",
   penguinOrbitHint: "Arrastrá para verlo de atrás. Tocá la panza para la siguiente escena. La notebook se prende con un clic.",
   leadBefore:
-    "La estructura (reloj de 3 horas, Revisit y Done) está inspirada en cómo se suele ver una certificación de sysadmin Linux. Los puntos rápidos van primero; si algo te traba, lo marcás y seguís. Un ",
-  leadAfter: " muestra ese formato de afuera.",
+    "La estructura (reloj de 3 horas, Revisit y Done) está inspirada en cómo se suele ver una certificación de sysadmin Linux. Los puntos rápidos van primero; si algo te traba, lo marcás y seguís. En ",
+  leadAfter: " hay un video público del escritorio del examen.",
   start: "Empezá la práctica",
   startAnother: "Empezar otra",
   editionLabel: "Versión a practicar",
@@ -701,6 +704,7 @@ const en: Copy = {
   brand: "Personal practice",
   nav: "Sections",
   statsNav: "Stats",
+  basicsNav: "Basics",
   glossaryNav: "Glossary",
   glossaryTitle: "Linux sysadmin glossary",
   glossaryDescription:
@@ -765,8 +769,8 @@ const en: Copy = {
   penguinSpeed: "Slow",
   penguinOrbitHint: "Drag to see the back. Tap the belly for the next scene. Tap the notebook to switch it on.",
   leadBefore:
-    "The structure (3-hour clock, Revisit and Done) is inspired by how a Linux sysadmin certification exam usually looks. Quick points go first; if something stalls you, mark it and move on. A ",
-  leadAfter: " shows that format from the outside.",
+    "The structure (3-hour clock, Revisit and Done) is inspired by how a Linux sysadmin certification exam usually looks. Quick points go first; if something stalls you, mark it and move on. ",
+  leadAfter: " has a public video of the exam desktop.",
   start: "Start practice",
   startAnother: "Start another",
   editionLabel: "Version to practice",

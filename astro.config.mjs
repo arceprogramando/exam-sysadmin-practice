@@ -14,6 +14,7 @@ export default defineConfig({
     "/simulacro": "/practica/",
     "/en/simulacro": "/en/personal-practice/",
     "/en/practice": "/en/personal-practice/",
+    "/en/fundamentos": "/en/basics/",
   },
   vite: {
     plugins: [tailwindcss()],

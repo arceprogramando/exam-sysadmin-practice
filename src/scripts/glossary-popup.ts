@@ -471,7 +471,10 @@ function walk(node: Node): void {
     mark.addEventListener("mouseleave", queueHideTip);
     mark.addEventListener("focus", () => showTip(mark, definition));
     mark.addEventListener("blur", hideTip);
+    mark.addEventListener("pointerdown", () => hideTip());
     const open = (event: Event) => {
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed) return;
       event.preventDefault();
       event.stopPropagation();
       hideTip();

@@ -33,6 +33,7 @@ const canonical = new URL(path, SITE).href;
 const fullTitle = title.includes("arceprog") ? title : `${title} | arceprog`;
 const home = routePath(locale, "home");
 const stats = routePath(locale, "stats");
+const basics = routePath(locale, "basics");
 const glossary = routePath(locale, "glossary");
 const otherHref = swapLocalePath(path, other);
 /** Absolute PNG, no ?v= — WhatsApp/Meta parsers break on query strings. Same size as arceprog.dev. */
@@ -133,6 +134,7 @@ const siteName = "exam-sysadmin-practice.arceprog.dev";
           </span>
         </a>
         <nav class="flex items-center gap-4 text-sm font-medium" aria-label={ui.nav}>
+          <a class="text-muted no-underline hover:text-ink" href={basics}>{ui.basicsNav}</a>
           <a class="text-muted no-underline hover:text-ink" href={`${stats}?mode=fixed`}>{ui.statsNav}</a>
           <a class="text-muted no-underline hover:text-ink" href={glossary}>{ui.glossaryNav}</a>
           <a class="text-muted no-underline hover:text-ink" href={cvUrl(locale)}>{ui.cv}</a>

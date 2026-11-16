@@ -17,6 +17,7 @@
     { "source": "/en/practice", "destination": "/en/personal-practice/", "permanent": true },
     { "source": "/en/practice/", "destination": "/en/personal-practice/", "permanent": true },
     { "source": "/en/estadisticas/", "destination": "/en/stats/", "permanent": true },
-    { "source": "/en/glosario/", "destination": "/en/glossary/", "permanent": true }
+    { "source": "/en/glosario/", "destination": "/en/glossary/", "permanent": true },
+    { "source": "/en/fundamentos/", "destination": "/en/basics/", "permanent": true }
   ]
 }
