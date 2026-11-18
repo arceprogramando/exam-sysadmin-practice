@@ -274,6 +274,7 @@ export interface Copy {
   leftoverBadge: string;
   leftoverNote: string;
   leftoverClock: string;
+  leftoverDoneTitle: string;
   leftoverEmpty: string;
   statusPassed: string;
   statusRedo: string;
@@ -577,11 +578,12 @@ const es: Copy = {
   inProgress: "En curso",
   continueLeftovers: (n) => (n === 1 ? "Continuar 1 pendiente" : `Continuar ${n} pendientes`),
   continueLeftoversHint:
-    "Sin reloj de 3 horas. Solo los labs que no terminaste. Esos tiempos no entran al promedio ni al mejor del simulacro.",
-  leftoverBadge: "Pendientes · sin límite",
+    "Sin reloj: no toma tiempo. Solo los labs que no terminaste, para hacerlos con calma. No entra al promedio ni al mejor del simulacro.",
+  leftoverBadge: "Pendientes · sin reloj",
   leftoverNote:
-    "Esto no es el simulacro: son solo los labs que quedaron sin Done. Podés terminarlos con calma; el reloj de 3 horas ya no corre.",
-  leftoverClock: "Sin límite",
+    "Esto no es el simulacro: son solo los labs que quedaron sin Done. Acá no hay reloj ni se toma tiempo: terminalos con calma.",
+  leftoverClock: "Sin reloj",
+  leftoverDoneTitle: "Pendientes cerrados",
   leftoverEmpty: "No quedan labs pendientes en esta práctica.",
   statusPassed: "Pasado",
   statusRedo: "Rehacer",
@@ -898,11 +900,12 @@ const en: Copy = {
   inProgress: "In progress",
   continueLeftovers: (n) => (n === 1 ? "Continue 1 leftover" : `Continue ${n} leftovers`),
   continueLeftoversHint:
-    "No 3-hour clock. Only labs you did not finish. Those times do not enter the timed-run average or best.",
-  leftoverBadge: "Leftovers · no limit",
+    "No clock: no time is taken. Only labs you did not finish, at your pace. Not counted in the timed-run average or best.",
+  leftoverBadge: "Leftovers · no clock",
   leftoverNote:
-    "This is not the timed exam: only labs that are not Done yet. Finish them at your pace; the 3-hour clock is off.",
-  leftoverClock: "No limit",
+    "This is not the timed exam: only labs that are not Done yet. There is no clock and no time is taken: finish them at your pace.",
+  leftoverClock: "No clock",
+  leftoverDoneTitle: "Leftovers closed",
   leftoverEmpty: "No leftover labs in this practice.",
   statusPassed: "Skipped",
   statusRedo: "Redo",

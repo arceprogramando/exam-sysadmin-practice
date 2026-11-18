@@ -72,7 +72,12 @@ export function mountHome(): void {
     const asked = scored.filter((lab) => lab.usedHelp).length;
     const redo = scored.filter((lab) => lab.status === "done" && isHard(lab.difficulty)).length;
     const modeLabel = last.mode === "fixed" ? ui.seeStatsFixed : ui.seeStatsPausable;
-    detail.textContent = `${modeLabel} · ${formatClock(wallSec(last))} · ${ui.tally({ done, revisit, redo, skipped: passed, help: asked })}`;
+    const tally = ui.tally({ done, revisit, redo, skipped: passed, help: asked });
+    // Pendientes no toma tiempo: sin reloj en el resumen.
+    detail.textContent =
+      runKind(last) === "leftover"
+        ? `${ui.leftoverBadge} · ${tally}`
+        : `${modeLabel} · ${formatClock(wallSec(last))} · ${tally}`;
   }
 }
 

@@ -136,7 +136,9 @@ export function mountExam(host: HTMLElement): void {
   saveUi();
   expireIfNeeded();
   render();
-  if (current()?.status === "in_progress") tickTimer = window.setInterval(tick, 250);
+  const started = current();
+  // Pendientes: sin reloj. No hay nada que repintar ni tiempo que vencer.
+  if (started?.status === "in_progress" && runKind(started) !== "leftover") tickTimer = window.setInterval(tick, 250);
   window.addEventListener("pagehide", onPageHide);
   document.addEventListener("visibilitychange", onVisibilityChange);
 }
@@ -263,13 +265,13 @@ function render(): void {
   if (screen === "lab" && labs()[run.currentIndex]) {
     root.replaceChildren(examView(run));
     labClock = root.querySelector("[data-lab-clock]");
-    syncFloat(run);
+    showClock(run);
     return;
   }
   screen = "board";
   root.replaceChildren(boardView(run));
   labClock = null;
-  syncFloat(run);
+  showClock(run);
   if (focusLabIndex != null) {
     revealLab(focusLabIndex);
     focusLabIndex = null;
@@ -554,6 +556,7 @@ function clockBar(run: Run, showLab: boolean): HTMLElement {
   if (runKind(run) === "leftover") {
     bar.append(el("p", "mb-3 text-xs font-semibold tracking-[0.16em] text-good uppercase", copy().leftoverBadge));
   }
+  if (runKind(run) === "leftover") showLab = false;
   const counts = el("dl", "clock-counts");
   counts.style.setProperty("--clock-count", showLab ? "6" : "5");
   const scored = countedLabs(run.labs, run.edition).filter((item) => visibleOnBoard(run, item));
@@ -573,6 +576,12 @@ function clockBar(run: Run, showLab: boolean): HTMLElement {
   );
   bar.append(counts);
   return bar;
+}
+
+/** El reloj flotante es del simulacro. En Pendientes no se muestra. */
+function showClock(run: Run): void {
+  if (runKind(run) === "leftover") removeFloat();
+  else syncFloat(run);
 }
 
 function removeFloat(): void {
@@ -921,15 +930,19 @@ function summaryView(run: Run): HTMLElement {
     abandoned: copy().abandoned,
     in_progress: copy().inProgress,
   };
+  const leftoverRun = runKind(run) === "leftover";
   const page = el("div", "flex flex-col gap-6 pb-10");
   const head = el("section", "rounded-3xl border border-line bg-card p-6 sm:p-8");
   head.append(
     el(
       "p",
       "text-xs font-semibold tracking-[0.16em] text-muted uppercase",
-      runKind(run) === "leftover" ? copy().leftoverBadge : titles[run.status],
+      leftoverRun ? copy().leftoverBadge : titles[run.status],
     ),
-    el("h1", "stat-value mt-2 text-4xl font-semibold", formatClock(wallSec(run))),
+    // Pendientes no toma tiempo: en vez del reloj total, el título.
+    leftoverRun
+      ? el("h1", "mt-2 text-3xl font-semibold", copy().leftoverDoneTitle)
+      : el("h1", "stat-value mt-2 text-4xl font-semibold", formatClock(wallSec(run))),
     el("p", "mt-3 text-lg", copy().tally({ done, revisit: scored.filter((item) => item.status === "revisit").length, redo, skipped, help })),
     el("p", "mt-2 text-sm text-muted", copy().summaryHint),
   );
@@ -973,7 +986,7 @@ function summaryView(run: Run): HTMLElement {
     }
     left.append(el("p", "text-sm text-muted", statusText(record)));
     const showTime =
-      record.status !== "revisit" && record.status !== "redo" && record.durationSec != null;
+      !leftoverRun && record.status !== "revisit" && record.status !== "redo" && record.durationSec != null;
     line.append(
       left,
       el("p", "stat-value text-sm", showTime ? formatShort(record.durationSec!, pageLocale()) : "—"),

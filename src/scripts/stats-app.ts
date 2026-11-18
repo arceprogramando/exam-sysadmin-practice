@@ -697,7 +697,8 @@ function history(runs: Run[]): HTMLElement {
     );
     head.append(status);
     const meta = el("div", "history-meta");
-    meta.append(el("span", "stat-value history-clock", formatClock(wallSec(run))));
+    // Pendientes no toma tiempo: no hay reloj que mostrar.
+    meta.append(el("span", "stat-value history-clock", leftover ? "—" : formatClock(wallSec(run))));
     meta.append(historyChips({ done, revisit, redo, skipped, help }));
     main.append(head, meta);
 

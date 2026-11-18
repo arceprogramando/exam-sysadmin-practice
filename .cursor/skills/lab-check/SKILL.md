@@ -81,6 +81,49 @@ A + B + C + D = TOTAL. Si alguna no se pudo mirar, va en una quinta línea (No c
 
 Una línea de arreglo por FALTA, sin pegar el walkthrough entero.
 
+## Número de la lista → id (v10)
+
+Lo que el usuario dice («el 24», «lab 24 server») es el número de la lista, no el id. Regla de `labCode`: labs `pdf` (en v10 entran Flatpak extra-04/05, salen Podman lab-20/21/22) ordenados client → server → los dos, respetando el orden de `LABS`; después los extras. Tabla actual (regenerala si cambia `labs.ts`):
+
+| Nº | id | VM | | Nº | id | VM |
+|----|----|----|-|----|----|----|
+| 01 | lab-01-root-client | client | | 16 | lab-18 | client |
+| 02 | lab-01 (red) | client | | 17 | lab-journal | client |
+| 03 | lab-03 (repos) | client | | 18 | lab-19 | client |
+| 04 | lab-05 (usuarios/sudo) | client | | 19 | extra-04 (Flatpak) | client |
+| 05 | lab-pwquality | client | | 20 | extra-05 | client |
+| 06 | lab-06 (setgid) | client | | 21 | lab-02-root-server | server |
+| 07 | lab-07 (cron) | client | | 22 | lab-02 (red) | server |
+| 08 | lab-at | client | | 23 | lab-ssh-key | server |
+| 09 | lab-09 (tar) | client | | 24 | lab-11 (chrony) | server + client |
+| 10 | lab-links | client | | 25 | lab-04 (puerto 82) | server |
+| 11 | lab-10 (ACL) | client | | 26 | lab-15 (LVM) | server |
+| 12 | lab-12 (find) | client | | 27 | lab-16 (swap) | server |
+| 13 | lab-find-size | client | | 28 | lab-17 | server |
+| 14 | lab-13 (grep) | client | | 29 | lab-08 | server |
+| 15 | lab-14 (UID) | client | | | | |
+
+## Acceso por vagrant ssh (lo más rápido)
+
+Si no hay `~/.ssh/config` con `rhcsa-client`, entrá por Vagrant desde la carpeta del Vagrantfile (máquina personal: `~/rhsca-lab-client-server`, un symlink; otra carpeta → `LAB_VAGRANT_DIR`). Las VMs las levanta el usuario: **nunca** `vagrant up/halt/destroy`.
+
+```bash
+scripts/vm.sh client 'id erik; getfacl /var/tmp/fstab'   # comando de lectura como root
+scripts/lab-11.sh                                         # chequeo completo de chrony en las dos
+```
+
+`vm.sh` pasa el comando en base64, así no hay que escapar `$`, comillas ni pipes. Primero `vagrant status` si no sabés si están arriba.
+
+- Contraseñas: no intentes loguearte. Compará el hash: `openssl passwd -6 -salt SALT CLAVE` contra el campo de `getent shadow USUARIO` (SALT = lo que va entre el segundo y el tercer `$`). Si el campo empieza con `!`, el usuario no tiene contraseña (falta `passwd`).
+- Nunca abras un login interactivo (`script -qc "su - erik"`, `su - erik` sin `-c`): se cuelga esperando una terminal y deja la sesión abierta en la VM. Para mensajes de login (lab-19), leé los archivos (`/etc/profile.d/*.sh`, `~/.bashrc`). `su - USER -c true` no sirve para probarlos: `/etc/profile` manda la salida de `profile.d` a `/dev/null` cuando el shell no es interactivo.
+- `httpd` y `http` en el firewall del server vienen del provisionamiento (instalados a la hora en que se creó la VM). No cuentan como rastro del lab-04: mirá `rpm -q httpd --qf '%{INSTALLTIME:date}'` antes de decir que lo empezaron.
+
+## Trampas que se repiten
+
+- **Cambió el archivo, no reinició el servicio.** `sshd -T` y `sshd -t` leen el disco, no el proceso que corre. Compará `stat -c %y ARCHIVO` contra `systemctl show UNIDAD -p ActiveEnterTimestamp`: si el archivo es más nuevo, el servicio corre la config vieja. Para chrony mirá también `ss -ulnp | grep chronyd`: sin `:123` el `allow` no entró. Arreglo: `systemctl restart chronyd` / `sshd -t && systemctl reload sshd`.
+- **sshd: gana el primero que se lee.** `sshd_config` incluye `sshd_config.d/*.conf` en la línea 15. `00-rhcsa-lab-root.conf` (PermitRootLogin) y `05-vagrant.conf` (PasswordAuthentication no) le ganan a lo que pongan más abajo en `sshd_config`. Para saber de qué archivo sale: `grep -Rni 'permitrootlogin\|passwordauthentication' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/`. Ojo con `ssh_config.d` (cliente) contra `sshd_config.d` (servidor).
+- **El Vagrant pierde internet después de los labs de red (02 y 22).** El gateway y el DNS `172.16.1.1` en enp0s8 quedan con métrica 100 y le ganan a la NAT (`10.0.2.2`, 101). `172.16.1.1` es el host: responde ping pero no rutea ni resuelve. Efectos: `dnf` → `Could not resolve host`; chrony del server → `sources with unknown address`. No es un error del lab. Arreglo sin romper el lab de red: `nmcli con mod enp0s8 ipv4.route-metric 200 ipv4.dns-priority 200 && nmcli con up enp0s8`.
+
 ## SSH a la VM de práctica (client)
 
 Config típica en `~/.ssh/config`: `Host rhcsa-client` → `127.0.0.1`, puerto **2222**, user a veces `felipe` **sin** `IdentityFile`.
@@ -130,6 +173,8 @@ Probe multi-lab de ejemplo (root@client): ver [probes.md](probes.md) § “Pasad
   - Client (172.16.1.12): línea `server 172.16.1.13` (iburst OK) en chrony.conf; `chronyc sources` tiene que mostrar esa IP como fuente usable (no solo `^?` / unreachable eterno); `chronyd` active y enabled.
   - Persistente = `systemctl is-enabled chronyd` en **las dos**, no solo `is-active`.
   - FALTAs típicas: solo client configurado; `allow` sin firewall (o al revés); pool público tapa al server del lab; chronyd running pero disabled; `chronyc sources` solo `127.0.0.1` / `CHRO`. Ver [examples/lab-11.md](examples/lab-11.md).
+  - **Server sin hora propia:** `chronyc tracking` en el server dice `Leap status : Not synchronised`. El server recibe y contesta (`chronyc serverstats` / `chronyc clients` muestran al `.12`), pero el client descarta la respuesta y queda `^?` con Reach 0. No confundir con firewall: si `clients` muestra al `.12`, el firewall anda. Causas: sin internet (ver trampa de rutas) o pool que no resuelve. Arreglo: devolverle internet, o `local stratum 10` en el chrony.conf del server y restart.
+  - Correr `scripts/lab-11.sh`: junta todo eso en una pasada.
 
 ## Probes
 

@@ -9,6 +9,10 @@ Lista: **24 · server** (“Las dos máquinas no marcan la misma hora”).
 - Client 172.16.1.12 sincroniza contra ese server
 - Persistente en las dos (`chronyd` enabled)
 
+## Atajo
+
+`scripts/lab-11.sh` corre todo esto (más escucha, hora propia del server y pedidos recibidos) en las dos VMs por vagrant ssh.
+
 ## Probe server (puerto 2200)
 
 ```bash
@@ -59,6 +63,24 @@ server 172.16.1.13 iburst
 | `chronyd` active pero `disabled` en una de las dos | FALTA (no persistente) |
 | Solo una máquina tocada | incompleta / FALTA según qué falta |
 | chrony no instalado (`rpm -q` falla) | no realizada o FALTA si la otra mitad sí |
+
+| `allow` agregado después del último restart (`stat` del conf más nuevo que `ActiveEnterTimestamp`; `ss -ulnp` sin `:123`) | FALTA: falta `systemctl restart chronyd` |
+| Server `Leap status: Not synchronised` y `chronyc clients` muestra al `.12` | FALTA: el server no tiene hora para dar; el client queda `^?` aunque firewall y allow estén bien |
+
+## Caso real (2026-11-18, Vagrant)
+
+Server con `allow 172.16.1.12`, `ntp` en el firewall (runtime y permanent), escuchando en `:123`, enabled. Client con `server 172.16.1.13 iburst`, enabled. Aun así el client queda `^? 172.16.1.13 … Reach 0`:
+
+```text
+# server
+Leap status     : Not synchronised
+8 sources with unknown address
+NTP packets received       : 11      ← el client sí llega
+default via 172.16.1.1 dev enp0s8 metric 100   ← sin internet
+dns_FALLA
+```
+
+Causa: el lab de red del server dejó el gateway `172.16.1.1` con más prioridad que la NAT, así que el pool no resuelve y el server no tiene hora. Arreglo: `nmcli con mod enp0s8 ipv4.route-metric 200 ipv4.dns-priority 200 && nmcli con up enp0s8 && systemctl restart chronyd` (o `local stratum 10`). Veredicto mientras tanto: **incompleta** (sirve NTP y es persistente, pero el client no sincroniza).
 
 Notas:
 

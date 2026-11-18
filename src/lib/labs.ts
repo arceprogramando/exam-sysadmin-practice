@@ -1019,8 +1019,8 @@ export const LABS: Lab[] = [
           as: "root",
         },
         {
-          cmd: "umount /mnt/wshare && mount -a && findmnt /mnt/wshare",
-          why: "Paso 12 — prueba fstab sin reiniciar (simula el boot).\n\numount /mnt/wshare → lo sacás a mano; la carpeta queda “vacía” otra vez.\nmount -a → lee /etc/fstab y monta todo lo pendiente (incluida tu línea UUID).\nfindmnt /mnt/wshare → tiene que volver a mostrar TARGET /mnt/wshare y FSTYPE ext4.\n\nSi findmnt no muestra nada: la línea de fstab está mal (UUID, tipazo, campos) o no se guardó.\nSi esto pasa, al reboot real /mnt/wshare también quedaría vacío.",
+          cmd: "systemctl daemon-reload && umount /mnt/wshare && mount -a && findmnt /mnt/wshare",
+          why: "Paso 12 — prueba fstab sin reiniciar (simula el boot).\n\nsystemctl daemon-reload → primero, porque acabás de editar fstab. systemd arma una unidad .mount por cada línea de fstab y no relee el archivo solo: sin esto, mount y umount avisan «your fstab has been modified, but systemd still uses the old version». No monta nada; solo le hace leer el fstab nuevo.\numount /mnt/wshare → lo sacás a mano; la carpeta queda “vacía” otra vez.\nmount -a → lee /etc/fstab y monta todo lo pendiente (incluida tu línea UUID).\nfindmnt /mnt/wshare → tiene que volver a mostrar TARGET /mnt/wshare y FSTYPE ext4.\n\nSi findmnt no muestra nada: la línea de fstab está mal (UUID, tipazo, campos) o no se guardó.\nSi esto pasa, al reboot real /mnt/wshare también quedaría vacío.",
           as: "root",
         },
       ],
@@ -1085,8 +1085,8 @@ export const LABS: Lab[] = [
           as: "root",
         },
         {
-          cmd: "swapoff /dev/sdb2; swapon -a && swapon --show",
-          why: "Paso 8 — prueba fstab sin reiniciar (simula el boot).\n\n¿Para qué?\nComprobar que la línea de fstab prende el swap sola, sin reiniciar de verdad.\n\nswapoff /dev/sdb2 → lo apagás a mano (queda como “recién booteado” sin esa reserva).\nswapon -a → lee /etc/fstab y activa TODO el swap de ahí (incluida tu línea UUID).\nswapon --show → tiene que volver a listar /dev/sdb2 (SIZE ~420M).\n\nEl ; asegura que swapoff corra igual. El && solo llega al --show si swapon -a salió bien.\n\nSi no aparece: UUID con comillas, tipazo, o no guardaste con :wq.",
+          cmd: "systemctl daemon-reload; swapoff /dev/sdb2; swapon -a && swapon --show",
+          why: "Paso 8 — prueba fstab sin reiniciar (simula el boot).\n\n¿Para qué?\nComprobar que la línea de fstab prende el swap sola, sin reiniciar de verdad.\n\nsystemctl daemon-reload → primero, porque acabás de editar fstab. systemd arma una unidad .mount por cada línea de fstab y no relee el archivo solo: sin esto, mount, umount y swapon pueden avisar «your fstab has been modified, but systemd still uses the old version». No monta nada; solo le hace leer el fstab nuevo.\nswapoff /dev/sdb2 → lo apagás a mano (queda como “recién booteado” sin esa reserva).\nswapon -a → lee /etc/fstab y activa TODO el swap de ahí (incluida tu línea UUID).\nswapon --show → tiene que volver a listar /dev/sdb2 (SIZE ~420M).\n\nEl ; asegura que swapoff corra igual. El && solo llega al --show si swapon -a salió bien.\n\nSi no aparece: UUID con comillas, tipazo, o no guardaste con :wq.",
           as: "root",
         },
       ],
@@ -1097,7 +1097,7 @@ export const LABS: Lab[] = [
     track: "pdf",
     title: "Hay que cambiar el tamaño del volumen sin perder datos",
     story:
-      "Operaciones tiene un volumen vo (filesystem montado) demasiado grande y quiere dejarlo cerca de 50 MB (vale 30–70), sin perder datos.\n\nAchicar mal se rompe: si bajás solo el LV y el ext4 sigue grande, el filesystem no cabe. Hay que achicar primero el ext4 y después el LV (camino del video Q17).\n\nEn esta VM, después de wshare + swap, vo todavía no existe: primero lo armás (prep) y después lo achicás.",
+      "Operaciones tiene un volumen vo (filesystem montado) demasiado grande y quiere dejarlo cerca de 50 MB (vale 30–70), sin perder datos.\n\nAchicar mal se rompe: si bajás solo el LV y el ext4 sigue grande, el filesystem no cabe. Hay que achicar primero el ext4 y después el LV (camino del video Q17).\n\nEn esta VM, después de wshare + swap, vo todavía no existe: primero lo armás (prep) y después lo achicás.\n\nPrep: en el lugar libre de /dev/sdb, una partición nueva de 130 MB tipo LVM. Con ella, el VG vgroup con extents (PE) de 10 MB. Adentro, el LV vo de 12 extents (120 MB), con ext4, montado en /mnt/vo y en fstab.",
     objective: [
       "LV vo en el VG vgroup.",
       "Tamaño final cerca de 50 MB (vale 30–70).",
@@ -1151,12 +1151,12 @@ export const LABS: Lab[] = [
         },
         {
           cmd: "vi /etc/fstab",
-          why: "Paso 7 — prep · línea para que mount -a funcione después:\n\nUUID=EL-DE-BLKID /mnt/vo ext4 defaults 0 0\n\nSin comillas. No borres wshare ni swap.\nEn vi: G → o → pegá → Esc → :wq",
+          why: "Paso 7 — prep · línea para que mount -a funcione después:\n\nUUID=EL-DE-BLKID /mnt/vo ext4 defaults 0 0\n\nSin comillas. No borres wshare ni swap.\nEn vi: G → o → pegá → Esc → :wq\n\nDespués de guardar va systemctl daemon-reload (paso 8).",
           as: "root",
         },
         {
-          cmd: "lvs && df -h /mnt/vo",
-          why: "Paso 8 — antes de achicar. lvs ~120M; df un poco menos (reserva ext4). Si no ves vo, volvé a la prep.",
+          cmd: "systemctl daemon-reload && lvs && df -h /mnt/vo",
+          why: "Paso 8 — foto de antes de achicar.\n\n• systemctl daemon-reload → primero (lo pide el fstab del paso 7), porque acabás de editar fstab. systemd arma una unidad .mount por cada línea de fstab y no relee el archivo solo: sin esto, mount y umount avisan «your fstab has been modified, but systemd still uses the old version». No monta nada; solo le hace leer el fstab nuevo.\n• lvs → tamaño del LV (la caja): vo ~120.00m.\n• && → corre df solo si lvs anduvo.\n• df -h /mnt/vo → tamaño del filesystem (la bolsa): ~107M, un poco menos que el LV porque ext4 usa una parte para su estructura y reserva ~5% para root.\n\nSi lvs no muestra vo, o df no dice vgroup-vo en Filesystem (no está montado), volvé a la prep.",
           as: "root",
         },
         {
@@ -1181,7 +1181,7 @@ export const LABS: Lab[] = [
         },
         {
           cmd: "mount -a && lvs && df -h /mnt/vo",
-          why: "Paso 13 — remontar con fstab y comprobar.\n\nlvs → vo ~50.00m\ndf → cerca de 50M (suele mostrar un poco menos por reserva ext4)\nRango OK del lab: 30–70 MB.\n\nSi mount -a no monta: mirá la línea de /mnt/vo en fstab (UUID sin comillas).",
+          why: "Paso 13 — remontar con fstab y comprobar. Son tres comandos unidos con &&: cada uno corre solo si el anterior salió bien.\n\n1. mount -a → monta todo lo de /etc/fstab que no esté montado. Acá vuelve a montar /mnt/vo (lo desmontaste en el paso 9) y de paso prueba que la línea de fstab sirve. Si no imprime nada, anduvo.\n2. lvs → tamaño del LV (la caja): vo tiene que decir ~50.00m. Es la prueba del lvreduce.\n3. df -h /mnt/vo → tamaño del filesystem (la bolsa): un poco menos de 50M. Es la prueba del resize2fs, y de que montó: en Filesystem tiene que decir /dev/mapper/vgroup-vo.\n\nRango OK del lab: 30–70 MB.\n\nSi mount -a falla, no ves lvs ni df: el error queda a la vista. Mirá la línea de /mnt/vo en fstab (UUID igual al de blkid). Si df muestra el filesystem de / en vez de vgroup-vo, vo no montó.",
           as: "root",
         },
       ],

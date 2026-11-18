@@ -592,9 +592,9 @@ const es: GlossaryEntry[] = [
     term: "systemctl",
     aliases: ["enable --now"],
     definition:
-      "system control: el comando para controlar systemd, el init del sistema (arranca servicios, los mantiene y decide qué vuelve al boot).\n\nUna unidad suele ser un servicio (.service): NetworkManager, crond, atd, httpd, chronyd, etc.\n\n• status → mira: active/running (arriba ahora), enabled/disabled (¿arranca al boot?). No cambia nada.\n• start / stop → ahora.\n• enable / disable → próximo boot.\n• enable --now → arranca ya y lo deja para el boot (lo más usado en los labs).\n• restart → vuelve a leer la config y reinicia el servicio.\n\nPrimero status; el enable --now solo si no está active y enabled.\n\nEjemplos de labs\n• Red: systemctl status NetworkManager → si falta, systemctl enable --now NetworkManager\n• Cron: systemctl status crond → si falta, systemctl enable --now crond\n• at: systemctl status atd → si falta, systemctl enable --now atd\n• Hora: systemctl enable --now chronyd\n• Apache: systemctl restart httpd (después de cambiar Listen o SELinux)\n• Perfil: systemctl enable --now tuned",
+      "system control: el comando para controlar systemd, el init del sistema (arranca servicios, los mantiene y decide qué vuelve al boot).\n\nUna unidad suele ser un servicio (.service): NetworkManager, crond, atd, httpd, chronyd, etc.\n\n• status → mira: active/running (arriba ahora), enabled/disabled (¿arranca al boot?). No cambia nada.\n• start / stop → ahora.\n• enable / disable → próximo boot.\n• enable --now → arranca ya y lo deja para el boot (lo más usado en los labs).\n• restart → vuelve a leer la config y reinicia el servicio.\n• daemon-reload → systemd relee sus unidades y /etc/fstab (por cada línea arma una unidad .mount). Va después de editar fstab: si no, mount avisa «systemd still uses the old version». No reinicia ningún servicio.\n\nPrimero status; el enable --now solo si no está active y enabled.\n\nEjemplos de labs\n• Red: systemctl status NetworkManager → si falta, systemctl enable --now NetworkManager\n• Cron: systemctl status crond → si falta, systemctl enable --now crond\n• at: systemctl status atd → si falta, systemctl enable --now atd\n• Hora: systemctl enable --now chronyd\n• Apache: systemctl restart httpd (después de cambiar Listen o SELinux)\n• Perfil: systemctl enable --now tuned",
     example:
-      "systemctl status NetworkManager · systemctl enable --now NetworkManager · systemctl status crond · systemctl enable --now crond · systemctl status atd · systemctl enable --now atd · systemctl enable --now chronyd · systemctl restart httpd · systemctl enable --now tuned · systemctl is-active crond · systemctl is-enabled crond",
+      "systemctl status NetworkManager · systemctl enable --now NetworkManager · systemctl status crond · systemctl enable --now crond · systemctl status atd · systemctl enable --now atd · systemctl enable --now chronyd · systemctl restart httpd · systemctl enable --now tuned · systemctl is-active crond · systemctl is-enabled crond · systemctl daemon-reload",
     tldr: { page: "systemctl", platform: "linux" },
   },
   {
@@ -631,9 +631,24 @@ const es: GlossaryEntry[] = [
   {
     term: "mount",
     definition:
-      "Muestra o monta sistemas de archivos. Sin argumentos, lista lo que está montado. -o remount,rw vuelve a montar escribible una raíz que arrancó solo lectura. El punto de montaje es el último argumento.",
-    example: "mount -o remount,rw / · mount -o remount,rw /sysroot",
+      "Muestra o monta sistemas de archivos. Sin argumentos, lista lo que está montado. -o remount,rw vuelve a montar escribible una raíz que arrancó solo lectura. El punto de montaje es el último argumento.\n\nmount -a\nMonta todo lo que está en /etc/fstab y todavía no está montado (lo ya montado lo deja como está). Es la prueba de que la línea de fstab sirve sin reiniciar: si hay un UUID mal copiado, un tipo equivocado o la carpeta no existe, el error sale acá y no en el próximo boot (que te deja en modo emergencia).\nSi no imprime nada, salió bien. Después de editar fstab, systemctl daemon-reload evita el aviso de que systemd usa la versión vieja.",
+    example: "mount -a · findmnt --verify · mount -o remount,rw / · mount -o remount,rw /sysroot",
     tldr: { page: "mount" },
+  },
+  {
+    term: "df",
+    aliases: ["df -h", "disk free", "espacio libre"],
+    definition:
+      "disk free: cuánto espacio tiene cada filesystem montado. -h lo muestra en K, M y G en vez de bloques. Con una ruta (df -h /mnt/vo) muestra solo el filesystem donde vive esa carpeta.\n\nColumnas\n• Filesystem → el dispositivo montado (/dev/mapper/vgroup-vo es lo mismo que /dev/vgroup/vo).\n• Size → tamaño del filesystem.\n• Used / Avail → ocupado y libre.\n• Use% → porcentaje usado.\n• Mounted on → dónde está montado.\n\ndf mide el filesystem, no el LV\nlvs dice cuánto mide la caja (el LV). df dice cuánto te deja usar la bolsa (el ext4). Con un LV de 120M, df muestra ~107M: ext4 usa una parte para su estructura y reserva ~5% para root. Por eso Size − Used no da Avail.\n\nSi lvs cambió y df no, el filesystem no acompañó al LV (faltó resize2fs o -r).\n\nSolo ve lo montado: si /mnt/vo está desmontado, df -h /mnt/vo muestra el filesystem de / (la carpeta vacía vive ahí). Si en Filesystem no ves vgroup-vo, no está montado.",
+    example: "df -h · df -h /mnt/vo · df -h /mnt/wshare",
+    tldr: { page: "df" },
+  },
+  {
+    term: "&&",
+    aliases: ["y lógico", "encadenar comandos"],
+    definition:
+      "Encadena comandos: corre el siguiente solo si el anterior salió bien (código de salida 0). Si uno falla, se corta ahí y los que siguen no corren.\n\nmount -a && lvs && df -h /mnt/vo\n1. mount -a monta lo de fstab.\n2. Si montó bien, lvs muestra el tamaño del LV.\n3. Si lvs anduvo, df -h /mnt/vo muestra el tamaño del filesystem.\nSi mount -a falla, no ves lvs ni df: el error queda a la vista, sin una tabla que lo tape.\n\nNo es lo mismo que ;\n• cmd1 ; cmd2 → corre cmd2 siempre, haya fallado o no cmd1.\n• cmd1 && cmd2 → cmd2 solo si cmd1 anduvo.\n• cmd1 || cmd2 → cmd2 solo si cmd1 falló.\n\nUso típico: sshd -t && systemctl reload sshd (recarga solo si la config no tiene errores).",
+    example: "mount -a && lvs && df -h /mnt/vo · sshd -t && systemctl reload sshd · mkdir -p /mnt/vo && mount /dev/vgroup/vo /mnt/vo",
   },
   {
     term: "nmcli",
@@ -657,8 +672,8 @@ const es: GlossaryEntry[] = [
   {
     term: "firewall-cmd",
     definition:
-      "Abre o cierra puertos en firewalld. --add-port=PUERTO/tcp abre. --permanent lo guarda. Sin --permanent, al reboot se pierde. --reload aplica ahora lo que quedó guardado. Hasta el reload, lo permanente no entra.",
-    example: "firewall-cmd --add-port=82/tcp --permanent && firewall-cmd --reload",
+      "Abre o cierra puertos y servicios en firewalld. --permanent lo guarda. Sin --permanent, al reboot se pierde. --reload aplica ahora lo que quedó guardado. Hasta el reload, lo permanente no entra.\n\nAbrir\n• --add-port=PUERTO/tcp abre un puerto suelto (Apache en el 82: 82/tcp).\n• --add-service=NOMBRE abre un servicio con nombre: ntp (UDP 123, lab de chrony), nfs, http, ssh. Es lo mismo que el puerto, pero sin acordarte del número ni de tcp/udp. firewall-cmd --get-services lista los nombres que existen.\n• --remove-port / --remove-service cierran.\n\nMirar (antes y después)\n• --list-services y --list-ports muestran lo que corre ahora (runtime).\n• --permanent --list-services muestra lo guardado, lo que vuelve al boot. Si un servicio está en una lista y no en la otra, falta el --permanent o falta el --reload.\n• --list-all muestra todo junto de la zona: interfaces, servicios y puertos.\n\nZonas\nCada placa está en una zona. Sin --zone, los cambios van a la zona por defecto (casi siempre public). --get-active-zones dice qué placas hay en cada zona: si enp0s8 estuviera en otra zona, abrir en public no le sirve.",
+    example: "firewall-cmd --add-port=82/tcp --permanent && firewall-cmd --reload · firewall-cmd --permanent --add-service=ntp && firewall-cmd --reload · firewall-cmd --list-services · firewall-cmd --permanent --list-services · firewall-cmd --list-ports · firewall-cmd --list-all · firewall-cmd --get-active-zones · firewall-cmd --get-services",
     tldr: { page: "firewall-cmd", platform: "linux" },
   },
   {
@@ -791,7 +806,7 @@ const es: GlossaryEntry[] = [
   {
     term: "lvs",
     definition:
-      "Lista Logical Volumes. No cambia nada.\n\nAntes y después de lvextend/lvresize: mirá el tamaño del LV acá.\nSi lvs ya cambió y df -h /mnt/vo no, faltó -r o resize2fs.",
+      "Lista Logical Volumes. No cambia nada.\n\nQué mirar\n• LV → nombre (vo, wshare).\n• VG → en qué grupo está (vgroup, wgroup).\n• Attr → la o del final de -wi-ao---- quiere decir abierto (montado o en uso).\n• LSize → tamaño del LV: la caja, no lo que te deja usar el filesystem (eso es df).\n\nAntes y después de lvextend/lvresize/lvreduce: mirá el tamaño del LV acá.\nSi lvs ya cambió y df -h /mnt/vo no, faltó -r o resize2fs.",
     example: "lvs · lvs /dev/vgroup/vo · lvs -o lv_name,vg_name,lv_size",
     tldr: { page: "lvs", platform: "linux" },
   },
@@ -823,15 +838,16 @@ const es: GlossaryEntry[] = [
   },
   {
     term: "mkswap",
-    definition: "Marca una partición como swap. No la activa: eso es swapon. Después la línea va en fstab para que vuelva sola.",
+    definition: "Marca una partición como swap. No la activa: eso es swapon. Después la línea va en fstab para que vuelva sola.\n\nAl terminar imprime el UUID (no label, UUID=…). Si te lo olvidaste, blkid -t TYPE=swap te lo vuelve a mostrar (ver swapon).",
     example: "mkswap /dev/sdb2",
     tldr: { page: "mkswap", platform: "linux" },
   },
   {
     term: "swapon",
+    aliases: ["swap", "UUID del swap"],
     definition:
-      "Activa un swap ya marcado con mkswap.\n\n• swapon /dev/sdb2 → activa esa partición ahora\n• swapon --show o -s → lista los activos (no cambia nada)\n• swapon -a → activa todas las entradas swap de /etc/fstab (después de agregar la línea)\n\nSin la línea en fstab, al reboot no vuelve. En fstab el truco es: UUID=… swap swap defaults 0 0 (dos veces la palabra swap).",
-    example: "swapon /dev/sdb2 · swapon --show · swapon -a",
+      "Activa un swap ya marcado con mkswap.\n\n• swapon /dev/sdb2 → activa esa partición ahora\n• swapon --show o -s → lista los activos (no cambia nada)\n• swapon -a → activa todas las entradas swap de /etc/fstab (después de agregar la línea)\n\nSin la línea en fstab, al reboot no vuelve. En fstab el truco es: UUID=… swap swap defaults 0 0 (dos veces la palabra swap).\n\n¿Qué UUID tiene mi swap?\n• blkid -t TYPE=swap → lista solo los dispositivos marcados como swap, con su UUID. Sirve aunque no sepas en qué partición quedó.\n• blkid /dev/sdb2 → si ya sabés la partición.\n• blkid -s UUID -o value /dev/sdb2 → imprime solo el UUID, sin comillas: listo para pegar.\n• lsblk -f → árbol de discos; en la fila con FSTYPE swap está el UUID.\n• swapon --show → dice qué partición está activa como swap (NAME), pero no el UUID: después le pasás esa ruta a blkid.\n\nOjo: la swap del sistema (la de la box) también aparece. La del lab es la que creaste, por ejemplo /dev/sdb2, no la de sda.\n\nPara pegarla directo en fstab sin copiar a mano:\necho \"UUID=$(blkid -s UUID -o value /dev/sdb2) swap swap defaults 0 0\" >> /etc/fstab\nDespués swapon -a y swapon --show: si aparece, la línea está bien.",
+    example: "blkid -t TYPE=swap · blkid -s UUID -o value /dev/sdb2 · lsblk -f · swapon /dev/sdb2 · swapon --show · swapon -a",
     tldr: { page: "swapon", platform: "linux" },
   },
   {
@@ -885,6 +901,14 @@ const es: GlossaryEntry[] = [
     definition:
       "La puerta de salida de tu red. Cuando el destino no está en la misma red que marca la máscara de red, el paquete no se entrega directo: se lo mandás al gateway, y ese equipo lo reenvía hacia afuera.\n\nEn el lab es 172.16.1.1. El client (.12) y el server (.13) están en 172.16.1.0/24, así que entre ellos el camino es directo. Para una red distinta, el camino pasa por el gateway.\n\nSe guarda en el perfil de la interfaz, junto con la dirección:\nnmcli connection modify NOMBRE ipv4.gateway 172.16.1.1\n\nEn este lab el DNS también es 172.16.1.1. El gateway reenvía paquetes. El DNS resuelve nombres.",
     example: "nmcli connection modify NOMBRE ipv4.gateway 172.16.1.1 · ip route",
+    tldr: { page: "nmcli", platform: "linux" },
+  },
+  {
+    term: "route-metric",
+    aliases: ["métrica", "metric", "ipv4.route-metric", "dns-priority", "ipv4.dns-priority"],
+    definition:
+      "Cuando una máquina tiene dos salidas por defecto (dos gateways), la métrica decide cuál usa. Es un costo: gana el número más bajo. dns-priority hace lo mismo con los DNS: el número más bajo queda primero en /etc/resolv.conf.\n\nEl problema en el Vagrant\nDespués del lab de red, el client tiene dos rutas por defecto:\n• via 172.16.1.1 dev enp0s8 (la del lab) → métrica 100\n• via 10.0.2.2 dev enp0s3 (la NAT de Vagrant) → métrica 101\nGana la del lab porque 100 < 101. Pero 172.16.1.1 es el host: responde ping y no saca a internet ni resuelve nombres. dnf falla con Could not resolve host y chrony del server no consigue hora.\n\nQuién tiene 100 y quién 101 no lo elegiste vos. NetworkManager les da 100 a las placas ethernet, y si hay dos, la que se activa última se queda con 100. Por eso a veces anda y a veces no.\n\nEl arreglo\nnmcli con mod enp0s8 ipv4.route-metric 200 ipv4.dns-priority 200\nnmcli con up enp0s8\n• route-metric 200: la ruta del lab pasa de 100 a 200. La NAT (101) ahora es más barata y gana. Pierde la del lab.\n• dns-priority 200: el default es 100. enp0s3 queda en 100 y enp0s8 en 200, así que los DNS de la NAT van primero y 172.16.1.1 queda abajo.\n• ¿Por qué 200? No es mágico: alcanza cualquier número mayor que el de la NAT (101 en la ruta, 100 en el DNS). 200 es redondo y deja margen.\n• con up aplica ya. con mod solo guarda en el perfil.\n\nQué no cambia\nIP, gateway, DNS y search domain siguen siendo los del lab. Solo cambia cuál se usa primero cuando hay dos. La red 172.16.1.0/24 (client ↔ server) sigue yendo por enp0s8: es una ruta más específica y la métrica no la toca.\n\nEn el examen no hace falta: ahí 172.16.1.1 es un gateway real. Es un parche solo para el Vagrant.",
+    example: "ip route | grep default · nmcli con mod enp0s8 ipv4.route-metric 200 ipv4.dns-priority 200 · nmcli con up enp0s8 · cat /etc/resolv.conf · nmcli -g ipv4.route-metric,ipv4.dns-priority con show enp0s8",
     tldr: { page: "nmcli", platform: "linux" },
   },
   {
@@ -1578,9 +1602,9 @@ const en: GlossaryEntry[] = [
     term: "systemctl",
     aliases: ["enable --now"],
     definition:
-      "system control: the command that controls systemd, the system init (starts services, keeps them running, and decides what comes back at boot).\n\nA unit is usually a service (.service): NetworkManager, crond, atd, httpd, chronyd, etc.\n\n• status → look: active/running (up now), enabled/disabled (starts at boot?). Changes nothing.\n• start / stop → now.\n• enable / disable → next boot.\n• enable --now → start now and leave it for boot (most used in the labs).\n• restart → reread config and restart the service.\n\nCheck status first; use enable --now only if it is not already active and enabled.\n\nLab examples\n• Network: systemctl status NetworkManager → if needed, systemctl enable --now NetworkManager\n• Cron: systemctl status crond → if needed, systemctl enable --now crond\n• at: systemctl status atd → if needed, systemctl enable --now atd\n• Time: systemctl enable --now chronyd\n• Apache: systemctl restart httpd (after Listen or SELinux changes)\n• Profile: systemctl enable --now tuned",
+      "system control: the command that controls systemd, the system init (starts services, keeps them running, and decides what comes back at boot).\n\nA unit is usually a service (.service): NetworkManager, crond, atd, httpd, chronyd, etc.\n\n• status → look: active/running (up now), enabled/disabled (starts at boot?). Changes nothing.\n• start / stop → now.\n• enable / disable → next boot.\n• enable --now → start now and leave it for boot (most used in the labs).\n• restart → reread config and restart the service.\n• daemon-reload → systemd rereads its units and /etc/fstab (it builds a .mount unit per line). Run it after editing fstab: otherwise mount warns «systemd still uses the old version». It restarts no service.\n\nCheck status first; use enable --now only if it is not already active and enabled.\n\nLab examples\n• Network: systemctl status NetworkManager → if needed, systemctl enable --now NetworkManager\n• Cron: systemctl status crond → if needed, systemctl enable --now crond\n• at: systemctl status atd → if needed, systemctl enable --now atd\n• Time: systemctl enable --now chronyd\n• Apache: systemctl restart httpd (after Listen or SELinux changes)\n• Profile: systemctl enable --now tuned",
     example:
-      "systemctl status NetworkManager · systemctl enable --now NetworkManager · systemctl status crond · systemctl enable --now crond · systemctl status atd · systemctl enable --now atd · systemctl enable --now chronyd · systemctl restart httpd · systemctl enable --now tuned · systemctl is-active crond · systemctl is-enabled crond",
+      "systemctl status NetworkManager · systemctl enable --now NetworkManager · systemctl status crond · systemctl enable --now crond · systemctl status atd · systemctl enable --now atd · systemctl enable --now chronyd · systemctl restart httpd · systemctl enable --now tuned · systemctl is-active crond · systemctl is-enabled crond · systemctl daemon-reload",
     tldr: { page: "systemctl", platform: "linux" },
   },
   {
@@ -1617,9 +1641,24 @@ const en: GlossaryEntry[] = [
   {
     term: "mount",
     definition:
-      "Shows or mounts filesystems. With no arguments it lists what is mounted. -o remount,rw mounts a root that booted read-only so it can be written. The mount point is the last argument.",
-    example: "mount -o remount,rw / · mount -o remount,rw /sysroot",
+      "Shows or mounts filesystems. With no arguments it lists what is mounted. -o remount,rw mounts a root that booted read-only so it can be written. The mount point is the last argument.\n\nmount -a\nMounts everything in /etc/fstab that is not mounted yet (what is already mounted stays as is). It tests the fstab line without rebooting: a mistyped UUID, a wrong type, or a missing folder errors here, not at the next boot (which drops you into emergency mode).\nNo output means it worked. After editing fstab, systemctl daemon-reload avoids the warning that systemd still uses the old version.",
+    example: "mount -a · findmnt --verify · mount -o remount,rw / · mount -o remount,rw /sysroot",
     tldr: { page: "mount" },
+  },
+  {
+    term: "df",
+    aliases: ["df -h", "disk free", "free space"],
+    definition:
+      "disk free: how much space each mounted filesystem has. -h shows it in K, M, and G instead of blocks. With a path (df -h /mnt/vo) it shows only the filesystem that folder lives on.\n\nColumns\n• Filesystem → the mounted device (/dev/mapper/vgroup-vo is the same as /dev/vgroup/vo).\n• Size → filesystem size.\n• Used / Avail → used and free.\n• Use% → percent used.\n• Mounted on → where it is mounted.\n\ndf measures the filesystem, not the LV\nlvs says how big the box (the LV) is. df says how much the bag (the ext4) lets you use. With a 120M LV, df shows ~107M: ext4 keeps part for its own structure and reserves ~5% for root. That is why Size − Used is not Avail.\n\nIf lvs changed and df did not, the filesystem did not follow the LV (resize2fs or -r is missing).\n\nIt only sees mounted filesystems: if /mnt/vo is unmounted, df -h /mnt/vo shows the / filesystem (the empty folder lives there). If Filesystem does not say vgroup-vo, it is not mounted.",
+    example: "df -h · df -h /mnt/vo · df -h /mnt/wshare",
+    tldr: { page: "df" },
+  },
+  {
+    term: "&&",
+    aliases: ["logical and", "chain commands"],
+    definition:
+      "Chains commands: runs the next one only if the previous one succeeded (exit code 0). If one fails, it stops there and the rest do not run.\n\nmount -a && lvs && df -h /mnt/vo\n1. mount -a mounts what is in fstab.\n2. If that worked, lvs shows the LV size.\n3. If lvs worked, df -h /mnt/vo shows the filesystem size.\nIf mount -a fails you do not see lvs or df: the error stays visible, with no table burying it.\n\nNot the same as ;\n• cmd1 ; cmd2 → always runs cmd2, whether cmd1 failed or not.\n• cmd1 && cmd2 → cmd2 only if cmd1 worked.\n• cmd1 || cmd2 → cmd2 only if cmd1 failed.\n\nTypical use: sshd -t && systemctl reload sshd (reloads only if the config has no errors).",
+    example: "mount -a && lvs && df -h /mnt/vo · sshd -t && systemctl reload sshd · mkdir -p /mnt/vo && mount /dev/vgroup/vo /mnt/vo",
   },
   {
     term: "nmcli",
@@ -1643,8 +1682,8 @@ const en: GlossaryEntry[] = [
   {
     term: "firewall-cmd",
     definition:
-      "Opens or closes ports in firewalld. --add-port=PORT/tcp opens one. --permanent saves it. Without --permanent, a reboot drops it. --reload applies what was saved. Until the reload, the permanent change is not active.",
-    example: "firewall-cmd --add-port=82/tcp --permanent && firewall-cmd --reload",
+      "Opens or closes ports and services in firewalld. --permanent saves it. Without --permanent, a reboot drops it. --reload applies what was saved. Until the reload, the permanent change is not active.\n\nOpen\n• --add-port=PORT/tcp opens a single port (Apache on 82: 82/tcp).\n• --add-service=NAME opens a named service: ntp (UDP 123, chrony lab), nfs, http, ssh. Same as the port, without remembering the number or tcp/udp. firewall-cmd --get-services lists the names that exist.\n• --remove-port / --remove-service close them.\n\nCheck (before and after)\n• --list-services and --list-ports show what is running now (runtime).\n• --permanent --list-services shows what is saved, what comes back at boot. If a service is in one list and not the other, the --permanent or the --reload is missing.\n• --list-all shows the whole zone at once: interfaces, services, and ports.\n\nZones\nEvery interface is in a zone. Without --zone, changes go to the default zone (almost always public). --get-active-zones says which interfaces are in each zone: if enp0s8 were in another zone, opening it in public would not help.",
+    example: "firewall-cmd --add-port=82/tcp --permanent && firewall-cmd --reload · firewall-cmd --permanent --add-service=ntp && firewall-cmd --reload · firewall-cmd --list-services · firewall-cmd --permanent --list-services · firewall-cmd --list-ports · firewall-cmd --list-all · firewall-cmd --get-active-zones · firewall-cmd --get-services",
     tldr: { page: "firewall-cmd", platform: "linux" },
   },
   {
@@ -1777,7 +1816,7 @@ const en: GlossaryEntry[] = [
   {
     term: "lvs",
     definition:
-      "Lists Logical Volumes. It changes nothing.\n\nBefore and after lvextend/lvresize: read the LV size here.\nIf lvs already changed and df -h /mnt/vo did not, -r or resize2fs is still missing.",
+      "Lists Logical Volumes. It changes nothing.\n\nWhat to read\n• LV → name (vo, wshare).\n• VG → which group it is in (vgroup, wgroup).\n• Attr → the o near the end of -wi-ao---- means open (mounted or in use).\n• LSize → LV size: the box, not what the filesystem lets you use (that is df).\n\nBefore and after lvextend/lvresize/lvreduce: read the LV size here.\nIf lvs already changed and df -h /mnt/vo did not, -r or resize2fs is still missing.",
     example: "lvs · lvs /dev/vgroup/vo · lvs -o lv_name,vg_name,lv_size",
     tldr: { page: "lvs", platform: "linux" },
   },
@@ -1809,15 +1848,16 @@ const en: GlossaryEntry[] = [
   },
   {
     term: "mkswap",
-    definition: "Marks a partition as swap. It does not turn it on: that is swapon. The fstab line comes after, so it comes back by itself.",
+    definition: "Marks a partition as swap. It does not turn it on: that is swapon. The fstab line comes after, so it comes back by itself.\n\nWhen it finishes it prints the UUID (no label, UUID=…). If you forgot it, blkid -t TYPE=swap shows it again (see swapon).",
     example: "mkswap /dev/sdb2",
     tldr: { page: "mkswap", platform: "linux" },
   },
   {
     term: "swapon",
+    aliases: ["swap", "swap UUID"],
     definition:
-      "Turns on swap that mkswap already marked.\n\n• swapon /dev/sdb2 → activates that partition now\n• swapon --show or -s → lists active ones (changes nothing)\n• swapon -a → activates every swap line in /etc/fstab (after you add the line)\n\nWithout the fstab line, a reboot drops it. In fstab the trick is: UUID=… swap swap defaults 0 0 (the word swap twice).",
-    example: "swapon /dev/sdb2 · swapon --show · swapon -a",
+      "Turns on swap that mkswap already marked.\n\n• swapon /dev/sdb2 → activates that partition now\n• swapon --show or -s → lists active ones (changes nothing)\n• swapon -a → activates every swap line in /etc/fstab (after you add the line)\n\nWithout the fstab line, a reboot drops it. In fstab the trick is: UUID=… swap swap defaults 0 0 (the word swap twice).\n\nWhat UUID does my swap have?\n• blkid -t TYPE=swap → lists only devices marked as swap, with their UUID. Works even if you forgot which partition it was.\n• blkid /dev/sdb2 → when you know the partition.\n• blkid -s UUID -o value /dev/sdb2 → prints only the UUID, no quotes: ready to paste.\n• lsblk -f → disk tree; the row with FSTYPE swap has the UUID.\n• swapon --show → says which partition is active as swap (NAME), but not the UUID: pass that path to blkid next.\n\nWatch out: the system swap (from the box) shows up too. The lab one is the one you made, for example /dev/sdb2, not the one on sda.\n\nTo add it to fstab without copying by hand:\necho \"UUID=$(blkid -s UUID -o value /dev/sdb2) swap swap defaults 0 0\" >> /etc/fstab\nThen swapon -a and swapon --show: if it shows up, the line is right.",
+    example: "blkid -t TYPE=swap · blkid -s UUID -o value /dev/sdb2 · lsblk -f · swapon /dev/sdb2 · swapon --show · swapon -a",
     tldr: { page: "swapon", platform: "linux" },
   },
   {
@@ -1869,6 +1909,14 @@ const en: GlossaryEntry[] = [
     definition:
       "The way out of your network. When the destination is outside the network marked by the subnet mask, the packet is not delivered directly: you send it to the gateway, and that machine forwards it onward.\n\nIn the lab it is 172.16.1.1. The client (.12) and the server (.13) are on 172.16.1.0/24, so traffic between them stays direct. Traffic for a different network goes through the gateway.\n\nIt is stored on the interface profile, next to the address:\nnmcli connection modify NAME ipv4.gateway 172.16.1.1\n\nIn this lab the DNS is also 172.16.1.1. The gateway forwards packets. The DNS resolves names.",
     example: "nmcli connection modify NAME ipv4.gateway 172.16.1.1 · ip route",
+    tldr: { page: "nmcli", platform: "linux" },
+  },
+  {
+    term: "route-metric",
+    aliases: ["metric", "ipv4.route-metric", "dns-priority", "ipv4.dns-priority"],
+    definition:
+      "When a machine has two default routes (two gateways), the metric decides which one it uses. It is a cost: the lowest number wins. dns-priority does the same for DNS servers: the lowest number goes first in /etc/resolv.conf.\n\nThe Vagrant problem\nAfter the network lab, the client has two default routes:\n• via 172.16.1.1 dev enp0s8 (the lab one) → metric 100\n• via 10.0.2.2 dev enp0s3 (the Vagrant NAT) → metric 101\nThe lab one wins because 100 < 101. But 172.16.1.1 is the host: it answers ping and does not route to the internet or resolve names. dnf fails with Could not resolve host and the server's chrony gets no time.\n\nYou did not choose who gets 100 and who gets 101. NetworkManager gives ethernet NICs 100, and when there are two, the one activated last keeps 100. That is why it works some days and not others.\n\nThe fix\nnmcli con mod enp0s8 ipv4.route-metric 200 ipv4.dns-priority 200\nnmcli con up enp0s8\n• route-metric 200: the lab route goes from 100 to 200. The NAT (101) is now cheaper and wins. The lab route loses.\n• dns-priority 200: the default is 100. enp0s3 stays at 100 and enp0s8 goes to 200, so the NAT DNS servers go first and 172.16.1.1 drops down.\n• Why 200? Nothing special: any number above the NAT's (101 for the route, 100 for DNS) works. 200 is round and leaves room.\n• con up applies it now. con mod only saves it in the profile.\n\nWhat does not change\nAddress, gateway, DNS, and search domain stay the lab values. Only which one is used first changes. The 172.16.1.0/24 network (client ↔ server) still goes through enp0s8: it is a more specific route and the metric does not touch it.\n\nNot needed on the exam: there 172.16.1.1 is a real gateway. This is a patch for the Vagrant only.",
+    example: "ip route | grep default · nmcli con mod enp0s8 ipv4.route-metric 200 ipv4.dns-priority 200 · nmcli con up enp0s8 · cat /etc/resolv.conf · nmcli -g ipv4.route-metric,ipv4.dns-priority con show enp0s8",
     tldr: { page: "nmcli", platform: "linux" },
   },
   {
