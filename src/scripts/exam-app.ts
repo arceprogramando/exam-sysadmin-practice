@@ -450,7 +450,8 @@ function taskRow(run: Run, lab: Lab, index: number): HTMLElement {
   const title = el("span", "font-medium", `${labCode(lab.id)} · ${lab.title}`);
   text.append(title);
   if (outsideScore(lab.id)) {
-    text.append(el("span", "lab-unscored mt-1 inline-flex", copy().unscoredBadge));
+    // flex + w-fit: always on its own line under the title, as wide as its text.
+    text.append(el("span", "lab-unscored mt-1 flex w-fit", copy().unscoredBadge));
   }
   if (lab.story) text.append(el("p", "lab-story mt-1 block text-sm leading-relaxed", storyPreview(lab.story)));
   const meta = el("span", "lab-meta mt-0.5 block text-sm text-muted", rowMeta(record, lab));
