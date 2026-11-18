@@ -5,7 +5,7 @@ import {
   labCode,
   trackFor,
   isUnscored,
-  isOffEdition,
+  isOutsideScore,
   REDHAT_EXAM_VIDEO,
   type Lab,
   type LabCommand,
@@ -384,9 +384,14 @@ function machineOf(lab: Lab): "client" | "server" | "both" {
   return "client";
 }
 
+/** Unscored labs and Extras: no difficulty, no final score. Edition of the open run. */
+function outsideScore(labId: string): boolean {
+  return isOutsideScore(labId, current()?.edition ?? loadEdition());
+}
+
 function ratedDone(record: LabRecord | undefined): boolean {
   if (record?.status !== "done") return false;
-  if (isUnscored(record.labId)) return true;
+  if (outsideScore(record.labId)) return true;
   return record.difficulty != null;
 }
 
@@ -444,7 +449,7 @@ function taskRow(run: Run, lab: Lab, index: number): HTMLElement {
   const text = el("div", "min-w-0 text-left");
   const title = el("span", "font-medium", `${labCode(lab.id)} · ${lab.title}`);
   text.append(title);
-  if (isUnscored(lab.id)) {
+  if (outsideScore(lab.id)) {
     text.append(el("span", "lab-unscored mt-1 inline-flex", copy().unscoredBadge));
   }
   if (lab.story) text.append(el("p", "lab-story mt-1 block text-sm leading-relaxed", storyPreview(lab.story)));
@@ -454,7 +459,7 @@ function taskRow(run: Run, lab: Lab, index: number): HTMLElement {
   enter.addEventListener("click", () => openLab(index));
   row.append(marks, text, enter);
   if (stuck) row.append(stuckFlag());
-  if (done && !isUnscored(lab.id)) row.append(difficultyLine(index, record?.difficulty ?? null, lab));
+  if (done && !outsideScore(lab.id)) row.append(difficultyLine(index, record?.difficulty ?? null, lab));
   return row;
 }
 
@@ -777,6 +782,8 @@ function labCard(lab: Lab, record: LabRecord): HTMLElement {
   );
   if (isUnscored(lab.id)) {
     card.append(el("p", "lab-unscored-note mt-3", copy().unscoredNote));
+  } else if (outsideScore(lab.id)) {
+    card.append(el("p", "lab-unscored-note mt-3", copy().extrasNote));
   }
   if (lab.story) card.append(storyText(lab.story, "mt-3 text-base leading-relaxed text-ink/80"));
   card.append(
@@ -872,7 +879,7 @@ function actions(run: Run): HTMLElement {
     flag.classList.add("mt-3");
     wrap.append(flag);
   }
-  if (record.status === "done" && !isUnscored(labs()[run.currentIndex]?.id ?? "")) {
+  if (record.status === "done" && !outsideScore(labs()[run.currentIndex]?.id ?? "")) {
     const line = difficultyLine(run.currentIndex, record.difficulty ?? null, labs()[run.currentIndex]);
     line.classList.add("mt-3");
     wrap.append(line);
@@ -968,7 +975,7 @@ function summaryView(run: Run): HTMLElement {
   for (const [index, lab] of summaryRows) {
     const record = run.labs[index];
     if (!record) continue;
-    const counts = !isUnscored(lab.id) && !isOffEdition(lab.id, run.edition ?? loadEdition());
+    const counts = !isOutsideScore(lab.id, run.edition ?? loadEdition());
     const pending = isLeftoverStatus(record.status);
     if (!counts && pending) continue;
     const stuck = record.status === "skipped";

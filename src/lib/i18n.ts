@@ -231,6 +231,7 @@ export interface Copy {
   groupExtras: string;
   unscoredBadge: string;
   unscoredNote: string;
+  extrasNote: string;
   marksLegend: string;
   foldDone: string;
   unfoldDone: (count: number) => string;
@@ -536,7 +537,9 @@ const es: Copy = {
   groupExtras: "Extras, si te queda tiempo",
   unscoredBadge: "No cuenta para la estadística final",
   unscoredNote:
-    "Este extra no entra en la cobertura, ni en el promedio, ni en Continuar pendientes. Podés mirarlo y marcar Done igual.",
+    "Este extra no entra en la cobertura ni en el promedio. Podés mirarlo y marcar Done igual, y si no llegaste, retomarlo en Continuar pendientes.",
+  extrasNote:
+    "Es un extra: no entra en el puntaje ni en el promedio del simulacro. Sí suma en el gráfico de temas. Hacelo si te queda tiempo, o después en Continuar pendientes.",
   marksLegend: "Revisit (volver después) · Done (ya está)",
   foldDone: "Ocultar hechas",
   unfoldDone: (count) => `Mostrar ${count} hechas`,
@@ -578,7 +581,7 @@ const es: Copy = {
   inProgress: "En curso",
   continueLeftovers: (n) => (n === 1 ? "Continuar 1 pendiente" : `Continuar ${n} pendientes`),
   continueLeftoversHint:
-    "Sin reloj: no toma tiempo. Solo los labs que no terminaste, para hacerlos con calma. No entra al promedio ni al mejor del simulacro.",
+    "Sin reloj: no toma tiempo. Los labs que no terminaste, extras incluidos, para hacerlos con calma. No entra al promedio ni al mejor del simulacro.",
   leftoverBadge: "Pendientes · sin reloj",
   leftoverNote:
     "Esto no es el simulacro: son solo los labs que quedaron sin Done. Acá no hay reloj ni se toma tiempo: terminalos con calma.",
@@ -858,7 +861,9 @@ const en: Copy = {
   groupExtras: "Extras, if you have time",
   unscoredBadge: "Does not count toward final stats",
   unscoredNote:
-    "This extra is left out of coverage, averages, and Continue leftovers. You can still watch it and mark Done.",
+    "This extra is left out of coverage and averages. You can still watch it and mark Done, and if you did not get to it, pick it up in Continue leftovers.",
+  extrasNote:
+    "This is an extra: it is left out of the timed-run score and average. It still counts in the topic chart. Do it if you have time, or later in Continue leftovers.",
   marksLegend: "Revisit (come back later) · Done (finished)",
   foldDone: "Hide finished",
   unfoldDone: (count) => `Show ${count} finished`,
@@ -900,7 +905,7 @@ const en: Copy = {
   inProgress: "In progress",
   continueLeftovers: (n) => (n === 1 ? "Continue 1 leftover" : `Continue ${n} leftovers`),
   continueLeftoversHint:
-    "No clock: no time is taken. Only labs you did not finish, at your pace. Not counted in the timed-run average or best.",
+    "No clock: no time is taken. The labs you did not finish, extras included, at your pace. Not counted in the timed-run average or best.",
   leftoverBadge: "Leftovers · no clock",
   leftoverNote:
     "This is not the timed exam: only labs that are not Done yet. There is no clock and no time is taken: finish them at your pace.",

@@ -114,6 +114,16 @@ export function isUnscored(labId: string): boolean {
   return UNSCORED_IDS.has(labId);
 }
 
+/**
+ * Outside the final score: the unscored labs and everything in the Extras group for this edition
+ * (that includes the container topic of the other edition). They stay on the board and in Continue leftovers.
+ */
+export function isOutsideScore(labId: string, edition: Edition): boolean {
+  if (isUnscored(labId)) return true;
+  const lab = LABS.find((item) => item.id === labId);
+  return lab ? trackFor(lab, edition) === "extra" : false;
+}
+
 function machineRank(where: string): number {
   const text = where.toLowerCase();
   const client = text.includes("client");

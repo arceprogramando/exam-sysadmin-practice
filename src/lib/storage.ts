@@ -1,4 +1,4 @@
-import { LABS, isOffEdition, isUnscored, type Edition } from "./labs";
+import { LABS, isOutsideScore, isUnscored, type Edition } from "./labs";
 import { EXAM_LIMIT_SEC } from "./time";
 
 export const STORAGE_KEY = "arceprog:rhcsa-exam:v1";
@@ -81,8 +81,7 @@ export function countedLabs(labs: LabRecord[], edition?: Edition): LabRecord[] {
   return labs.filter(
     (lab) =>
       !SETUP_IDS.has(lab.labId) &&
-      !isUnscored(lab.labId) &&
-      !(edition && isOffEdition(lab.labId, edition)),
+      !isOutsideScore(lab.labId, edition ?? "v10"),
   );
 }
 
@@ -106,8 +105,9 @@ export function isLeftoverStatus(status: LabStatus): boolean {
   return status === "pending" || status === "revisit" || status === "redo";
 }
 
+/** Everything on the board that is not finished, extras and unscored labs included: Continue leftovers takes them all. */
 export function leftoverLabs(run: Run): LabRecord[] {
-  return countedLabs(run.labs, run.edition).filter((lab) => isLeftoverStatus(lab.status));
+  return run.labs.filter((lab) => !SETUP_IDS.has(lab.labId) && isLeftoverStatus(lab.status));
 }
 
 export function remainingSec(run: Run, now = Date.now()): number {
@@ -265,13 +265,10 @@ export function startLeftoverRun(sourceId: string): Run | null {
     return next;
   });
 
-  const first = labs.findIndex(
-    (lab) =>
-      isLeftoverStatus(lab.status) &&
-      !SETUP_IDS.has(lab.labId) &&
-      !isUnscored(lab.labId) &&
-      !isOffEdition(lab.labId, source.edition ?? "v10"),
-  );
+  // Start on a lab that counts; if only extras are left, on the first of those.
+  const open = (lab: LabRecord) => isLeftoverStatus(lab.status) && !SETUP_IDS.has(lab.labId);
+  const scoredFirst = labs.findIndex((lab) => open(lab) && !isOutsideScore(lab.labId, source.edition ?? "v10"));
+  const first = scoredFirst >= 0 ? scoredFirst : labs.findIndex(open);
 
   const run: Run = {
     id: crypto.randomUUID(),
