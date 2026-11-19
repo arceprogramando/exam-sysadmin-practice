@@ -88,6 +88,14 @@ const HELP_ALWAYS_LABS: readonly string[] = [
 /** Grupo "Extras, si te queda tiempo". En false no aparece en el tablero ni en el resumen. */
 const SHOW_EXTRAS = false;
 
+/** Labs "Hoy no" (SKIP_TODAY_IDS en labs.ts). En true no aparecen en el tablero ni en el resumen. */
+const HIDE_SKIP_TODAY = true;
+
+function hiddenLab(lab: Lab): boolean {
+  if (!SHOW_EXTRAS && lab.track === "extra") return true;
+  return HIDE_SKIP_TODAY && isSkippedToday(lab.id);
+}
+
 function helpAllowed(run: Run | null | undefined): boolean {
   if (HELP_ENABLED) return true;
   if (!run) return false;
@@ -401,7 +409,7 @@ function taskList(run: Run): HTMLElement {
   const wrap = el("div", "flex flex-col gap-6");
   const indexed = labs()
     .map((lab, index) => ({ lab, index, record: run.labs[index] }))
-    .filter((item) => visibleOnBoard(run, item.record));
+    .filter((item) => !hiddenLab(item.lab) && visibleOnBoard(run, item.record));
   const pdf = indexed.filter((item) => item.lab.track === "pdf");
   wrap.append(taskGroup(run, copy().groupClient, "client", pdf.filter((item) => machineOf(item.lab) === "client")));
   wrap.append(taskGroup(run, copy().groupServer, "server", pdf.filter((item) => machineOf(item.lab) === "server")));
@@ -1017,7 +1025,7 @@ function summaryView(run: Run): HTMLElement {
 
   const table = el("div", "overflow-hidden rounded-3xl border border-line bg-card");
   const summaryRows = [...labs().entries()].filter(
-    ([, lab]) => lab.track !== "setup" && (SHOW_EXTRAS || lab.track !== "extra"),
+    ([, lab]) => lab.track !== "setup" && !hiddenLab(lab),
   );
   summaryRows.sort((a, b) => labCode(a[1].id).localeCompare(labCode(b[1].id)));
   for (const [index, lab] of summaryRows) {
