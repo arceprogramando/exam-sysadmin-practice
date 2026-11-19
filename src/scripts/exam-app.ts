@@ -79,6 +79,8 @@ const HELP_ALWAYS_LABS: readonly string[] = [
   "lab-04", // Apache en puerto no estándar + SELinux (semanage port)
   "lab-at", // at: aviso de una sola vez
   "lab-11", // chrony: server ofrece NTP y el client sincroniza
+  "lab-15", // LVM: wgroup + wshare + fstab por UUID
+  "lab-16", // swap: partición de 400 MB, activa y en fstab
 ];
 
 /** Grupo "Extras, si te queda tiempo". En false no aparece en el tablero ni en el resumen. */
