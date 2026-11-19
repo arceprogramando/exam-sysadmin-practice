@@ -58,6 +58,38 @@ let expiredOnce = false;
 let screen: "board" | "lab" = "board";
 let visitStart: number | null = null;
 let focusLabIndex: number | null = null;
+/**
+ * Botón "Pedí ayuda" y su panel (tip, pasos, comandos, videos).
+ * En false se ocultan para practicar como en el examen real. El contenido sigue en labs.ts:
+ * pasalo a true para volver a tenerlo.
+ */
+const HELP_ENABLED = false;
+
+/** En la tanda de "los que me faltaron" (después de terminar) la ayuda sí se muestra. */
+const HELP_IN_LEFTOVERS = true;
+
+/**
+ * Labs que muestran "Pedí ayuda" aunque HELP_ENABLED esté en false.
+ * Va el id del lab (el de labs.ts), no el número de pantalla: el número cambia entre v9 y v10.
+ */
+const HELP_ALWAYS_LABS: readonly string[] = [
+  "lab-17", // resize de LV (resize2fs + lvreduce)
+  "lab-08", // autofs + NFS (era el 29 · server en v10)
+  "extra-03", // FTP anónimo con SELinux (pasado al bloque server)
+  "lab-04", // Apache en puerto no estándar + SELinux (semanage port)
+];
+
+/** Grupo "Extras, si te queda tiempo". En false no aparece en el tablero ni en el resumen. */
+const SHOW_EXTRAS = false;
+
+function helpAllowed(run: Run | null | undefined): boolean {
+  if (HELP_ENABLED) return true;
+  if (!run) return false;
+  if (HELP_IN_LEFTOVERS && runKind(run) === "leftover") return true;
+  const labId = labs()[run.currentIndex]?.id;
+  return !!labId && HELP_ALWAYS_LABS.includes(labId);
+}
+
 /** Panel de ayuda visible en la pantalla del lab. */
 let helpVisible = false;
 let floatX: number | null = null;
@@ -370,7 +402,7 @@ function taskList(run: Run): HTMLElement {
   const both = pdf.filter((item) => machineOf(item.lab) === "both");
   if (both.length) wrap.append(taskGroup(run, copy().groupBoth, "both", both));
   const extras = indexed.filter((item) => item.lab.track === "extra");
-  if (extras.length) wrap.append(taskGroup(run, copy().groupExtras, "extras", extras));
+  if (SHOW_EXTRAS && extras.length) wrap.append(taskGroup(run, copy().groupExtras, "extras", extras));
   if (!indexed.length) wrap.append(el("p", "rounded-3xl border border-line bg-card p-5 text-muted", copy().leftoverEmpty));
   return wrap;
 }
@@ -796,7 +828,7 @@ function labCard(lab: Lab, record: LabRecord): HTMLElement {
   if (record.attempts > 1) {
     card.append(el("p", "mt-4 text-sm text-warn", copy().attempt(record.attempts)));
   }
-  if (helpVisible) card.append(helpPanel(lab));
+  if (helpAllowed(current()) && helpVisible) card.append(helpPanel(lab));
   return card;
 }
 
@@ -872,7 +904,8 @@ function actions(run: Run): HTMLElement {
   doneBtn.addEventListener("click", () => setMark(run.currentIndex, "done"));
   const skipBtn = button(copy().skipTask, record.status === "skipped" ? "btn-stuck" : "btn btn-quiet");
   skipBtn.addEventListener("click", () => setMark(run.currentIndex, "skipped"));
-  row.append(helpBtn, revisitBtn, redoBtn, doneBtn, skipBtn);
+  if (helpAllowed(run)) row.append(helpBtn);
+  row.append(revisitBtn, redoBtn, doneBtn, skipBtn);
   const wrap = el("div");
   wrap.append(row);
   if (record.status === "skipped") {
@@ -971,7 +1004,9 @@ function summaryView(run: Run): HTMLElement {
   page.append(head);
 
   const table = el("div", "overflow-hidden rounded-3xl border border-line bg-card");
-  const summaryRows = [...labs().entries()].filter(([, lab]) => lab.track !== "setup");
+  const summaryRows = [...labs().entries()].filter(
+    ([, lab]) => lab.track !== "setup" && (SHOW_EXTRAS || lab.track !== "extra"),
+  );
   summaryRows.sort((a, b) => labCode(a[1].id).localeCompare(labCode(b[1].id)));
   for (const [index, lab] of summaryRows) {
     const record = run.labs[index];
@@ -1028,6 +1063,7 @@ function statusText(record: LabRecord): string {
 
 function toggleHelp(): void {
   const run = current();
+  if (!helpAllowed(run)) return;
   if (!run || run.status !== "in_progress" || screen !== "lab") return;
   const record = run.labs[run.currentIndex];
   if (!record) return;

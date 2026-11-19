@@ -97,11 +97,12 @@ const es: GlossaryEntry[] = [
     tldr: { page: "apropos" },
   },
   {
-    term: "vim",
+    term: "vi",
+    aliases: ["vim"],
     definition:
-      "Editor de texto en la terminal. vim ARCHIVO. i entra en inserción (escribís). Esc vuelve al modo normal. :wq Enter guarda y sale. :q! Enter sale sin guardar.\n\nBuscar: /FRASE Enter (igual que en man). n la próxima. N (Shift+n) la anterior.\n\nPara el lab del puerto 82: vim /etc/httpd/conf/httpd.conf, /Listen, cambiá Listen 80 por Listen 82 en la línea sin #, Esc, :wq.",
-    example: "vim /etc/httpd/conf/httpd.conf",
-    tldr: { page: "vim" },
+      "Editor de texto en la terminal. vi ARCHIVO. Usá vi y no vim: vi viene en cualquier instalación, vim (vim-enhanced) puede no estar en la máquina del examen. Las teclas son las mismas.\n\ni entra en inserción (escribís). Esc vuelve al modo normal. :wq Enter guarda y sale. :q! Enter sale sin guardar.\n\nBuscar: /FRASE Enter (igual que en man). n la próxima. N (Shift+n) la anterior.\n\nPara el lab del puerto 82: vi /etc/httpd/conf/httpd.conf, /Listen, cambiá Listen 80 por Listen 82 en la línea sin #, Esc, :wq.",
+    example: "vi /etc/httpd/conf/httpd.conf",
+    tldr: { page: "vi" },
   },
   {
     term: "grep",
@@ -930,13 +931,13 @@ const es: GlossaryEntry[] = [
     aliases: ["pwquality.conf", "/etc/security/pwquality.conf", "minlen", "pam_pwquality"],
     definition:
       "Política de calidad de la contraseña al correr passwd: largo mínimo, clases de caracteres, etc.\n\nArchivo: /etc/security/pwquality.conf. Lo típico del lab es minlen = 8.\n\nNo es la edad máxima: eso es PASS_MAX_DAYS en /etc/login.defs (cuentas nuevas) y chage -M (cuenta que ya existe).\n\nSi no recordás la ruta: man -k password, man pwquality.conf o man pam_pwquality. También grep -r minlen /etc/security.",
-    example: "vim /etc/security/pwquality.conf · grep ^minlen /etc/security/pwquality.conf",
+    example: "vi /etc/security/pwquality.conf · grep ^minlen /etc/security/pwquality.conf",
   },
   {
     term: "PASS_MAX_DAYS",
     aliases: ["login.defs", "/etc/login.defs", "chage", "edad máxima", "password aging"],
     definition:
-      "Cuántos días puede durar una contraseña antes de que haya que cambiarla.\n\nPara cuentas nuevas: línea PASS_MAX_DAYS en /etc/login.defs (ej. 30). useradd la lee al crear.\nPara una cuenta que ya existe (roman): no hereda el cambio de login.defs → chage -M 30 roman. chage -l roman verifica.\n\nNo es el largo mínimo: eso es minlen en /etc/security/pwquality.conf.\n\nSi no recordás dónde: man -k aging, man passwd (FILES → login.defs), man login.defs, man chage. O grep -r PASS_MAX /etc.",
+      "Cuántos días puede durar una contraseña antes de que haya que cambiarla.\n\nPara cuentas nuevas: línea PASS_MAX_DAYS en /etc/login.defs (ej. 30). useradd la lee al crear.\nPara una cuenta que ya existe (roman): no hereda el cambio de login.defs → chage -M 30 roman. chage -l roman verifica.\n\nNo es el largo mínimo: eso es minlen en /etc/security/pwquality.conf.\n\nSi no recordás dónde: man -k expir (aging no aparece en las descripciones cortas), man passwd (FILES → login.defs), man login.defs, man chage. O grep -r PASS_MAX /etc.",
     example: "grep ^PASS_MAX_DAYS /etc/login.defs · chage -M 30 roman · chage -l roman",
     tldr: { page: "chage", platform: "linux" },
   },
@@ -979,13 +980,13 @@ const es: GlossaryEntry[] = [
   {
     term: "sed",
     definition:
-      "Edita texto por línea. -i cambia el archivo. Sin -i, solo imprime. La s cambia la primera coincidencia de cada línea. ^ exige el principio de la línea. No es set: set es otra orden de bash. Para editar a mano en el examen, vim suele ser más claro.",
+      "Edita texto por línea. -i cambia el archivo. Sin -i, solo imprime. La s cambia la primera coincidencia de cada línea. ^ exige el principio de la línea. No es set: set es otra orden de bash. Para editar a mano en el examen, vi suele ser más claro.",
     example: "sed -n '/Listen/p' /etc/httpd/conf/httpd.conf → imprime solo las líneas Listen, sin tocar el archivo",
     tldr: { page: "sed" },
   },
   {
     term: "visudo",
-    definition: "Abre sudoers y no lo guarda si la sintaxis está mal. Es el editor seguro. No se edita /etc/sudoers con vim directo: un error te deja sin sudo.",
+    definition: "Abre sudoers y no lo guarda si la sintaxis está mal. Es el editor seguro. No se edita /etc/sudoers con vi directo: un error te deja sin sudo.",
     example: "visudo",
     tldr: { page: "visudo", platform: "linux" },
   },
@@ -1114,11 +1115,12 @@ const en: GlossaryEntry[] = [
     tldr: { page: "apropos" },
   },
   {
-    term: "vim",
+    term: "vi",
+    aliases: ["vim"],
     definition:
-      "Text editor in the terminal. vim FILE. i enters insert mode (you type). Esc returns to normal mode. :wq Enter saves and quits. :q! Enter quits without saving.\n\nSearch: /PHRASE Enter (same as in man). n next. N (Shift+n) previous.\n\nFor the port 82 lab: vim /etc/httpd/conf/httpd.conf, /Listen, change Listen 80 to Listen 82 on the line without #, Esc, :wq.",
-    example: "vim /etc/httpd/conf/httpd.conf",
-    tldr: { page: "vim" },
+      "Text editor in the terminal. vi FILE. Use vi, not vim: vi ships with every install, vim (vim-enhanced) may be missing on the exam machine. The keys are the same.\n\ni enters insert mode (you type). Esc returns to normal mode. :wq Enter saves and quits. :q! Enter quits without saving.\n\nSearch: /PHRASE Enter (same as in man). n next. N (Shift+n) previous.\n\nFor the port 82 lab: vi /etc/httpd/conf/httpd.conf, /Listen, change Listen 80 to Listen 82 on the line without #, Esc, :wq.",
+    example: "vi /etc/httpd/conf/httpd.conf",
+    tldr: { page: "vi" },
   },
   {
     term: "grep",
@@ -1937,13 +1939,13 @@ const en: GlossaryEntry[] = [
     aliases: ["pwquality.conf", "/etc/security/pwquality.conf", "minlen", "pam_pwquality"],
     definition:
       "Password quality policy when someone runs passwd: minimum length, character classes, etc.\n\nFile: /etc/security/pwquality.conf. The lab usually wants minlen = 8.\n\nNot the maximum age: that is PASS_MAX_DAYS in /etc/login.defs (new accounts) and chage -M (account that already exists).\n\nIf you forget the path: man -k password, man pwquality.conf, or man pam_pwquality. Also grep -r minlen /etc/security.",
-    example: "vim /etc/security/pwquality.conf · grep ^minlen /etc/security/pwquality.conf",
+    example: "vi /etc/security/pwquality.conf · grep ^minlen /etc/security/pwquality.conf",
   },
   {
     term: "PASS_MAX_DAYS",
     aliases: ["login.defs", "/etc/login.defs", "chage", "maximum age", "password aging"],
     definition:
-      "How many days a password may last before it must be changed.\n\nFor new accounts: PASS_MAX_DAYS line in /etc/login.defs (e.g. 30). useradd reads it at create time.\nFor an account that already exists (roman): it does not inherit the login.defs change → chage -M 30 roman. chage -l roman verifies.\n\nNot the minimum length: that is minlen in /etc/security/pwquality.conf.\n\nIf you forget where: man -k aging, man passwd (FILES → login.defs), man login.defs, man chage. Or grep -r PASS_MAX /etc.",
+      "How many days a password may last before it must be changed.\n\nFor new accounts: PASS_MAX_DAYS line in /etc/login.defs (e.g. 30). useradd reads it at create time.\nFor an account that already exists (roman): it does not inherit the login.defs change → chage -M 30 roman. chage -l roman verifies.\n\nNot the minimum length: that is minlen in /etc/security/pwquality.conf.\n\nIf you forget where: man -k expir (aging is not in the short descriptions), man passwd (FILES → login.defs), man login.defs, man chage. Or grep -r PASS_MAX /etc.",
     example: "grep ^PASS_MAX_DAYS /etc/login.defs · chage -M 30 roman · chage -l roman",
     tldr: { page: "chage", platform: "linux" },
   },
@@ -1986,13 +1988,13 @@ const en: GlossaryEntry[] = [
   {
     term: "sed",
     definition:
-      "Edits text line by line. -i changes the file. Without -i it only prints. s replaces the first match on each line. ^ requires the start of the line. It is not set: set is a different bash builtin. For hand edits on the exam, vim is usually clearer.",
+      "Edits text line by line. -i changes the file. Without -i it only prints. s replaces the first match on each line. ^ requires the start of the line. It is not set: set is a different bash builtin. For hand edits on the exam, vi is usually clearer.",
     example: "sed -n '/Listen/p' /etc/httpd/conf/httpd.conf → prints only the Listen lines, without touching the file",
     tldr: { page: "sed" },
   },
   {
     term: "visudo",
-    definition: "Opens sudoers and does not save it if the syntax is wrong. It is the safe editor. Do not edit /etc/sudoers with vim directly: one mistake can leave you without sudo.",
+    definition: "Opens sudoers and does not save it if the syntax is wrong. It is the safe editor. Do not edit /etc/sudoers with vi directly: one mistake can leave you without sudo.",
     example: "visudo",
     tldr: { page: "visudo", platform: "linux" },
   },

@@ -429,7 +429,7 @@ export const LABS: Lab[] = [
       videoHint: "Está en la playlist del otro repo, parte 9. El video es de seguridad; esta tarea es la llave de root de una máquina a la otra.",
       videos: [{ title: "Parte 9: llave SSH", url: YT.harunaSecurity }],
       commands: [
-        { cmd: "vim /etc/ssh/sshd_config.d/00-rhcsa-lab-root.conf", why: "Server. En vim, /PermitRootLogin y dejalo en yes. En la línea de abajo agregá PasswordAuthentication yes. 05-vagrant.conf tiene PasswordAuthentication no; este archivo se lee antes y gana. Si solo tocás /etc/ssh/sshd_config, estos drop-in siguen mandando.", as: "root" },
+        { cmd: "vi /etc/ssh/sshd_config.d/00-rhcsa-lab-root.conf", why: "Server. En vi, /PermitRootLogin y dejalo en yes. En la línea de abajo agregá PasswordAuthentication yes. 05-vagrant.conf tiene PasswordAuthentication no; este archivo se lee antes y gana. Si solo tocás /etc/ssh/sshd_config, estos drop-in siguen mandando.", as: "root" },
         { cmd: "systemctl reload sshd", why: "Server. Aplica el cambio de sshd sin cortar otras sesiones. Sin reload, el archivo nuevo no cuenta.", as: "root" },
         { cmd: "sshd -T | grep -Ei 'permitrootlogin|passwordauthentication'", why: "Server. Tiene que decir permitrootlogin yes y passwordauthentication yes. Si passwordauthentication sigue en no, ssh desde el client no pregunta la contraseña: Permission denied (publickey,gssapi-keyex,gssapi-with-mic).", as: "root" },
         { cmd: "ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519", why: "Client. Crea la pareja. -N '' es sin passphrase: si no, el script igual pide algo. Si dice que ya existe, no la pises.", as: "root" },
@@ -542,7 +542,7 @@ export const LABS: Lab[] = [
         { cmd: "dnf repolist && dnf install -y policycoreutils-python-utils", why: "semanage no viene en la mínima: el shell dice orden no encontrada. El paquete sale del repo DNF local de esta máquina, en AppStream.\nPara ver el nombre: dnf provides /usr/sbin/semanage. El patrón */semanage a veces no coincide y dnf dice que no hay resultados.", as: "root" },
         { cmd: "dnf install -y httpd", why: "Si grep dice que /etc/httpd/conf/httpd.conf no existe, Apache no está instalado. El paquete sale del repo DNF local. En el Vagrant a veces ya viene; en una mínima, no.", as: "root" },
         { cmd: "grep -n Listen /etc/httpd/conf/httpd.conf", why: "No cambia el puerto. Muestra la línea donde Apache dice en qué puerto escucha, con su número.\nSuele decir Listen 80. La que cuenta es la que no tiene # adelante. #Listen 12.34.56.78:80 es un comentario y se deja.\nSin el cambio de abajo, Apache sigue en el 80 aunque SELinux y el firewall ya permitan el 82.", as: "root" },
-        { cmd: "vim /etc/httpd/conf/httpd.conf", why: "Mismo cambio que en el video: Listen 80 pasa a Listen 82.\nAbrí el archivo. /Listen y Enter salta a esa palabra (n la próxima si hay varias).\nLa línea que cuenta es Listen 80 sin # adelante. i entra en inserción, cambiá el 80 por 82, Esc, :wq Enter guarda y sale.\n:q! sale sin guardar si te equivocaste.\nDespués el grep de arriba tiene que mostrar Listen 82.", as: "root" },
+        { cmd: "vi /etc/httpd/conf/httpd.conf", why: "Mismo cambio que en el video: Listen 80 pasa a Listen 82.\nAbrí el archivo. /Listen y Enter salta a esa palabra (n la próxima si hay varias).\nLa línea que cuenta es Listen 80 sin # adelante. i entra en inserción, cambiá el 80 por 82, Esc, :wq Enter guarda y sale.\n:q! sale sin guardar si te equivocaste.\nDespués el grep de arriba tiene que mostrar Listen 82.", as: "root" },
         { cmd: "man semanage-port", why: "man semanage solo es la página general: no trae el ejemplo del puerto.\nLas páginas chicas se llaman semanage-port, semanage-fcontext, etc. En el prompt escribí man semanage- y apretá Tab dos veces: bash lista esas páginas. Completá semanage-port y Enter.\nAdentro el visor es less. /Examples o /port y Enter. n / N (Shift+n) saltan entre coincidencias. Espacio baja una pantalla, b sube, q sale.\nEn EXAMPLES hay un SSH con -a -t … -p tcp. Adaptarlo: tipo http_port_t y puerto 82.", as: "root" },
         { cmd: "semanage port -l | grep http", why: "No cambia nada. Lista los puertos que SELinux ya etiquetó y deja solo las líneas de http.\nhttp_port_t es la etiqueta de los puertos donde Apache puede escuchar.\nSi 82 no aparece ahí, en Enforcing Apache no puede usarlo, aunque httpd.conf diga Listen 82. Por eso un restart antes de agregarlo falla.", as: "root" },
         { cmd: "semanage port -a -t http_port_t -p tcp 82", why: "Agrega el 82 a la etiqueta http_port_t, en TCP. -a agrega, -t es el tipo y -p tcp es el protocolo.\nQueda en la política y sigue después del reboot. No toca los archivos de /var/www/html: acá el bloqueo es el puerto.\nLas líneas policy capability son normales: SELinux reescribe la política. Si vuelve el prompt y no dice error, quedó. Comprobar con semanage port -l | grep http: el 82 tiene que aparecer en http_port_t.\nSi dice que el puerto ya está definido, ya estaba. No hace falta correrlo de nuevo.", as: "root" },
@@ -633,7 +633,7 @@ export const LABS: Lab[] = [
       "Usuario roman, y chage -M 30 roman.",
     ],
     help: {
-      tip: "Son dos archivos distintos. El largo mínimo se edita en /etc/security/pwquality.conf (minlen = 8): es el que abre el video con vim. /etc/login.defs con PASS_MAX_DAYS 30 vale para las cuentas que nacen después. roman ya creado no lo hereda: hace falta chage -M.\n\nSi no recordás la ruta: man -k password o man -k aging; man passwd (sección FILES) apunta a login.defs; man login.defs describe PASS_MAX_DAYS; man pwquality.conf (o man pam_pwquality) es el del largo. También sirve grep -r PASS_MAX /etc y grep -r minlen /etc/security.",
+      tip: "Son dos archivos distintos. El largo mínimo se edita en /etc/security/pwquality.conf (minlen = 8): es el que abre el video con vim. /etc/login.defs con PASS_MAX_DAYS 30 vale para las cuentas que nacen después. roman ya creado no lo hereda: hace falta chage -M.\n\nSi no recordás la ruta: man -k password o man -k expir; man passwd (sección FILES) apunta a login.defs; man login.defs describe PASS_MAX_DAYS; man pwquality.conf (o man pam_pwquality) es el del largo. También sirve grep -r PASS_MAX /etc y grep -r minlen /etc/security.",
       videoHint: "Parte 8 del otro repo: 7:18 es pwquality.conf (minlen); 8:26 es login.defs / 30 días.",
       videos: [
         { title: "Parte 8: pwquality / minlen (7:18)", url: `${YT.harunaUsers}&t=438s` },
@@ -641,9 +641,9 @@ export const LABS: Lab[] = [
       ],
       commands: [
         { cmd: "id roman || useradd roman && echo 'Roman.pass.1' | passwd --stdin roman", why: "Si no existe, crealo. La clave de práctica tiene más de 8 caracteres.", as: "root" },
-        { cmd: "man -k password ; man -k aging", why: "Si no sabés dónde está. Busca páginas por palabra. Después abrís man passwd, man login.defs o man pwquality.conf.", as: "root" },
-        { cmd: "vim /etc/security/pwquality.conf", why: "Largo mínimo. /minlen y Enter salta a esa palabra (n la próxima si hay varias).\nSuele venir # minlen = 8 comentada: borrá el # (o la línea activa sin #) y dejá minlen = 8. i inserta, Esc, :wq Enter guarda.\nNo agregues otra minlen abajo si ya hay una: descomentá o editá la que existe. :q! sale sin guardar si te equivocaste.", as: "root" },
-        { cmd: "vim /etc/login.defs", why: "Edad máxima de cuentas nuevas. /PASS_MAX_DAYS y Enter.\nLa línea que cuenta es la que NO empieza con # (suele decir 99999). Cambiala a 30: PASS_MAX_DAYS seguido de tab o espacios y 30.\nNo toques la línea comentada con #. i → editá → Esc → :wq Enter.", as: "root" },
+        { cmd: "man -k password", why: "Si no sabés dónde está. Busca páginas por palabra. Después abrís man passwd, man login.defs o man pwquality.conf.", as: "root" },
+        { cmd: "vi /etc/security/pwquality.conf", why: "Largo mínimo. /minlen y Enter salta a esa palabra (n la próxima si hay varias).\nSuele venir # minlen = 8 comentada: borrá el # (o la línea activa sin #) y dejá minlen = 8. i inserta, Esc, :wq Enter guarda.\nNo agregues otra minlen abajo si ya hay una: descomentá o editá la que existe. :q! sale sin guardar si te equivocaste.", as: "root" },
+        { cmd: "vi /etc/login.defs", why: "Edad máxima de cuentas nuevas. /PASS_MAX_DAYS y Enter.\nLa línea que cuenta es la que NO empieza con # (suele decir 99999). Cambiala a 30: PASS_MAX_DAYS seguido de tab o espacios y 30.\nNo toques la línea comentada con #. i → editá → Esc → :wq Enter.", as: "root" },
         { cmd: "chage -M 30 roman && chage -l roman", why: "Aplica el máximo a Roman (login.defs no alcanza si ya existía). Maximum number of days between password change tiene que decir 30.", as: "root" },
       ],
     },
@@ -708,7 +708,7 @@ export const LABS: Lab[] = [
         { cmd: "systemctl status crond", why: "Primero. Si está active y enabled, seguí. Si está inactive o disabled, el enable --now de abajo. Sin crond, el crontab no corre.", as: "root" },
         { cmd: "systemctl enable --now crond", why: "Solo si el status de arriba no quedó enabled/active. enable lo deja para el próximo boot; --now lo arranca ya.", as: "root" },
         { cmd: "cat /etc/crontab", why: "No edites este archivo para el lab. Solo mirá el ejemplo: minuto, hora, día del mes, mes, día de la semana, y después el comando.\nEn /etc/crontab aparece también user-name (sexto campo). En crontab -u erik -e ese campo no se escribe: la tabla ya es de erik.\n* * * * * = cada minuto.", as: "root" },
-        { cmd: "crontab -u erik -e", why: "Editar la tabla de Erik, no la de root. No es vim /etc/crontab.", as: "root" },
+        { cmd: "crontab -u erik -e", why: "Editar la tabla de Erik, no la de root. No es vi /etc/crontab.", as: "root" },
         { cmd: "* * * * * logger \"Ex200 Testing\"", why: "Los cinco asteriscos son cada minuto (como en el dibujo de /etc/crontab). Sin user-name acá.", as: "root" },
         { cmd: "crontab -u erik -l", why: "Ver que quedó guardada.", as: "root" },
         { cmd: "journalctl -t erik --since '2 min ago'", why: "logger usa el usuario como identificador. Esperá un minuto.", as: "root" },
@@ -793,7 +793,7 @@ export const LABS: Lab[] = [
     help: {
       tip: "Orden de ln: primero el archivo que YA existe, después dónde CREÁS el enlace. ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft → 1º notas.txt, 2º el soft link en atajos. No al revés.\n\nln -s = soft link (atajo; si el original desaparece, queda colgado). ln sin -s = hard link (mismo inodo). No se puede hard link a un directorio ni de un disco a otro.",
       videoHint: "Está en la playlist del otro repo, parte 1. Ahí hace el soft link y el hard link.",
-      videos: [{ title: "Parte 1: soft link y hard link", url: YT.harunaTools }],
+      videos: [{ title: "Parte 1: soft link y hard link", url: `${YT.harunaTools}&t=393s` }],
       commands: [
         { cmd: "mkdir -p /root/roman/atajos && echo 'notas de roman' > /root/roman/notas.txt", why: "El archivo real. El texto es para reconocer después cuál sobrevive.", as: "root" },
         { cmd: "ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft", why: "Soft link. Orden: 1º el archivo real (notas.txt), 2º dónde se crea el soft (atajos/notas-soft). ls -l lo muestra con -> hacia la ruta.", as: "root" },
@@ -1484,7 +1484,7 @@ export const LABS: Lab[] = [
   },
   {
     id: "extra-03",
-    track: "extra",
+    track: "pdf",
     title: "El FTP anónimo tiene que poder dejar y llevar archivos",
     story: "La gente entra sin cuenta. Tiene que poder bajar de una carpeta y subir a otra, con SELinux todavía activo.",
     objective: [
@@ -1492,7 +1492,7 @@ export const LABS: Lab[] = [
       "Anónimo descarga de /srv/company-drop/pub.",
       "Anónimo sube a /srv/company-drop/incoming.",
     ],
-    where: "server o client",
+    where: "server",
     steps: [
       "El servicio es vsftpd. El script de preparación del repo deja el escenario.",
       "Un anónimo tiene que poder descargar de /srv/company-drop/pub.",
