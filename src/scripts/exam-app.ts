@@ -77,6 +77,7 @@ const HELP_ALWAYS_LABS: readonly string[] = [
   "lab-08", // autofs + NFS (era el 29 · server en v10)
   "extra-03", // FTP anónimo con SELinux (pasado al bloque server)
   "lab-04", // Apache en puerto no estándar + SELinux (semanage port)
+  "lab-at", // at: aviso de una sola vez
 ];
 
 /** Grupo "Extras, si te queda tiempo". En false no aparece en el tablero ni en el resumen. */

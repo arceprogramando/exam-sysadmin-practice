@@ -94,14 +94,14 @@ Lo que el usuario dice («el 24», «lab 24 server») es el número de la lista,
 | 05 | lab-pwquality | client | | 20 | extra-05 | client |
 | 06 | lab-06 (setgid) | client | | 21 | lab-02-root-server | server |
 | 07 | lab-07 (cron) | client | | 22 | lab-02 (red) | server |
-| 08 | lab-at | client | | 23 | lab-ssh-key | server |
-| 09 | lab-09 (tar) | client | | 24 | lab-11 (chrony) | server + client |
-| 10 | lab-links | client | | 25 | lab-04 (puerto 82) | server |
-| 11 | lab-10 (ACL) | client | | 26 | lab-15 (LVM) | server |
-| 12 | lab-12 (find) | client | | 27 | lab-16 (swap) | server |
+| 08 | lab-at | client | | 23 | lab-11 (chrony) | server + client |
+| 09 | lab-09 (tar) | client | | 24 | lab-04 (puerto 82) | server |
+| 10 | lab-links | client | | 25 | lab-15 (LVM) | server |
+| 11 | lab-10 (ACL) | client | | 26 | lab-16 (swap) | server |
+| 12 | lab-12 (find) | client | | 27 | lab-ssh-key | server |
 | 13 | lab-find-size | client | | 28 | lab-17 | server |
 | 14 | lab-13 (grep) | client | | 29 | lab-08 | server |
-| 15 | lab-14 (UID) | client | | | | |
+| 15 | lab-14 (UID) | client | | 30 | extra-03 (FTP anónimo) | server |
 
 ## Acceso por vagrant ssh (lo más rápido)
 

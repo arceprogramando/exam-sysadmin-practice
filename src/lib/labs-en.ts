@@ -1076,13 +1076,19 @@ export const LAB_EN: Record<string, LabEn> = {
   "lab-links": {
     title: "Roman needs two shortcuts to the same file",
     story: "Roman keeps notes in /root/roman/notas.txt and wants to open them from /root/roman/atajos.\n\nWe need two paths: a soft link (symbolic link), which points at the name, and a hard link, which is the same file. If someone deletes the original name, the hard link still has to hold the text.\n\nIt does not count toward final stats or Continue leftovers. You can still do it and mark Done.",
-    objective: ["File /root/roman/notas.txt.", "Soft link notas-soft.", "Hard link notas-hard, same inode."],
+    objective: [
+      "File /root/roman/notas.txt.",
+      "Directory /root/roman/atajos.",
+      "Soft link /root/roman/atajos/notas-soft → /root/roman/notas.txt.",
+      "Hard link /root/roman/atajos/notas-hard, same inode as notas.txt.",
+    ],
     where: "client",
     steps: [
       "After the /etc backup: same topic, files.",
-      "Create notas.txt.",
-      "Soft link notas-soft with ln -s.",
-      "Hard link notas-hard with ln, no -s. ls -li has to show the same inode as notas.txt.",
+      "Create /root/roman/notas.txt and the directory /root/roman/atajos.",
+      "Soft link /root/roman/atajos/notas-soft with ln -s.",
+      "Hard link /root/roman/atajos/notas-hard with ln, no -s. ls -li has to show the same inode as notas.txt.",
+      "Use full paths on both sides of ln: if the second argument is just a name, the link is created in the directory you are standing in.",
     ],
     tip: "ln order: first the file that ALREADY exists, then where you CREATE the link. ln -s /root/roman/notas.txt /root/roman/atajos/notas-soft → 1st notas.txt, 2nd the soft link under atajos. Not the other way around.\n\nln -s = soft link (shortcut; if the original goes away, it dangles). ln without -s = hard link (same inode). You cannot hard-link a directory, or across disks.",
     videoHint: "It is in the other repo's playlist, part 1. There it makes the soft link and the hard link.",
