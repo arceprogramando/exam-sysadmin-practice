@@ -6,6 +6,7 @@ import {
   trackFor,
   isUnscored,
   isBroken,
+  isSkippedToday,
   isOutsideScore,
   REDHAT_EXAM_VIDEO,
   type Lab,
@@ -488,7 +489,9 @@ function taskRow(run: Run, lab: Lab, index: number): HTMLElement {
   text.append(title);
   if (outsideScore(lab.id)) {
     // flex + w-fit: always on its own line under the title, as wide as its text.
-    text.append(el("span", "lab-unscored mt-1 flex w-fit", copy().unscoredBadge));
+    text.append(
+      el("span", "lab-unscored mt-1 flex w-fit", isSkippedToday(lab.id) ? copy().skipTodayBadge : copy().unscoredBadge),
+    );
   }
   if (lab.story) text.append(el("p", "lab-story mt-1 block text-sm leading-relaxed", storyPreview(lab.story)));
   const meta = el("span", "lab-meta mt-0.5 block text-sm text-muted", rowMeta(record, lab));
@@ -820,6 +823,8 @@ function labCard(lab: Lab, record: LabRecord): HTMLElement {
   );
   if (isBroken(lab.id)) {
     card.append(el("p", "lab-unscored-note mt-3 text-warn", copy().brokenNote));
+  } else if (isSkippedToday(lab.id)) {
+    card.append(el("p", "lab-unscored-note mt-3", copy().skipTodayNote));
   } else if (isUnscored(lab.id)) {
     card.append(el("p", "lab-unscored-note mt-3", copy().unscoredNote));
   } else if (outsideScore(lab.id)) {

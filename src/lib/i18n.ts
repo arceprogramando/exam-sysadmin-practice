@@ -232,6 +232,8 @@ export interface Copy {
   unscoredBadge: string;
   unscoredNote: string;
   brokenNote: string;
+  skipTodayBadge: string;
+  skipTodayNote: string;
   extrasNote: string;
   marksLegend: string;
   foldDone: string;
@@ -537,6 +539,9 @@ const es: Copy = {
   groupBoth: "En las dos",
   groupExtras: "Extras, si te queda tiempo",
   unscoredBadge: "No cuenta para la estadística final",
+  skipTodayBadge: "Hoy no: fuera de la estadística",
+  skipTodayNote:
+    "Hoy no se practica: no cuenta en el puntaje ni en las estadísticas. En otra ocasión vuelve a contar (SKIP_TODAY_ENABLED en labs.ts).",
   brokenNote:
     "Lab en revisión: la historia o los pasos pueden tener errores. No cuenta en el puntaje ni en las estadísticas. Guiate por los objetivos.",
   unscoredNote:
@@ -863,6 +868,9 @@ const en: Copy = {
   groupBoth: "On both",
   groupExtras: "Extras, if you have time",
   unscoredBadge: "Does not count toward final stats",
+  skipTodayBadge: "Not today: left out of stats",
+  skipTodayNote:
+    "Not practiced today: it does not count toward the score or stats. It counts again another time (SKIP_TODAY_ENABLED in labs.ts).",
   brokenNote:
     "Lab under review: the story or the steps may have mistakes. It does not count toward the score or stats. Go by the objectives.",
   unscoredNote:

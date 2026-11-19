@@ -93,6 +93,16 @@ const UNSCORED_IDS = new Set([
 const BROKEN_IDS = new Set<string>([
   "lab-04", // Apache en el 82: historia y pasos confusos para estudiar
 ]);
+/**
+ * "Hoy no": labs que se dejan para otra ocasión. Con SKIP_TODAY_ENABLED en true se ven con su aviso
+ * y quedan fuera del puntaje, la cobertura y los pendientes. En false vuelven a contar normal.
+ */
+const SKIP_TODAY_ENABLED = true;
+const SKIP_TODAY_IDS = new Set<string>([
+  "lab-ssh-key", // 27
+  "lab-08", // 29 autofs
+  "extra-03", // 30 FTP anónimo
+]);
 const EDITION_KEY = "arceprog:rhcsa-edition";
 
 export function loadEdition(): Edition {
@@ -118,7 +128,12 @@ export function isOffEdition(labId: string, edition: Edition): boolean {
 
 /** Extra that stays on the list but does not enter the final practice score or stats. */
 export function isUnscored(labId: string): boolean {
-  return UNSCORED_IDS.has(labId) || BROKEN_IDS.has(labId);
+  return UNSCORED_IDS.has(labId) || BROKEN_IDS.has(labId) || isSkippedToday(labId);
+}
+
+/** Lab que hoy no se practica (ver SKIP_TODAY_IDS). */
+export function isSkippedToday(labId: string): boolean {
+  return SKIP_TODAY_ENABLED && SKIP_TODAY_IDS.has(labId);
 }
 
 /** Lab con contenido en revisión (ver BROKEN_IDS). */
