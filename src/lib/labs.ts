@@ -86,6 +86,13 @@ const UNSCORED_IDS = new Set([
   "lab-find-size",
   "lab-journal",
 ]);
+/**
+ * Labs con contenido en revisión: se ven con un aviso y quedan fuera del puntaje, la cobertura y los pendientes.
+ * Sacá el id de la lista cuando el lab esté corregido.
+ */
+const BROKEN_IDS = new Set<string>([
+  "lab-04", // Apache en el 82: historia y pasos confusos para estudiar
+]);
 const EDITION_KEY = "arceprog:rhcsa-edition";
 
 export function loadEdition(): Edition {
@@ -111,7 +118,12 @@ export function isOffEdition(labId: string, edition: Edition): boolean {
 
 /** Extra that stays on the list but does not enter the final practice score or stats. */
 export function isUnscored(labId: string): boolean {
-  return UNSCORED_IDS.has(labId);
+  return UNSCORED_IDS.has(labId) || BROKEN_IDS.has(labId);
+}
+
+/** Lab con contenido en revisión (ver BROKEN_IDS). */
+export function isBroken(labId: string): boolean {
+  return BROKEN_IDS.has(labId);
 }
 
 /**

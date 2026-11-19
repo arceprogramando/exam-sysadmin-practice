@@ -5,6 +5,7 @@ import {
   labCode,
   trackFor,
   isUnscored,
+  isBroken,
   isOutsideScore,
   REDHAT_EXAM_VIDEO,
   type Lab,
@@ -817,7 +818,9 @@ function labCard(lab: Lab, record: LabRecord): HTMLElement {
     el("p", "text-xs font-semibold tracking-[0.16em] text-muted uppercase", `${labCode(lab.id)} · ${lab.where}`),
     el("h1", "mt-2 text-3xl font-semibold tracking-tight", lab.title),
   );
-  if (isUnscored(lab.id)) {
+  if (isBroken(lab.id)) {
+    card.append(el("p", "lab-unscored-note mt-3 text-warn", copy().brokenNote));
+  } else if (isUnscored(lab.id)) {
     card.append(el("p", "lab-unscored-note mt-3", copy().unscoredNote));
   } else if (outsideScore(lab.id)) {
     card.append(el("p", "lab-unscored-note mt-3", copy().extrasNote));

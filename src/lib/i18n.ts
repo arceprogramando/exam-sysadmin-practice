@@ -231,6 +231,7 @@ export interface Copy {
   groupExtras: string;
   unscoredBadge: string;
   unscoredNote: string;
+  brokenNote: string;
   extrasNote: string;
   marksLegend: string;
   foldDone: string;
@@ -536,6 +537,8 @@ const es: Copy = {
   groupBoth: "En las dos",
   groupExtras: "Extras, si te queda tiempo",
   unscoredBadge: "No cuenta para la estadística final",
+  brokenNote:
+    "Lab en revisión: la historia o los pasos pueden tener errores. No cuenta en el puntaje ni en las estadísticas. Guiate por los objetivos.",
   unscoredNote:
     "Este extra no entra en la cobertura ni en el promedio. Podés mirarlo y marcar Done igual, y si no llegaste, retomarlo en Continuar pendientes.",
   extrasNote:
@@ -860,6 +863,8 @@ const en: Copy = {
   groupBoth: "On both",
   groupExtras: "Extras, if you have time",
   unscoredBadge: "Does not count toward final stats",
+  brokenNote:
+    "Lab under review: the story or the steps may have mistakes. It does not count toward the score or stats. Go by the objectives.",
   unscoredNote:
     "This extra is left out of coverage and averages. You can still watch it and mark Done, and if you did not get to it, pick it up in Continue leftovers.",
   extrasNote:
