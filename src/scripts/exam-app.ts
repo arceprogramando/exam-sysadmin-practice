@@ -91,7 +91,41 @@ const SHOW_EXTRAS = false;
 /** Labs "Hoy no" (SKIP_TODAY_IDS en labs.ts). En true no aparecen en el tablero ni en el resumen. */
 const HIDE_SKIP_TODAY = true;
 
+/**
+ * Modo foco: con ?foco=CLAVE en la URL de la práctica, el tablero muestra solo esos labs.
+ * Se sale volviendo a la URL sin ?foco.
+ */
+const FOCUS_SETS: Record<string, { title: string; ids: readonly string[] }> = {
+  storage: { title: "Storage: LVM, swap y resize", ids: ["lab-15", "lab-16", "lab-17"] },
+};
+
+function focusKey(): string | null {
+  if (typeof location === "undefined") return null;
+  const key = new URLSearchParams(location.search).get("foco");
+  return key && FOCUS_SETS[key] ? key : null;
+}
+
+function focusNote(): HTMLElement {
+  const key = focusKey();
+  const note = el("section", "strategy-note");
+  if (key) {
+    note.append(el("h2", "strategy-note-title", `Modo foco · ${FOCUS_SETS[key].title}`));
+    note.append(el("p", "mt-1 text-sm", "Solo ves estos labs. El reloj y la práctica son los de siempre."));
+    note.append(link(location.pathname, "Salir del modo foco", "mt-2 inline-block font-medium underline"));
+  } else {
+    note.append(el("h2", "strategy-note-title", "Modo foco"));
+    const row = el("p", "mt-1 text-sm");
+    for (const [k, set] of Object.entries(FOCUS_SETS)) {
+      row.append(link(`${location.pathname}?foco=${k}`, set.title, "font-medium underline"));
+    }
+    note.append(row);
+  }
+  return note;
+}
+
 function hiddenLab(lab: Lab): boolean {
+  const key = focusKey();
+  if (key) return !FOCUS_SETS[key].ids.includes(lab.id);
   if (!SHOW_EXTRAS && lab.track === "extra") return true;
   return HIDE_SKIP_TODAY && isSkippedToday(lab.id);
 }
@@ -361,7 +395,7 @@ function examView(run: Run): HTMLElement {
 function boardView(run: Run): HTMLElement {
   const page = el("div", "flex flex-col gap-6 pb-12");
   const leftover = runKind(run) === "leftover";
-  page.append(clockBar(run, false), leftover ? leftoverNote() : strategyNote(), taskList(run));
+  page.append(clockBar(run, false), focusNote(), leftover ? leftoverNote() : strategyNote(), taskList(run));
   const foot = el("div", "flex flex-col items-start gap-2");
   const close = button(copy().closeRun, "btn btn-quiet w-fit");
   close.addEventListener("click", () => closeRun());
@@ -975,7 +1009,7 @@ async function beginLeftovers(source: Run): Promise<void> {
   helpVisible = false;
   visitStart = null;
   expiredOnce = false;
-  location.href = to("practice");
+  location.href = to("practice") + location.search;
 }
 
 function summaryView(run: Run): HTMLElement {
